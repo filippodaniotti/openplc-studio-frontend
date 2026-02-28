@@ -20,6 +20,13 @@ import { ModuleType } from '../../shared/enums/module-type.enum';
 import { SelectModule } from 'primeng/select';
 import { AutoCompleteCompleteEvent, AutoCompleteModule } from 'primeng/autocomplete';
 import { RunConfiguratorService } from '../run-configurator.service';
+// popup
+import { PopupModalComponent } from '../../shared/popup-modal/popup-modal.component';
+import { InputTextModule } from 'primeng/inputtext';
+//breadcrumbs
+import { MenuItem } from 'primeng/api';
+import { BreadcrumbModule } from 'primeng/breadcrumb';
+
 
 const suggestedBands: number[] = [200, 1000, 2000];
 
@@ -53,6 +60,9 @@ type GroupedModules = { label: string; items: Module[] };
     CheckboxModule,
     SelectModule,
     AutoCompleteModule,
+    PopupModalComponent, // popup 
+    InputTextModule,
+    BreadcrumbModule, // breadcrumbs
   ],
 })
 export class ModuleConfiguratorComponent implements OnInit {
@@ -88,6 +98,67 @@ export class ModuleConfiguratorComponent implements OnInit {
   public bandSettingsSelectedModuleProxy: ModuleWithCount | null = null;
 
   public bandSettingsSelectedModuleCounter: number = 0;
+
+  // POPUP LEFT & RIGHT OPTIONS 
+  public leftOptionPopupVisible = false;
+
+  public rightOptionPopupVisible = false;
+
+  public channelPopupData: any = null;
+
+  public currentBandSettingsParamName: string = '';
+
+  // BREADCRUMBS
+  public leftBreadcrumbs: MenuItem[] = [];
+
+  public rightBreadcrumbs: MenuItem[] = [];
+
+  public openChannelPopup(channel: 'left' | 'right', paramName: string) {
+    this.currentBandSettingsParamName = paramName;
+
+    const baseBreadcrumbs: MenuItem[] = [
+      { 
+        label: 'Advanced PLC', 
+      },
+      { 
+        label: channel === 'left' ? 'Left' : 'Right',
+        disabled: true
+      }
+  ];
+
+  if (channel === 'left') {
+    this.leftOptionPopupVisible = true;
+    this.leftBreadcrumbs = baseBreadcrumbs;
+  } else {
+    this.rightOptionPopupVisible = true;
+    this.rightBreadcrumbs = baseBreadcrumbs;
+  }
+  
+  this.channelPopupData = { channel };
+  }
+
+  public onLeftOptionConfirm() {
+    console.log('Confermato per Left:', this.channelPopupData);
+    // Logica Left
+    this.leftOptionPopupVisible = false;
+  }
+
+  public onRightOptionConfirm() {
+    console.log('Confermato per Right:', this.channelPopupData);
+    // Logica Right
+    this.rightOptionPopupVisible = false;
+  }
+
+  public onBreadcrumbNavigate(item: MenuItem, fromChannel: 'left' | 'right') {
+  if (item.label === 'Advanced PLC') {
+    if (fromChannel === 'left') {
+      this.leftOptionPopupVisible = false;
+    } else {
+      this.rightOptionPopupVisible = false;
+    }
+    console.log('Tornato ad Advanced PLC da:', fromChannel);
+  }
+}
 
   private readonly unsubAll$ = new Subject<void>();
 

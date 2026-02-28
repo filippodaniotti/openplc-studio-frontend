@@ -304,6 +304,7 @@
                   *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'dual_mono'"
                   class="flex flex-row w-full gap-5"
                 >
+                <!--
                   <p-inputgroup class="flex-1">
                     <p-inputgroup-addon>Left</p-inputgroup-addon>
                     <p-autocomplete
@@ -318,8 +319,42 @@
                       [dropdown]="true"
                     ></p-autocomplete>
                   </p-inputgroup>
+                  -->
+                  <span
+                    class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
+                    (click)="openChannelPopup('left', param.name)"
+                    title="Clicca per opzioni avanzate">
+                    Left ⓘ
+                  </span>
+                  <app-popup-modal 
+                    [(visible)]="leftOptionPopupVisible" 
+                    header="Configurazione Option Left"
+                    [breadcrumbs]="leftBreadcrumbs"
+                    (breadcrumbClick)="onBreadcrumbNavigate($event, 'left')"
+                    (onConfirm)="onLeftOptionConfirm()">
+                    
+                    <p-autocomplete
+                      [(ngModel)]="bandSettingsSelectedModuleProxy"
+                      [suggestions]="availableModulesFilter"
+                      [optionLabel]="'name'"
+                      class="w-full advanced-plc-autocomplete"
+                      (completeMethod)="searchModules($event, true)"
+                      (onSelect)="addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'left')"
+                      appendTo="body"
+                      typeahead="false"
+                      [dropdown]="true"
+                    ></p-autocomplete>
+                  </app-popup-modal>
+                <!--
                   <p-inputgroup class="flex-1">
-                    <p-inputgroup-addon>Right</p-inputgroup-addon>
+                    <p-inputgroup-addon>
+                      <span 
+                          class="cursor-pointer hover:text-blue-400 transition-colors" 
+                          (click)="openChannelPopup('right')"
+                          title="Clicca per opzioni avanzate">
+                          Right ⓘ
+                      </span>
+                    </p-inputgroup-addon>
                     <p-autocomplete
                       [(ngModel)]="bandSettingsSelectedModuleProxy"
                       [suggestions]="availableModulesFilter"
@@ -332,6 +367,32 @@
                       [dropdown]="true"
                     ></p-autocomplete>
                   </p-inputgroup>
+                  -->
+                  <span
+                    class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
+                    (click)="openChannelPopup('right', param.name)"
+                    title="Clicca per opzioni avanzate">
+                    Right ⓘ
+                  </span>
+                  <app-popup-modal 
+                  [(visible)]="rightOptionPopupVisible" 
+                  header="Configurazione Option Right"
+                  [breadcrumbs]="rightBreadcrumbs"
+                  (breadcrumbClick)="onBreadcrumbNavigate($event, 'right')"
+                  (onConfirm)="onRightOptionConfirm()">
+                  
+                  <p-autocomplete
+                    [(ngModel)]="bandSettingsSelectedModuleProxy"
+                    [suggestions]="availableModulesFilter"
+                    [optionLabel]="'name'"
+                    class="w-full advanced-plc-autocomplete"
+                    (completeMethod)="searchModules($event, true)"
+                    (onSelect)="addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'right')"
+                    appendTo="body"
+                    typeahead="false"
+                    [dropdown]="true"
+                  ></p-autocomplete>
+                </app-popup-modal>
                 </div>
               </ng-template>
 
@@ -423,6 +484,7 @@
           </ng-container>
         </ng-container>
       </div>
+      
     </div>
   </ng-container>
 </ng-template>
