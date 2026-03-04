@@ -344,6 +344,28 @@
                       typeahead="false"
                       [dropdown]="true"
                     ></p-autocomplete>
+                    <!-- Lista elementi selezionati Left -->
+                    <p-listbox
+                      [options]="getChannelModules('left')"
+                      [(ngModel)]="bandSettingModuleFocus"
+                      [optionLabel]="'id'"
+                      class="w-full mt-2"
+                    >
+                      <ng-template let-item let-index="index" #item>
+                        <div class="flex flex-row flex-auto">
+                          <p>{{ item.name }}</p>
+                          <div class="flex-auto"></div>
+                          <p-button
+                            icon="pi pi-times"
+                            [rounded]="true"
+                            severity="danger"
+                            [outlined]="true"
+                            size="small"
+                            (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
+                          />
+                        </div>
+                      </ng-template>
+                    </p-listbox>
                   </app-popup-modal>
                 <!--
                   <p-inputgroup class="flex-1">
@@ -392,6 +414,28 @@
                     typeahead="false"
                     [dropdown]="true"
                   ></p-autocomplete>
+                  <!-- Lista elementi selezionati Right -->
+                  <p-listbox
+                    [options]="getChannelModules('right')"
+                    [(ngModel)]="bandSettingModuleFocus"
+                    [optionLabel]="'id'"
+                    class="w-full mt-2"
+                  >
+                    <ng-template let-item let-index="index" #item>
+                      <div class="flex flex-row flex-auto">
+                        <p>{{ item.name }}</p>
+                        <div class="flex-auto"></div>
+                        <p-button
+                          icon="pi pi-times"
+                          [rounded]="true"
+                          severity="danger"
+                          [outlined]="true"
+                          size="small"
+                          (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
+                        />
+                      </div>
+                    </ng-template>
+                  </p-listbox>
                 </app-popup-modal>
                 </div>
               </ng-template>

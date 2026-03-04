@@ -160,6 +160,13 @@ export class ModuleConfiguratorComponent implements OnInit {
   }
 }
 
+//metodo per ottenere i moduli di band settings in base al canale 
+public getChannelModules(channel: string): ModuleWithCount[] {
+  const bandSettingsParam = this.moduleFocus?.settings.find(s => s.name === 'band_settings');
+  const bandSettings = bandSettingsParam?.value as Record<string, ModuleWithCount[]> | undefined;
+  return bandSettings?.[channel] ?? [];
+}
+
   private readonly unsubAll$ = new Subject<void>();
 
   constructor(
