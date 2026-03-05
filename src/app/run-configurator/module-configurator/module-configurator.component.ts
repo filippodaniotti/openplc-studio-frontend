@@ -113,8 +113,19 @@ export class ModuleConfiguratorComponent implements OnInit {
 
   public rightBreadcrumbs: MenuItem[] = [];
 
+  //VIEW CONTROL
+  public popupView: 'list' | 'detail' = 'list';
+
+  public popupSelectedModule: ModuleWithCount | null = null;
+
+  public currentPopupChannel: 'left' | 'right' = 'left';
+
   public openChannelPopup(channel: 'left' | 'right', paramName: string) {
+    
     this.currentBandSettingsParamName = paramName;
+    this.popupView = 'list'; // reset vista
+    this.popupSelectedModule = null;
+    
 
     const baseBreadcrumbs: MenuItem[] = [
       { 
@@ -148,17 +159,17 @@ export class ModuleConfiguratorComponent implements OnInit {
     // Logica Right
     this.rightOptionPopupVisible = false;
   }
-
+  
+  // Gestione navigazione breadcrumbs all'interno del popup
   public onBreadcrumbNavigate(item: MenuItem, fromChannel: 'left' | 'right') {
   if (item.label === 'Advanced PLC') {
-    if (fromChannel === 'left') {
-      this.leftOptionPopupVisible = false;
-    } else {
-      this.rightOptionPopupVisible = false;
+    if (fromChannel === 'left') this.leftOptionPopupVisible = false;
+    else this.rightOptionPopupVisible = false;
+    } 
+    else if (item.label === 'Left' || item.label === 'Right') {
+    this.backToChannelList(fromChannel);
     }
-    console.log('Tornato ad Advanced PLC da:', fromChannel);
-  }
-}
+  } 
 
 //metodo per ottenere i moduli di band settings in base al canale 
 public getChannelModules(channel: string): ModuleWithCount[] {
@@ -166,6 +177,41 @@ public getChannelModules(channel: string): ModuleWithCount[] {
   const bandSettings = bandSettingsParam?.value as Record<string, ModuleWithCount[]> | undefined;
   return bandSettings?.[channel] ?? [];
 }
+
+//metodo per aprire il dettaglio del modulo cliccato, con gestione breadcrumbs e canale di riferimento nel popup
+public openModuleDetail(module: ModuleWithCount, channel: 'left' | 'right') {
+  this.popupSelectedModule = module;
+  this.popupView = 'detail';
+  this.currentPopupChannel = channel;
+
+  const breadcrumbs = channel === 'left' ? this.leftBreadcrumbs : this.rightBreadcrumbs;
+  const updated = [
+    breadcrumbs[0], 
+    { ...breadcrumbs[1], disabled: false }, 
+    { label: module.name, disabled: true }
+  ];
+  if (channel === 'left') {
+    this.leftBreadcrumbs = updated;
+  } else {
+    this.rightBreadcrumbs = updated;
+  }
+}
+
+//metodo per tornare alla lista dei moduli all'interno del popup, resettando il modulo selezionato e aggiornando le breadcrumbs
+public backToChannelList(channel: 'left' | 'right') {
+  this.popupView = 'list';
+  this.popupSelectedModule = null;
+  const baseBreadcrumbs: MenuItem[] = [
+    { label: 'Advanced PLC' },
+    { label: channel === 'left' ? 'Left' : 'Right', disabled: true }
+  ];
+  if (channel === 'left') {
+    this.leftBreadcrumbs = baseBreadcrumbs;
+  } else {
+    this.rightBreadcrumbs = baseBreadcrumbs;
+  }
+}
+
 
   private readonly unsubAll$ = new Subject<void>();
 

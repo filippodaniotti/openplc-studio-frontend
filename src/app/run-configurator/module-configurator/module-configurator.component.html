@@ -326,46 +326,74 @@
                     title="Clicca per opzioni avanzate">
                     Left ⓘ
                   </span>
-                  <app-popup-modal 
-                    [(visible)]="leftOptionPopupVisible" 
+                  <app-popup-modal
+                    [(visible)]="leftOptionPopupVisible"
                     header="Configurazione Option Left"
                     [breadcrumbs]="leftBreadcrumbs"
                     (breadcrumbClick)="onBreadcrumbNavigate($event, 'left')"
                     (onConfirm)="onLeftOptionConfirm()">
-                    
-                    <p-autocomplete
-                      [(ngModel)]="bandSettingsSelectedModuleProxy"
-                      [suggestions]="availableModulesFilter"
-                      [optionLabel]="'name'"
-                      class="w-full advanced-plc-autocomplete"
-                      (completeMethod)="searchModules($event, true)"
-                      (onSelect)="addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'left')"
-                      appendTo="body"
-                      typeahead="false"
-                      [dropdown]="true"
-                    ></p-autocomplete>
-                    <!-- Lista elementi selezionati Left -->
-                    <p-listbox
-                      [options]="getChannelModules('left')"
-                      [(ngModel)]="bandSettingModuleFocus"
-                      [optionLabel]="'id'"
-                      class="w-full mt-2"
-                    >
-                      <ng-template let-item let-index="index" #item>
-                        <div class="flex flex-row flex-auto">
-                          <p>{{ item.name }}</p>
-                          <div class="flex-auto"></div>
-                          <p-button
-                            icon="pi pi-times"
-                            [rounded]="true"
-                            severity="danger"
-                            [outlined]="true"
-                            size="small"
-                            (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
-                          />
-                        </div>
-                      </ng-template>
-                    </p-listbox>
+
+                    <!-- VISTA LISTA -->
+                    <ng-container *ngIf="popupView === 'list'">
+                      <p-autocomplete
+                        [(ngModel)]="bandSettingsSelectedModuleProxy"
+                        [suggestions]="availableModulesFilter"
+                        [optionLabel]="'name'"
+                        class="w-full advanced-plc-autocomplete"
+                        (completeMethod)="searchModules($event, true)"
+                        (onSelect)="addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'left')"
+                        appendTo="body"
+                        typeahead="false"
+                        [dropdown]="true"
+                      ></p-autocomplete>
+                      <p-listbox
+                        [options]="getChannelModules('left')"
+                        [(ngModel)]="bandSettingModuleFocus"
+                        [optionLabel]="'id'"
+                        class="w-full mt-2"
+                      >
+                        <ng-template let-item let-index="index" #item>
+                          <div class="flex flex-row flex-auto">
+                            <p (click)="openModuleDetail(item, 'left')" class="cursor-pointer flex-1">{{ item.name }}</p>
+                            <p-button
+                              icon="pi pi-times"
+                              [rounded]="true"
+                              severity="danger"
+                              [outlined]="true"
+                              size="small"
+                              (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
+                            />
+                          </div>
+                        </ng-template>
+                      </p-listbox>
+                    </ng-container>
+
+                    <!-- VISTA DETTAGLIO MODULO -->
+                    <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
+                      <p-button
+                        label="Back"
+                        icon="pi pi-arrow-left"
+                        severity="secondary"
+                        size="small"
+                        class="mb-3"
+                        (onClick)="backToChannelList('left')"
+                      ></p-button>
+                      <div class="flex flex-col gap-2">
+                        <ng-container *ngFor="let param of $any(popupSelectedModule.settings)">
+                          <div class="w-full flex flex-row min-h-10">
+                            <p class="min-w-56 flex items-center">{{ param.name }}</p>
+                            <ng-container [ngSwitch]="param.type">
+                              <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" />
+                              <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
+                              <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
+                              <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true" class="content-center"></p-checkbox>
+                              <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues" class="flex-1" appendTo="body"></p-select>
+                            </ng-container>
+                          </div>
+                        </ng-container>
+                      </div>
+                    </ng-container>
+
                   </app-popup-modal>
                 <!--
                   <p-inputgroup class="flex-1">
@@ -396,47 +424,75 @@
                     title="Clicca per opzioni avanzate">
                     Right ⓘ
                   </span>
-                  <app-popup-modal 
-                  [(visible)]="rightOptionPopupVisible" 
-                  header="Configurazione Option Right"
-                  [breadcrumbs]="rightBreadcrumbs"
-                  (breadcrumbClick)="onBreadcrumbNavigate($event, 'right')"
-                  (onConfirm)="onRightOptionConfirm()">
-                  
-                  <p-autocomplete
-                    [(ngModel)]="bandSettingsSelectedModuleProxy"
-                    [suggestions]="availableModulesFilter"
-                    [optionLabel]="'name'"
-                    class="w-full advanced-plc-autocomplete"
-                    (completeMethod)="searchModules($event, true)"
-                    (onSelect)="addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'right')"
-                    appendTo="body"
-                    typeahead="false"
-                    [dropdown]="true"
-                  ></p-autocomplete>
-                  <!-- Lista elementi selezionati Right -->
-                  <p-listbox
-                    [options]="getChannelModules('right')"
-                    [(ngModel)]="bandSettingModuleFocus"
-                    [optionLabel]="'id'"
-                    class="w-full mt-2"
-                  >
-                    <ng-template let-item let-index="index" #item>
-                      <div class="flex flex-row flex-auto">
-                        <p>{{ item.name }}</p>
-                        <div class="flex-auto"></div>
-                        <p-button
-                          icon="pi pi-times"
-                          [rounded]="true"
-                          severity="danger"
-                          [outlined]="true"
-                          size="small"
-                          (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
-                        />
+                  <app-popup-modal
+                    [(visible)]="rightOptionPopupVisible"
+                    header="Configurazione Option Right"
+                    [breadcrumbs]="rightBreadcrumbs"
+                    (breadcrumbClick)="onBreadcrumbNavigate($event, 'right')"
+                    (onConfirm)="onRightOptionConfirm()">
+
+                    <!-- VISTA LISTA -->
+                    <ng-container *ngIf="popupView === 'list'">
+                      <p-autocomplete
+                        [(ngModel)]="bandSettingsSelectedModuleProxy"
+                        [suggestions]="availableModulesFilter"
+                        [optionLabel]="'name'"
+                        class="w-full advanced-plc-autocomplete"
+                        (completeMethod)="searchModules($event, true)"
+                        (onSelect)="addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'right')"
+                        appendTo="body"
+                        typeahead="false"
+                        [dropdown]="true"
+                      ></p-autocomplete>
+                      <p-listbox
+                        [options]="getChannelModules('right')"
+                        [(ngModel)]="bandSettingModuleFocus"
+                        [optionLabel]="'id'"
+                        class="w-full mt-2"
+                      >
+                        <ng-template let-item let-index="index" #item>
+                          <div class="flex flex-row flex-auto">
+                            <p (click)="openModuleDetail(item, 'right')" class="cursor-pointer flex-1">{{ item.name }}</p>
+                            <p-button
+                              icon="pi pi-times"
+                              [rounded]="true"
+                              severity="danger"
+                              [outlined]="true"
+                              size="small"
+                              (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
+                            />
+                          </div>
+                        </ng-template>
+                      </p-listbox>
+                    </ng-container>
+
+                    <!-- VISTA DETTAGLIO MODULO -->
+                    <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
+                      <p-button
+                        label="Back"
+                        icon="pi pi-arrow-left"
+                        severity="secondary"
+                        size="small"
+                        class="mb-3"
+                        (onClick)="backToChannelList('right')"
+                      ></p-button>
+                      <div class="flex flex-col gap-2">
+                        <ng-container *ngFor="let param of $any(popupSelectedModule.settings)">
+                          <div class="w-full flex flex-row min-h-10">
+                            <p class="min-w-56 flex items-center">{{ param.name }}</p>
+                            <ng-container [ngSwitch]="param.type">
+                              <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" />
+                              <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
+                              <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
+                              <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true" class="content-center"></p-checkbox>
+                              <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues" class="flex-1" appendTo="body"></p-select>
+                            </ng-container>
+                          </div>
+                        </ng-container>
                       </div>
-                    </ng-template>
-                  </p-listbox>
-                </app-popup-modal>
+                    </ng-container>
+
+                  </app-popup-modal>
                 </div>
               </ng-template>
 
