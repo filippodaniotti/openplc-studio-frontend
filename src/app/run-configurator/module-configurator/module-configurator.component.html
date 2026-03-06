@@ -247,59 +247,236 @@
                 ></p-autocomplete>
               </ng-template>
 
-              <ng-template #bandSettingsInput>
+              <ng-template #bandSettingsInput>  <!-- linked -->
                 <div *ngIf="isAdvancedPLCLinked()" class="flex flex-row w-full gap-5">
-                  <!-- <div class="flex-none">Linked</div> -->
-                  <p-inputgroup class="flex-1">
-                    <p-inputgroup-addon>Linked</p-inputgroup-addon>
-                    <p-autocomplete
-                      [(ngModel)]="bandSettingsSelectedModuleProxy"
-                      [suggestions]="availableModulesFilter"
-                      [optionLabel]="'name'"
-                      class="w-full advanced-plc-autocomplete"
-                      (completeMethod)="searchModules($event, true)"
-                      (onSelect)="
-                        addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, param.name, 'linked')
-                      "
-                      appendTo="body"
-                      typeahead="false"
-                      [dropdown]="true"
-                    ></p-autocomplete>
-                  </p-inputgroup>
+                  <span
+                    class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
+                    (click)="openChannelPopup('linked', param.name)"
+                    title="Clicca per opzioni avanzate">
+                    Linked ⓘ
+                  </span>
+                  <app-popup-modal
+                    [(visible)]="linkedOptionPopupVisible"
+                    header="Configurazione Option Linked"
+                    [breadcrumbs]="linkedBreadcrumbs"
+                    (breadcrumbClick)="onBreadcrumbNavigate($event, 'linked')"
+                    (onConfirm)="onLinkedOptionConfirm()">
+
+                    <ng-container *ngIf="popupView === 'list'">
+                      <p-autocomplete
+                        [(ngModel)]="bandSettingsSelectedModuleProxy"
+                        [suggestions]="availableModulesFilter"
+                        [optionLabel]="'name'"
+                        class="w-full advanced-plc-autocomplete"
+                        (completeMethod)="searchModules($event, true)"
+                        (onSelect)="addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'linked')"
+                        appendTo="body"
+                        typeahead="false"
+                        [dropdown]="true"
+                      ></p-autocomplete>
+                      <p-listbox
+                        [options]="getChannelModules('linked')"
+                        [(ngModel)]="bandSettingModuleFocus"
+                        [optionLabel]="'id'"
+                        class="w-full mt-2"
+                      >
+                        <ng-template let-item let-index="index" #item>
+                          <div class="flex flex-row flex-auto">
+                            <p (click)="openModuleDetail(item, 'linked')" class="cursor-pointer flex-1">{{ item.name }}</p>
+                            <p-button
+                              icon="pi pi-times"
+                              [rounded]="true"
+                              severity="danger"
+                              [outlined]="true"
+                              size="small"
+                              (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
+                            />
+                          </div>
+                        </ng-template>
+                      </p-listbox>
+                    </ng-container>
+
+                    <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
+                      <p-button
+                        label="Back"
+                        icon="pi pi-arrow-left"
+                        severity="secondary"
+                        size="small"
+                        class="mb-3"
+                        (onClick)="backToChannelList('linked')"
+                      ></p-button>
+                      <div class="flex flex-col gap-2">
+                        <ng-container *ngFor="let param of $any(popupSelectedModule.settings)">
+                          <div class="w-full flex flex-row min-h-10">
+                            <p class="min-w-56 flex items-center">{{ param.name }}</p>
+                            <ng-container [ngSwitch]="param.type">
+                              <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" />
+                              <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
+                              <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
+                              <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true" class="content-center"></p-checkbox>
+                              <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues" class="flex-1" appendTo="body"></p-select>
+                            </ng-container>
+                          </div>
+                        </ng-container>
+                      </div>
+                    </ng-container>
+
+                  </app-popup-modal>
                 </div>
                 <div
                   *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'mid_side'"
                   class="flex flex-row w-full gap-5"
                 >
-                  <p-inputgroup class="flex-1">
-                    <p-inputgroup-addon>Mid</p-inputgroup-addon>
-                    <p-autocomplete
-                      [(ngModel)]="bandSettingsSelectedModuleProxy"
-                      [suggestions]="availableModulesFilter"
-                      [optionLabel]="'name'"
-                      class="flex-1 advanced-plc-autocomplete"
-                      (completeMethod)="searchModules($event, true)"
-                      (onSelect)="addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, param.name, 'mid')"
-                      appendTo="body"
-                      typeahead="false"
-                      [dropdown]="true"
-                    ></p-autocomplete>
-                  </p-inputgroup>
-                  <p-inputgroup class="flex-1">
-                    <p-inputgroup-addon>Side</p-inputgroup-addon>
-                    <p-autocomplete
-                      [(ngModel)]="bandSettingsSelectedModuleProxy"
-                      [suggestions]="availableModulesFilter"
-                      [optionLabel]="'name'"
-                      class="flex-1 advanced-plc-autocomplete"
-                      (completeMethod)="searchModules($event, true)"
-                      (onSelect)="addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, param.name, 'side')"
-                      appendTo="body"
-                      typeahead="false"
-                      [dropdown]="true"
-                    ></p-autocomplete>
-                  </p-inputgroup>
+                <!-- MID -->
+                <span
+                  class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
+                  (click)="openChannelPopup('mid', param.name)"
+                  title="Clicca per opzioni avanzate">
+                  Mid ⓘ
+                </span>
+                <app-popup-modal
+                  [(visible)]="midOptionPopupVisible"
+                  header="Configurazione Option Mid"
+                  [breadcrumbs]="midBreadcrumbs"
+                  (breadcrumbClick)="onBreadcrumbNavigate($event, 'mid')"
+                  (onConfirm)="onMidOptionConfirm()">
+
+                  <ng-container *ngIf="popupView === 'list'">
+                  <p-autocomplete
+                    [(ngModel)]="bandSettingsSelectedModuleProxy"
+                    [suggestions]="availableModulesFilter"
+                    [optionLabel]="'name'"
+                    class="w-full advanced-plc-autocomplete"
+                    (completeMethod)="searchModules($event, true)"
+                    (onSelect)="addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'mid')"
+                    appendTo="body"
+                    typeahead="false"
+                    [dropdown]="true"
+                  ></p-autocomplete>
+                  <p-listbox
+                    [options]="getChannelModules('mid')"
+                    [(ngModel)]="bandSettingModuleFocus"
+                    [optionLabel]="'id'"
+                    class="w-full mt-2"
+                  >
+                    <ng-template let-item let-index="index" #item>
+                      <div class="flex flex-row flex-auto">
+                        <p (click)="openModuleDetail(item, 'mid')" class="cursor-pointer flex-1">{{ item.name }}</p>
+                        <p-button
+                          icon="pi pi-times"
+                          [rounded]="true"
+                          severity="danger"
+                          [outlined]="true"
+                          size="small"
+                          (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
+                        />
+                      </div>
+                    </ng-template>
+                  </p-listbox>
+                </ng-container>
+
+                <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
+                  <p-button
+                    label="Back"
+                    icon="pi pi-arrow-left"
+                    severity="secondary"
+                    size="small"
+                    class="mb-3"
+                    (onClick)="backToChannelList('mid')"
+                  ></p-button>
+                  <div class="flex flex-col gap-2">
+                    <ng-container *ngFor="let param of $any(popupSelectedModule.settings)">
+                      <div class="w-full flex flex-row min-h-10">
+                        <p class="min-w-56 flex items-center">{{ param.name }}</p>
+                        <ng-container [ngSwitch]="param.type">
+                          <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" />
+                          <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
+                          <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
+                          <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true" class="content-center"></p-checkbox>
+                          <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues" class="flex-1" appendTo="body"></p-select>
+                        </ng-container>
+                      </div>
+                    </ng-container>
+                  </div>
+                </ng-container>
+
+              </app-popup-modal>
+
+            <!-- SIDE -->
+            <span
+              class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
+              (click)="openChannelPopup('side', param.name)"
+              title="Clicca per opzioni avanzate">
+              Side ⓘ
+            </span>
+            <app-popup-modal
+              [(visible)]="sideOptionPopupVisible"
+              header="Configurazione Option Side"
+              [breadcrumbs]="sideBreadcrumbs"
+              (breadcrumbClick)="onBreadcrumbNavigate($event, 'side')"
+              (onConfirm)="onSideOptionConfirm()">
+
+              <ng-container *ngIf="popupView === 'list'">
+                <p-autocomplete
+                  [(ngModel)]="bandSettingsSelectedModuleProxy"
+                  [suggestions]="availableModulesFilter"
+                  [optionLabel]="'name'"
+                  class="w-full advanced-plc-autocomplete"
+                  (completeMethod)="searchModules($event, true)"
+                  (onSelect)="addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'side')"
+                  appendTo="body"
+                  typeahead="false"
+                  [dropdown]="true"
+                ></p-autocomplete>
+                <p-listbox
+                  [options]="getChannelModules('side')"
+                  [(ngModel)]="bandSettingModuleFocus"
+                  [optionLabel]="'id'"
+                  class="w-full mt-2"
+                >
+                <ng-template let-item let-index="index" #item>
+                  <div class="flex flex-row flex-auto">
+                    <p (click)="openModuleDetail(item, 'side')" class="cursor-pointer flex-1">{{ item.name }}</p>
+                    <p-button
+                      icon="pi pi-times"
+                      [rounded]="true"
+                      severity="danger"
+                      [outlined]="true"
+                      size="small"
+                      (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
+                    />
+                  </div>
+                </ng-template>
+              </p-listbox>
+            </ng-container>
+
+              <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
+                <p-button
+                  label="Back"
+                  icon="pi pi-arrow-left"
+                  severity="secondary"
+                  size="small"
+                  class="mb-3"
+                  (onClick)="backToChannelList('side')"
+                ></p-button>
+                <div class="flex flex-col gap-2">
+                  <ng-container *ngFor="let param of $any(popupSelectedModule.settings)">
+                    <div class="w-full flex flex-row min-h-10">
+                      <p class="min-w-56 flex items-center">{{ param.name }}</p>
+                      <ng-container [ngSwitch]="param.type">
+                        <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" />
+                        <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
+                        <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
+                        <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true" class="content-center"></p-checkbox>
+                        <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues" class="flex-1" appendTo="body"></p-select>
+                      </ng-container>
+                    </div>
+                  </ng-container>
                 </div>
+              </ng-container>
+
+            </app-popup-modal>
+          </div>
                 <div
                   *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'dual_mono'"
                   class="flex flex-row w-full gap-5"

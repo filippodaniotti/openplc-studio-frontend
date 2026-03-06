@@ -118,36 +118,62 @@ export class ModuleConfiguratorComponent implements OnInit {
 
   public popupSelectedModule: ModuleWithCount | null = null;
 
-  public currentPopupChannel: 'left' | 'right' = 'left';
+  public currentPopupChannel: 'left' | 'right' | 'mid' | 'side' | 'linked' = 'left';
 
-  public openChannelPopup(channel: 'left' | 'right', paramName: string) {
-    
+  // POPUP MID & SIDE & LINKED
+  public midOptionPopupVisible = false;
+
+  public sideOptionPopupVisible = false;
+
+  public linkedOptionPopupVisible = false;
+
+  // BREADCRUMBS
+  public midBreadcrumbs: MenuItem[] = [];
+
+  public sideBreadcrumbs: MenuItem[] = [];
+  
+  public linkedBreadcrumbs: MenuItem[] = [];
+
+  //metodo per aprire il popup di configurazione del canale selezionato
+  public openChannelPopup(channel: 'left' | 'right' | 'mid' | 'side' | 'linked', paramName: string) {
     this.currentBandSettingsParamName = paramName;
-    this.popupView = 'list'; // reset vista
+    this.popupView = 'list';
     this.popupSelectedModule = null;
-    
+
+    const channelLabel = {
+      left: 'Left', right: 'Right', mid: 'Mid', side: 'Side', linked: 'Linked'
+    }[channel];
 
     const baseBreadcrumbs: MenuItem[] = [
-      { 
-        label: 'Advanced PLC', 
-      },
-      { 
-        label: channel === 'left' ? 'Left' : 'Right',
-        disabled: true
-      }
-  ];
+      { label: 'Advanced PLC' },
+      { label: channelLabel, disabled: true }
+    ];
 
-  if (channel === 'left') {
-    this.leftOptionPopupVisible = true;
-    this.leftBreadcrumbs = baseBreadcrumbs;
-  } else {
-    this.rightOptionPopupVisible = true;
-    this.rightBreadcrumbs = baseBreadcrumbs;
-  }
-  
-  this.channelPopupData = { channel };
-  }
+    switch (channel) {
+      case 'left':
+        this.leftOptionPopupVisible = true;
+        this.leftBreadcrumbs = baseBreadcrumbs;
+        break;
+      case 'right':
+        this.rightOptionPopupVisible = true;
+        this.rightBreadcrumbs = baseBreadcrumbs;
+        break;
+      case 'mid':
+        this.midOptionPopupVisible = true;
+        this.midBreadcrumbs = baseBreadcrumbs;
+        break;
+      case 'side':
+        this.sideOptionPopupVisible = true;
+        this.sideBreadcrumbs = baseBreadcrumbs;
+        break;
+      case 'linked':
+        this.linkedOptionPopupVisible = true;
+        this.linkedBreadcrumbs = baseBreadcrumbs;
+        break;
+    }
 
+    this.channelPopupData = { channel };
+  }
   public onLeftOptionConfirm() {
     console.log('Confermato per Left:', this.channelPopupData);
     // Logica Left
@@ -161,56 +187,91 @@ export class ModuleConfiguratorComponent implements OnInit {
   }
   
   // Gestione navigazione breadcrumbs all'interno del popup
-  public onBreadcrumbNavigate(item: MenuItem, fromChannel: 'left' | 'right') {
-  if (item.label === 'Advanced PLC') {
-    if (fromChannel === 'left') this.leftOptionPopupVisible = false;
-    else this.rightOptionPopupVisible = false;
-    } 
-    else if (item.label === 'Left' || item.label === 'Right') {
-    this.backToChannelList(fromChannel);
+  public onBreadcrumbNavigate(item: MenuItem, fromChannel: 'left' | 'right' | 'mid' | 'side' | 'linked') {
+    if (item.label === 'Advanced PLC') {
+      switch (fromChannel) {
+        case 'left': this.leftOptionPopupVisible = false; break;
+        case 'right': this.rightOptionPopupVisible = false; break;
+        case 'mid': this.midOptionPopupVisible = false; break;
+        case 'side': this.sideOptionPopupVisible = false; break;
+        case 'linked': this.linkedOptionPopupVisible = false; break;
+      }
+    } else {
+      this.backToChannelList(fromChannel);
     }
-  } 
-
-//metodo per ottenere i moduli di band settings in base al canale 
-public getChannelModules(channel: string): ModuleWithCount[] {
-  const bandSettingsParam = this.moduleFocus?.settings.find(s => s.name === 'band_settings');
-  const bandSettings = bandSettingsParam?.value as Record<string, ModuleWithCount[]> | undefined;
-  return bandSettings?.[channel] ?? [];
-}
-
-//metodo per aprire il dettaglio del modulo cliccato, con gestione breadcrumbs e canale di riferimento nel popup
-public openModuleDetail(module: ModuleWithCount, channel: 'left' | 'right') {
-  this.popupSelectedModule = module;
-  this.popupView = 'detail';
-  this.currentPopupChannel = channel;
-
-  const breadcrumbs = channel === 'left' ? this.leftBreadcrumbs : this.rightBreadcrumbs;
-  const updated = [
-    breadcrumbs[0], 
-    { ...breadcrumbs[1], disabled: false }, 
-    { label: module.name, disabled: true }
-  ];
-  if (channel === 'left') {
-    this.leftBreadcrumbs = updated;
-  } else {
-    this.rightBreadcrumbs = updated;
   }
-}
 
-//metodo per tornare alla lista dei moduli all'interno del popup, resettando il modulo selezionato e aggiornando le breadcrumbs
-public backToChannelList(channel: 'left' | 'right') {
-  this.popupView = 'list';
-  this.popupSelectedModule = null;
-  const baseBreadcrumbs: MenuItem[] = [
-    { label: 'Advanced PLC' },
-    { label: channel === 'left' ? 'Left' : 'Right', disabled: true }
-  ];
-  if (channel === 'left') {
-    this.leftBreadcrumbs = baseBreadcrumbs;
-  } else {
-    this.rightBreadcrumbs = baseBreadcrumbs;
+  //metodo per ottenere i moduli di band settings in base al canale 
+  public getChannelModules(channel: string): ModuleWithCount[] {
+    const bandSettingsParam = this.moduleFocus?.settings.find(s => s.name === 'band_settings');
+    const bandSettings = bandSettingsParam?.value as Record<string, ModuleWithCount[]> | undefined;
+    return bandSettings?.[channel] ?? [];
   }
-}
+
+  //metodo per aprire il dettaglio del modulo cliccato, con gestione breadcrumbs e canale di riferimento nel popup
+  public openModuleDetail(module: ModuleWithCount, channel: 'left' | 'right' | 'mid' | 'side' | 'linked') {
+    this.popupSelectedModule = module;
+    this.popupView = 'detail';
+    this.currentPopupChannel = channel;
+
+    const breadcrumbs = {
+      left: this.leftBreadcrumbs,
+      right: this.rightBreadcrumbs,
+      mid: this.midBreadcrumbs,
+      side: this.sideBreadcrumbs,
+      linked: this.linkedBreadcrumbs,
+    }[channel];
+
+    const updated = [
+      breadcrumbs[0],
+      { ...breadcrumbs[1], disabled: false },
+      { label: module.name, disabled: true }
+    ];
+
+    switch (channel) {
+      case 'left': this.leftBreadcrumbs = updated; break;
+      case 'right': this.rightBreadcrumbs = updated; break;
+      case 'mid': this.midBreadcrumbs = updated; break;
+      case 'side': this.sideBreadcrumbs = updated; break;
+      case 'linked': this.linkedBreadcrumbs = updated; break;
+    }
+  }
+
+  //metodo per tornare alla lista dei moduli all'interno del popup, resettando il modulo selezionato e aggiornando le breadcrumbs
+  public backToChannelList(channel: 'left' | 'right' | 'mid' | 'side' | 'linked') {
+    this.popupView = 'list';
+    this.popupSelectedModule = null;
+
+    const channelLabel = {
+      left: 'Left', right: 'Right', mid: 'Mid', side: 'Side', linked: 'Linked'
+    }[channel];
+
+    const baseBreadcrumbs: MenuItem[] = [
+      { label: 'Advanced PLC' },
+      { label: channelLabel, disabled: true }
+    ];
+
+    switch (channel) {
+      case 'left': this.leftBreadcrumbs = baseBreadcrumbs; break;
+      case 'right': this.rightBreadcrumbs = baseBreadcrumbs; break;
+      case 'mid': this.midBreadcrumbs = baseBreadcrumbs; break;
+      case 'side': this.sideBreadcrumbs = baseBreadcrumbs; break;
+      case 'linked': this.linkedBreadcrumbs = baseBreadcrumbs; break;
+    }
+  }
+  //metodo di conferma per i popup mid, side e linked
+  public onMidOptionConfirm() {
+    this.midOptionPopupVisible = false;
+  }
+  
+  public onSideOptionConfirm() {
+    this.sideOptionPopupVisible = false;
+  }
+
+  public onLinkedOptionConfirm() {
+    this.linkedOptionPopupVisible = false;
+  }
+
 
 
   private readonly unsubAll$ = new Subject<void>();
