@@ -301,8 +301,7 @@
                         label="Back"
                         icon="pi pi-arrow-left"
                         severity="secondary"
-                        size="small"
-                        class="mb-3"
+                        [style]="{ 'min-width': '100px' }"
                         (onClick)="backToChannelList('linked')"
                       ></p-button>
                       <div class="flex flex-col gap-2">
@@ -323,11 +322,13 @@
 
                   </app-popup-modal>
                 </div>
-                <div
-                  *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'mid_side'"
-                  class="flex flex-row w-full gap-5"
-                >
+              
                 <!-- MID -->
+              <div
+                *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'mid_side'"
+                class="flex flex-row w-full gap-5"
+              >
+                <div class="flex flex-col flex-1">
                 <span
                   class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
                   (click)="openChannelPopup('mid', param.name)"
@@ -373,36 +374,36 @@
                       </div>
                     </ng-template>
                   </p-listbox>
-                </ng-container>
-
-                <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
-                  <p-button
-                    label="Back"
-                    icon="pi pi-arrow-left"
-                    severity="secondary"
-                    size="small"
-                    class="mb-3"
-                    (onClick)="backToChannelList('mid')"
-                  ></p-button>
-                  <div class="flex flex-col gap-2">
-                    <ng-container *ngFor="let param of $any(popupSelectedModule.settings)">
-                      <div class="w-full flex flex-row min-h-10">
-                        <p class="min-w-56 flex items-center">{{ param.name }}</p>
-                        <ng-container [ngSwitch]="param.type">
-                          <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" />
-                          <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
-                          <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
-                          <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true" class="content-center"></p-checkbox>
-                          <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues" class="flex-1" appendTo="body"></p-select>
-                        </ng-container>
-                      </div>
-                    </ng-container>
-                  </div>
-                </ng-container>
+                  </ng-container>
+                  
+                  <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
+                    <p-button
+                      label="Back"
+                      icon="pi pi-arrow-left"
+                      severity="secondary"
+                      [style]="{ 'min-width': '100px' }"
+                      (onClick)="backToChannelList('mid')"
+                    ></p-button>
+                    <div class="flex flex-col gap-2">
+                      <ng-container *ngFor="let param of $any(popupSelectedModule.settings)">
+                        <div class="w-full flex flex-row min-h-10">
+                          <p class="min-w-56 flex items-center">{{ param.name }}</p>
+                          <ng-container [ngSwitch]="param.type">
+                            <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" />
+                            <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
+                            <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
+                            <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true" class="content-center"></p-checkbox>
+                            <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues" class="flex-1" appendTo="body"></p-select>
+                          </ng-container>
+                        </div>
+                      </ng-container>
+                    </div>
+                  </ng-container>
 
               </app-popup-modal>
-
+            </div>
             <!-- SIDE -->
+               <div class="flex flex-col flex-1">
             <span
               class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
               (click)="openChannelPopup('side', param.name)"
@@ -448,15 +449,14 @@
                   </div>
                 </ng-template>
               </p-listbox>
-            </ng-container>
+              </ng-container>
 
               <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
                 <p-button
                   label="Back"
                   icon="pi pi-arrow-left"
                   severity="secondary"
-                  size="small"
-                  class="mb-3"
+                  [style]="{ 'min-width': '100px' }"
                   (onClick)="backToChannelList('side')"
                 ></p-button>
                 <div class="flex flex-col gap-2">
@@ -476,11 +476,10 @@
               </ng-container>
 
             </app-popup-modal>
+            </div>
           </div>
-                <div
-                  *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'dual_mono'"
-                  class="flex flex-row w-full gap-5"
-                >
+        
+                
                 <!--
                   <p-inputgroup class="flex-1">
                     <p-inputgroup-addon>Left</p-inputgroup-addon>
@@ -497,6 +496,11 @@
                     ></p-autocomplete>
                   </p-inputgroup>
                   -->
+
+                <div *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'dual_mono'"
+                  class="flex flex-row w-full gap-5">
+                  <!-- LEFT -->
+                  <div class="flex flex-col flex-1">
                   <span
                     class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
                     (click)="openChannelPopup('left', param.name)"
@@ -551,8 +555,7 @@
                         label="Back"
                         icon="pi pi-arrow-left"
                         severity="secondary"
-                        size="small"
-                        class="mb-3"
+                        [style]="{ 'min-width': '100px' }"
                         (onClick)="backToChannelList('left')"
                       ></p-button>
                       <div class="flex flex-col gap-2">
@@ -572,6 +575,7 @@
                     </ng-container>
 
                   </app-popup-modal>
+                  </div>
                 <!--
                   <p-inputgroup class="flex-1">
                     <p-inputgroup-addon>
@@ -595,6 +599,8 @@
                     ></p-autocomplete>
                   </p-inputgroup>
                   -->
+                  <!-- RIGHT -->
+                  <div class="flex flex-col flex-1"> 
                   <span
                     class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
                     (click)="openChannelPopup('right', param.name)"
@@ -649,8 +655,7 @@
                         label="Back"
                         icon="pi pi-arrow-left"
                         severity="secondary"
-                        size="small"
-                        class="mb-3"
+                        [style]="{ 'min-width': '100px' }"
                         (onClick)="backToChannelList('right')"
                       ></p-button>
                       <div class="flex flex-col gap-2">
@@ -670,7 +675,9 @@
                     </ng-container>
 
                   </app-popup-modal>
+                  </div>
                 </div>
+              
               </ng-template>
 
               <ng-template #bandFrequenciesInput>
