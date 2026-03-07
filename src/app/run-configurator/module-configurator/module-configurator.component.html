@@ -249,12 +249,13 @@
 
               <ng-template #bandSettingsInput>  <!-- linked -->
                 <div *ngIf="isAdvancedPLCLinked()" class="flex flex-row w-full gap-5">
-                  <span
-                    class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
-                    (click)="openChannelPopup('linked', param.name)"
-                    title="Clicca per opzioni avanzate">
-                    Linked ⓘ
-                  </span>
+                  <p-button
+                    label="Linked"
+                    icon="pi pi-sliders-h"
+                    severity="secondary"
+                    [style]="{ 'min-width': '100px' }"
+                    (onClick)="openChannelPopup('linked', param.name)"
+                  ></p-button>
                   <app-popup-modal
                     [(visible)]="linkedOptionPopupVisible"
                     header="Configurazione Option Linked"
@@ -329,12 +330,14 @@
                 class="flex flex-row w-full gap-5"
               >
                 <div class="flex flex-col flex-1">
-                <span
-                  class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
-                  (click)="openChannelPopup('mid', param.name)"
-                  title="Clicca per opzioni avanzate">
-                  Mid ⓘ
-                </span>
+                <p-button
+                  label="Mid"
+                  icon="pi pi-sliders-h"
+                  severity="secondary"
+                  [style]="{ 'min-width': '100px' }"
+                  (onClick)="openChannelPopup('mid', param.name)"
+                ></p-button>
+
                 <app-popup-modal
                   [(visible)]="midOptionPopupVisible"
                   header="Configurazione Option Mid"
@@ -404,12 +407,14 @@
             </div>
             <!-- SIDE -->
                <div class="flex flex-col flex-1">
-            <span
-              class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
-              (click)="openChannelPopup('side', param.name)"
-              title="Clicca per opzioni avanzate">
-              Side ⓘ
-            </span>
+            <p-button
+              label="Side"
+              icon="pi pi-sliders-h"
+              severity="secondary"
+              [style]="{ 'min-width': '100px' }"
+              (onClick)="openChannelPopup('side', param.name)"
+            ></p-button>
+
             <app-popup-modal
               [(visible)]="sideOptionPopupVisible"
               header="Configurazione Option Side"
@@ -501,12 +506,13 @@
                   class="flex flex-row w-full gap-5">
                   <!-- LEFT -->
                   <div class="flex flex-col flex-1">
-                  <span
-                    class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
-                    (click)="openChannelPopup('left', param.name)"
-                    title="Clicca per opzioni avanzate">
-                    Left ⓘ
-                  </span>
+                  <p-button
+                    label="Left"
+                    icon="pi pi-sliders-h"
+                    severity="secondary"
+                    [style]="{ 'min-width': '100px' }"
+                    (onClick)="openChannelPopup('left', param.name)"
+                  ></p-button>
                   <app-popup-modal
                     [(visible)]="leftOptionPopupVisible"
                     header="Configurazione Option Left"
@@ -601,12 +607,13 @@
                   -->
                   <!-- RIGHT -->
                   <div class="flex flex-col flex-1"> 
-                  <span
-                    class="cursor-pointer hover:text-blue-400 transition-colors flex items-center"
-                    (click)="openChannelPopup('right', param.name)"
-                    title="Clicca per opzioni avanzate">
-                    Right ⓘ
-                  </span>
+                  <p-button
+                    label="Right"
+                    icon="pi pi-sliders-h"
+                    severity="secondary"
+                    [style]="{ 'min-width': '100px' }"
+                    (onClick)="openChannelPopup('right', param.name)"
+                  ></p-button>
                   <app-popup-modal
                     [(visible)]="rightOptionPopupVisible"
                     header="Configurazione Option Right"
