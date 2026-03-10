@@ -235,17 +235,152 @@
               </ng-template>
 
               <ng-template #listCrossfadeInput>
-                <p-autocomplete
-                  [(ngModel)]="selectedCrossfadeModuleProxy"
-                  [suggestions]="availableCrossfadeModulesFilter"
-                  [optionLabel]="'name'"
-                  class="flex-1"
-                  (completeMethod)="searchCrossfadeModules($event)"
-                  (onSelect)="addCrossfadeModule(selectedCrossfadeModuleProxy, param.name)"
-                  appendTo="body"
-                  [dropdown]="true"
-                ></p-autocomplete>
-              </ng-template>
+              <p-button
+                [label]="param.name"
+                icon="pi pi-sliders-h"
+                severity="secondary"
+                [style]="{ 'min-width': '100px' }"
+                (onClick)="openCrossfadePopup(param.name)"
+              ></p-button>
+
+              <!-- POPUP CROSSFADE -->
+              <app-popup-modal
+                *ngIf="param.name === 'crossfade'"
+                [(visible)]="crossfadePopupVisible"
+                [header]="'Configurazione ' + param.name"
+                [breadcrumbs]="crossfadeBreadcrumbs"
+                (breadcrumbClick)="onCrossfadeBreadcrumbNavigate($event, 'crossfade')"
+                (onConfirm)="onCrossfadeConfirm('crossfade')">
+
+                <ng-container *ngIf="crossfadePopupView === 'list'">
+                  <p-autocomplete
+                    [(ngModel)]="selectedCrossfadeModuleProxy"
+                    [suggestions]="availableCrossfadeModulesFilter"
+                    [optionLabel]="'name'"
+                    class="w-full advanced-plc-autocomplete"
+                    (completeMethod)="searchCrossfadeModules($event)"
+                    (onSelect)="addCrossfadeModule(selectedCrossfadeModuleProxy, param.name)"
+                    appendTo="body"
+                    [dropdown]="true"
+                  ></p-autocomplete>
+                  <p-listbox
+                    [options]="getCrossfadeModules(param.name)"
+                    [(ngModel)]="crossfadeModuleFocus"
+                    [optionLabel]="'id'"
+                    class="w-full mt-2"
+                  >
+                    <ng-template let-item let-index="index" #item>
+                      <div class="flex flex-row flex-auto">
+                        <p (click)="openCrossfadeModuleDetail(item, 'crossfade')" class="cursor-pointer flex-1">{{ item.name }}</p>
+                        <p-button
+                          class="small-icon-btn"
+                          icon="pi pi-times"
+                          [rounded]="true"
+                          severity="danger"
+                          [outlined]="true"
+                          size="small"
+                          (onClick)="$event.stopPropagation(); removeFromCrossfadeModulesSelection(item.id)"
+                        />
+                      </div>
+                    </ng-template>
+                  </p-listbox>
+                </ng-container>
+
+                <ng-container *ngIf="crossfadePopupView === 'detail' && crossfadePopupSelectedModule">
+                  <p-button
+                    label="Back"
+                    icon="pi pi-arrow-left"
+                    severity="secondary"
+                    [style]="{ 'min-width': '100px' }"
+                    (onClick)="backToCrossfadeList('crossfade')"
+                  ></p-button>
+                  <div class="flex flex-col gap-2">
+                    <ng-container *ngFor="let param of $any(crossfadePopupSelectedModule.settings)">
+                      <div class="w-full flex flex-row min-h-10">
+                        <p class="min-w-56 flex items-center">{{ param.name }}</p>
+                        <ng-container [ngSwitch]="param.type">
+                          <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" />
+                          <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
+                          <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
+                          <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true" class="content-center"></p-checkbox>
+                          <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues" class="flex-1" appendTo="body"></p-select>
+                        </ng-container>
+                      </div>
+                    </ng-container>
+                  </div>
+                </ng-container>
+
+              </app-popup-modal>
+
+            <!-- POPUP FADE_IN -->
+              <app-popup-modal
+                *ngIf="param.name === 'fade_in'"
+                [(visible)]="fadeInPopupVisible"
+                [header]="'Configurazione ' + param.name"
+                [breadcrumbs]="fadeInBreadcrumbs"
+                (breadcrumbClick)="onCrossfadeBreadcrumbNavigate($event, 'fade_in')"
+                (onConfirm)="onCrossfadeConfirm('fade_in')">
+
+                <ng-container *ngIf="crossfadePopupView === 'list'">
+                  <p-autocomplete
+                    [(ngModel)]="selectedCrossfadeModuleProxy"
+                    [suggestions]="availableCrossfadeModulesFilter"
+                    [optionLabel]="'name'"
+                    class="w-full advanced-plc-autocomplete"
+                    (completeMethod)="searchCrossfadeModules($event)"
+                    (onSelect)="addCrossfadeModule(selectedCrossfadeModuleProxy, param.name)"
+                    appendTo="body"
+                    [dropdown]="true"
+                  ></p-autocomplete>
+                  <p-listbox
+                    [options]="getCrossfadeModules(param.name)"
+                    [(ngModel)]="crossfadeModuleFocus"
+                    [optionLabel]="'id'"
+                    class="w-full mt-2"
+                  >
+                    <ng-template let-item let-index="index" #item>
+                      <div class="flex flex-row flex-auto">
+                        <p (click)="openCrossfadeModuleDetail(item, 'fade_in')" class="cursor-pointer flex-1">{{ item.name }}</p>
+                        <p-button
+                          class="small-icon-btn"
+                          icon="pi pi-times"
+                          [rounded]="true"
+                          severity="danger"
+                          [outlined]="true"
+                          size="small"
+                          (onClick)="$event.stopPropagation(); removeFromCrossfadeModulesSelection(item.id)"
+                        />
+                      </div>
+                    </ng-template>
+                  </p-listbox>
+                </ng-container>
+
+                <ng-container *ngIf="crossfadePopupView === 'detail' && crossfadePopupSelectedModule">
+                  <p-button
+                    label="Back"
+                    icon="pi pi-arrow-left"
+                    severity="secondary"
+                    [style]="{ 'min-width': '100px' }"
+                    (onClick)="backToCrossfadeList('fade_in')"
+                  ></p-button>
+                  <div class="flex flex-col gap-2">
+                    <ng-container *ngFor="let param of $any(crossfadePopupSelectedModule.settings)">
+                      <div class="w-full flex flex-row min-h-10">
+                        <p class="min-w-56 flex items-center">{{ param.name }}</p>
+                        <ng-container [ngSwitch]="param.type">
+                          <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" />
+                          <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
+                          <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
+                          <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true" class="content-center"></p-checkbox>
+                          <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues" class="flex-1" appendTo="body"></p-select>
+                        </ng-container>
+                      </div>
+                    </ng-container>
+                  </div>
+                </ng-container>
+
+              </app-popup-modal>
+            </ng-template>
 
               <ng-template #bandSettingsInput>  <!-- linked -->
                 <div *ngIf="isAdvancedPLCLinked()" class="flex flex-row w-full gap-5">

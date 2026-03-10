@@ -113,7 +113,7 @@ export class ModuleConfiguratorComponent implements OnInit {
 
   public rightBreadcrumbs: MenuItem[] = [];
 
-  //VIEW CONTROL
+  //VIEW CONTROL popup band settings
   public popupView: 'list' | 'detail' = 'list';
 
   public popupSelectedModule: ModuleWithCount | null = null;
@@ -133,6 +133,23 @@ export class ModuleConfiguratorComponent implements OnInit {
   public sideBreadcrumbs: MenuItem[] = [];
   
   public linkedBreadcrumbs: MenuItem[] = [];
+
+  // POPUP CROSSFADE & FADE_IN
+  public crossfadePopupVisible = false;
+
+  public fadeInPopupVisible = false;
+
+  // BREADCRUMBS
+  public crossfadeBreadcrumbs: MenuItem[] = [];
+
+  public fadeInBreadcrumbs: MenuItem[] = [];
+
+  // VIEW CONTROL crossfade popup 
+  public crossfadePopupView: 'list' | 'detail' = 'list';
+
+  public crossfadePopupSelectedModule: ModuleWithCount | null = null;
+
+  public currentCrossfadeParamName: string = '';
 
   //metodo per aprire il popup di configurazione del canale selezionato
   public openChannelPopup(channel: 'left' | 'right' | 'mid' | 'side' | 'linked', paramName: string) {
@@ -273,11 +290,99 @@ export class ModuleConfiguratorComponent implements OnInit {
   }
 
 
+  //metodo per aprire il popup di configurazione dei crossfade modules, con gestione breadcrumbs
+  public openCrossfadePopup(paramName: 'crossfade' | 'fade_in') {
+    this.currentCrossfadeParamName = paramName;
+    this.crossfadePopupView = 'list';
+    this.crossfadePopupSelectedModule = null;
+
+    const baseBreadcrumbs: MenuItem[] = [
+      { label: this.moduleFocus?.name ?? 'Module' },
+      { label: paramName, disabled: true }
+    ];
+
+    if (paramName === 'crossfade') {
+      this.crossfadePopupVisible = true;
+      this.crossfadeBreadcrumbs = baseBreadcrumbs;
+    } else {
+      this.fadeInPopupVisible = true;
+      this.fadeInBreadcrumbs = baseBreadcrumbs;
+    }
+  }
+
+  //metodo per aprire il dettaglio del crossfade module cliccato, con gestione breadcrumbs
+  public openCrossfadeModuleDetail(module: ModuleWithCount, paramName: 'crossfade' | 'fade_in') {
+    this.crossfadePopupSelectedModule = module;
+    this.crossfadePopupView = 'detail';
+
+    const breadcrumbs = paramName === 'crossfade'
+      ? this.crossfadeBreadcrumbs
+      : this.fadeInBreadcrumbs;
+
+    const updated = [
+      breadcrumbs[0],
+      { ...breadcrumbs[1], disabled: false },
+      { label: module.name, disabled: true }
+    ];
+
+    if (paramName === 'crossfade') {
+      this.crossfadeBreadcrumbs = updated;
+    } else {
+      this.fadeInBreadcrumbs = updated;
+    }
+  }
+
+  //metodo per tornare alla lista dei crossfade modules all'interno del popup
+  public backToCrossfadeList(paramName: 'crossfade' | 'fade_in') {
+    this.crossfadePopupView = 'list';
+    this.crossfadePopupSelectedModule = null;
+
+    const baseBreadcrumbs: MenuItem[] = [
+      { label: this.moduleFocus?.name ?? 'Module' },
+      { label: paramName, disabled: true }
+    ];
+
+    if (paramName === 'crossfade') {
+      this.crossfadeBreadcrumbs = baseBreadcrumbs;
+    } else {
+      this.fadeInBreadcrumbs = baseBreadcrumbs;
+    }
+  }
+
+  //metodo di conferma per i popup crossfade e fade_in
+  public onCrossfadeBreadcrumbNavigate(item: MenuItem, paramName: 'crossfade' | 'fade_in') {
+    if (item.label === (this.moduleFocus?.name ?? 'Module')) {
+      if (paramName === 'crossfade') {
+        this.crossfadePopupVisible = false; 
+      } else {
+        this.fadeInPopupVisible = false; 
+      }
+    } else {
+      this.backToCrossfadeList(paramName); 
+    }
+  }
+
+  //metodo di conferma per i popup crossfade e fade_in
+  public onCrossfadeConfirm(paramName: 'crossfade' | 'fade_in') {
+    if (paramName === 'crossfade') {
+      this.crossfadePopupVisible = false;
+    } else {
+      this.fadeInPopupVisible = false;
+    }
+  }
+  
+  //metodo per ottenere i moduli di crossfade o fade_in in base al parametro
+  public getCrossfadeModules(paramName: string): ModuleWithCount[] {
+    const param = this.moduleFocus?.settings.find(s => s.name === paramName);
+    return Array.isArray(param?.value) ? param.value : [];
+  }
+
+
 
   private readonly unsubAll$ = new Subject<void>();
 
   constructor(
-    private readonly modulesClient: ModulesClient,
+    private readonly modulesClient: ModulesClient, 
     public runConfigService: RunConfiguratorService,
   ) {}
 
