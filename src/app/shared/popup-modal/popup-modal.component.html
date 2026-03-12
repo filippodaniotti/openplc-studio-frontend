@@ -4,7 +4,9 @@
   [modal]="true" 
   [style]="{ width: '50vw', 'min-height': '40vh' }"
   [draggable]="false" 
-  [resizable]="false">
+  [resizable]="false"
+  (onHide)="close()">
+
   
   <!-- BREADCRUMBS -->
   <div class="breadcrumb-container" *ngIf="breadcrumbs.length > 0">
