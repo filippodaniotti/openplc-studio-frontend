@@ -82,3 +82,10 @@
     height: 100% !important;
   }
 }
+
+:host::ng-deep { /*aggiunto per allinare in alto le schermate di configurazione dei moduli*/
+  .p-splitter-panel {
+    align-items: flex-start !important;
+    overflow-y: auto;
+  }
+}

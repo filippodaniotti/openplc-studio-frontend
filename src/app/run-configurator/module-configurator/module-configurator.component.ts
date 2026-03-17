@@ -191,6 +191,18 @@ export class ModuleConfiguratorComponent implements OnInit {
 
     this.channelPopupData = { channel };
   }
+
+  //metodo per verificare se è aperto un popup di configurazione
+  public isAnyPopupOpen(): boolean {
+    return this.crossfadePopupVisible ||
+      this.fadeInPopupVisible ||
+      this.linkedOptionPopupVisible ||
+      this.midOptionPopupVisible ||
+      this.sideOptionPopupVisible ||
+      this.leftOptionPopupVisible ||
+      this.rightOptionPopupVisible;
+ }
+
   public onLeftOptionConfirm() {
     console.log('Confermato per Left:', this.channelPopupData);
     // Logica Left
@@ -369,6 +381,11 @@ export class ModuleConfiguratorComponent implements OnInit {
     } else {
       this.fadeInPopupVisible = false;
     }
+    this.currentCrossfadeParamName = '';
+    this.crossfadePopupView = 'list';
+    this.crossfadePopupSelectedModule = null;
+    console.log('dopo confirm:', this.currentCrossfadeParamName, this.fadeInPopupVisible);
+
   }
   
   //metodo per ottenere i moduli di crossfade o fade_in in base al parametro

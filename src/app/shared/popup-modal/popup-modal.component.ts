@@ -2,14 +2,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
 import { BreadcrumbModule } from 'primeng/breadcrumb'; // breadcrumb 
 import { MenuItem } from 'primeng/api';
 
 @Component({
   selector: 'app-popup-modal',
   standalone: true,
-  imports: [CommonModule, ButtonModule, DialogModule, BreadcrumbModule],
+  imports: [CommonModule, ButtonModule, BreadcrumbModule],
   templateUrl: './popup-modal.component.html',
   styleUrls: ['./popup-modal.component.scss']
 })
