@@ -1,12 +1,11 @@
 <div class="w-full">
-  
   <!-- BREADCRUMBS -->
   <div class="breadcrumb-container" *ngIf="breadcrumbs.length > 0">
     <p-breadcrumb
       [model]="breadcrumbs"
-      [home]="{icon: 'pi pi-home'}"
-      (onItemClick)="onBreadcrumbClick($event.item)">
-    </p-breadcrumb>
+      [home]="{ icon: 'pi pi-home' }"
+      (onItemClick)="onBreadcrumbClick($event.item)"
+    ></p-breadcrumb>
   </div>
 
   <!-- CONTENUTO -->
@@ -20,13 +19,12 @@
       label="Annulla"
       severity="secondary"
       (onClick)="close()"
-      [style]="{ 'min-width': '140px', 'height': '45px', 'font-size': '1.1rem' }">
-    </p-button>
+      [style]="{ 'min-width': '140px', height: '45px', 'font-size': '1.1rem' }"
+    ></p-button>
     <p-button
       label="Conferma"
       (onClick)="confirm()"
-      [style]="{ 'min-width': '140px', 'height': '45px', 'font-size': '1.1rem' }">
-    </p-button>
+      [style]="{ 'min-width': '140px', height: '45px', 'font-size': '1.1rem' }"
+    ></p-button>
   </div>
-
 </div>

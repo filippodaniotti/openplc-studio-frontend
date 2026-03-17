@@ -4,25 +4,25 @@
   .p-dialog-header {
     padding-bottom: 0.5rem;
   }
-  
+
   .breadcrumb-container {
     padding: 0.5rem 0 1rem 0;
     margin-bottom: 1rem;
     border-bottom: 1px solid #e5e7eb;
-    
+
     .p-breadcrumb {
       background: transparent;
       border: none;
       padding: 0;
-      
+
       .p-menuitem-link {
         cursor: pointer;
-        
+
         &:hover {
           color: #3b82f6;
         }
       }
-      
+
       .p-menuitem-text {
         font-size: 0.875rem;
       }

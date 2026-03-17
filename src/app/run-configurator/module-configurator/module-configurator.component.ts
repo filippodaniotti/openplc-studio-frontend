@@ -27,7 +27,6 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 
-
 const suggestedBands: number[] = [200, 1000, 2000];
 
 const crossfadeNameParameters: string[] = ['crossfade', 'fade_in'];
@@ -60,7 +59,7 @@ type GroupedModules = { label: string; items: Module[] };
     CheckboxModule,
     SelectModule,
     AutoCompleteModule,
-    PopupModalComponent, // popup 
+    PopupModalComponent, // popup
     InputTextModule,
     BreadcrumbModule, // breadcrumbs
   ],
@@ -99,7 +98,7 @@ export class ModuleConfiguratorComponent implements OnInit {
 
   public bandSettingsSelectedModuleCounter: number = 0;
 
-  // POPUP LEFT & RIGHT OPTIONS 
+  // POPUP LEFT & RIGHT OPTIONS
   public leftOptionPopupVisible = false;
 
   public rightOptionPopupVisible = false;
@@ -131,7 +130,7 @@ export class ModuleConfiguratorComponent implements OnInit {
   public midBreadcrumbs: MenuItem[] = [];
 
   public sideBreadcrumbs: MenuItem[] = [];
-  
+
   public linkedBreadcrumbs: MenuItem[] = [];
 
   // POPUP CROSSFADE & FADE_IN
@@ -144,7 +143,7 @@ export class ModuleConfiguratorComponent implements OnInit {
 
   public fadeInBreadcrumbs: MenuItem[] = [];
 
-  // VIEW CONTROL crossfade popup 
+  // VIEW CONTROL crossfade popup
   public crossfadePopupView: 'list' | 'detail' = 'list';
 
   public crossfadePopupSelectedModule: ModuleWithCount | null = null;
@@ -158,13 +157,14 @@ export class ModuleConfiguratorComponent implements OnInit {
     this.popupSelectedModule = null;
 
     const channelLabel = {
-      left: 'Left', right: 'Right', mid: 'Mid', side: 'Side', linked: 'Linked'
+      left: 'Left',
+      right: 'Right',
+      mid: 'Mid',
+      side: 'Side',
+      linked: 'Linked',
     }[channel];
 
-    const baseBreadcrumbs: MenuItem[] = [
-      { label: 'Advanced PLC' },
-      { label: channelLabel, disabled: true }
-    ];
+    const baseBreadcrumbs: MenuItem[] = [{ label: 'Advanced PLC' }, { label: channelLabel, disabled: true }];
 
     switch (channel) {
       case 'left':
@@ -194,14 +194,16 @@ export class ModuleConfiguratorComponent implements OnInit {
 
   //metodo per verificare se è aperto un popup di configurazione
   public isAnyPopupOpen(): boolean {
-    return this.crossfadePopupVisible ||
+    return (
+      this.crossfadePopupVisible ||
       this.fadeInPopupVisible ||
       this.linkedOptionPopupVisible ||
       this.midOptionPopupVisible ||
       this.sideOptionPopupVisible ||
       this.leftOptionPopupVisible ||
-      this.rightOptionPopupVisible;
- }
+      this.rightOptionPopupVisible
+    );
+  }
 
   public onLeftOptionConfirm() {
     console.log('Confermato per Left:', this.channelPopupData);
@@ -214,25 +216,35 @@ export class ModuleConfiguratorComponent implements OnInit {
     // Logica Right
     this.rightOptionPopupVisible = false;
   }
-  
+
   // Gestione navigazione breadcrumbs all'interno del popup
   public onBreadcrumbNavigate(item: MenuItem, fromChannel: 'left' | 'right' | 'mid' | 'side' | 'linked') {
     if (item.label === 'Advanced PLC') {
       switch (fromChannel) {
-        case 'left': this.leftOptionPopupVisible = false; break;
-        case 'right': this.rightOptionPopupVisible = false; break;
-        case 'mid': this.midOptionPopupVisible = false; break;
-        case 'side': this.sideOptionPopupVisible = false; break;
-        case 'linked': this.linkedOptionPopupVisible = false; break;
+        case 'left':
+          this.leftOptionPopupVisible = false;
+          break;
+        case 'right':
+          this.rightOptionPopupVisible = false;
+          break;
+        case 'mid':
+          this.midOptionPopupVisible = false;
+          break;
+        case 'side':
+          this.sideOptionPopupVisible = false;
+          break;
+        case 'linked':
+          this.linkedOptionPopupVisible = false;
+          break;
       }
     } else {
       this.backToChannelList(fromChannel);
     }
   }
 
-  //metodo per ottenere i moduli di band settings in base al canale 
+  //metodo per ottenere i moduli di band settings in base al canale
   public getChannelModules(channel: string): ModuleWithCount[] {
-    const bandSettingsParam = this.moduleFocus?.settings.find(s => s.name === 'band_settings');
+    const bandSettingsParam = this.moduleFocus?.settings.find((s) => s.name === 'band_settings');
     const bandSettings = bandSettingsParam?.value as Record<string, ModuleWithCount[]> | undefined;
     return bandSettings?.[channel] ?? [];
   }
@@ -251,18 +263,24 @@ export class ModuleConfiguratorComponent implements OnInit {
       linked: this.linkedBreadcrumbs,
     }[channel];
 
-    const updated = [
-      breadcrumbs[0],
-      { ...breadcrumbs[1], disabled: false },
-      { label: module.name, disabled: true }
-    ];
+    const updated = [breadcrumbs[0], { ...breadcrumbs[1], disabled: false }, { label: module.name, disabled: true }];
 
     switch (channel) {
-      case 'left': this.leftBreadcrumbs = updated; break;
-      case 'right': this.rightBreadcrumbs = updated; break;
-      case 'mid': this.midBreadcrumbs = updated; break;
-      case 'side': this.sideBreadcrumbs = updated; break;
-      case 'linked': this.linkedBreadcrumbs = updated; break;
+      case 'left':
+        this.leftBreadcrumbs = updated;
+        break;
+      case 'right':
+        this.rightBreadcrumbs = updated;
+        break;
+      case 'mid':
+        this.midBreadcrumbs = updated;
+        break;
+      case 'side':
+        this.sideBreadcrumbs = updated;
+        break;
+      case 'linked':
+        this.linkedBreadcrumbs = updated;
+        break;
     }
   }
 
@@ -272,27 +290,38 @@ export class ModuleConfiguratorComponent implements OnInit {
     this.popupSelectedModule = null;
 
     const channelLabel = {
-      left: 'Left', right: 'Right', mid: 'Mid', side: 'Side', linked: 'Linked'
+      left: 'Left',
+      right: 'Right',
+      mid: 'Mid',
+      side: 'Side',
+      linked: 'Linked',
     }[channel];
 
-    const baseBreadcrumbs: MenuItem[] = [
-      { label: 'Advanced PLC' },
-      { label: channelLabel, disabled: true }
-    ];
+    const baseBreadcrumbs: MenuItem[] = [{ label: 'Advanced PLC' }, { label: channelLabel, disabled: true }];
 
     switch (channel) {
-      case 'left': this.leftBreadcrumbs = baseBreadcrumbs; break;
-      case 'right': this.rightBreadcrumbs = baseBreadcrumbs; break;
-      case 'mid': this.midBreadcrumbs = baseBreadcrumbs; break;
-      case 'side': this.sideBreadcrumbs = baseBreadcrumbs; break;
-      case 'linked': this.linkedBreadcrumbs = baseBreadcrumbs; break;
+      case 'left':
+        this.leftBreadcrumbs = baseBreadcrumbs;
+        break;
+      case 'right':
+        this.rightBreadcrumbs = baseBreadcrumbs;
+        break;
+      case 'mid':
+        this.midBreadcrumbs = baseBreadcrumbs;
+        break;
+      case 'side':
+        this.sideBreadcrumbs = baseBreadcrumbs;
+        break;
+      case 'linked':
+        this.linkedBreadcrumbs = baseBreadcrumbs;
+        break;
     }
   }
   //metodo di conferma per i popup mid, side e linked
   public onMidOptionConfirm() {
     this.midOptionPopupVisible = false;
   }
-  
+
   public onSideOptionConfirm() {
     this.sideOptionPopupVisible = false;
   }
@@ -300,7 +329,6 @@ export class ModuleConfiguratorComponent implements OnInit {
   public onLinkedOptionConfirm() {
     this.linkedOptionPopupVisible = false;
   }
-
 
   //metodo per aprire il popup di configurazione dei crossfade modules, con gestione breadcrumbs
   public openCrossfadePopup(paramName: 'crossfade' | 'fade_in') {
@@ -310,7 +338,7 @@ export class ModuleConfiguratorComponent implements OnInit {
 
     const baseBreadcrumbs: MenuItem[] = [
       { label: this.moduleFocus?.name ?? 'Module' },
-      { label: paramName, disabled: true }
+      { label: paramName, disabled: true },
     ];
 
     if (paramName === 'crossfade') {
@@ -327,15 +355,9 @@ export class ModuleConfiguratorComponent implements OnInit {
     this.crossfadePopupSelectedModule = module;
     this.crossfadePopupView = 'detail';
 
-    const breadcrumbs = paramName === 'crossfade'
-      ? this.crossfadeBreadcrumbs
-      : this.fadeInBreadcrumbs;
+    const breadcrumbs = paramName === 'crossfade' ? this.crossfadeBreadcrumbs : this.fadeInBreadcrumbs;
 
-    const updated = [
-      breadcrumbs[0],
-      { ...breadcrumbs[1], disabled: false },
-      { label: module.name, disabled: true }
-    ];
+    const updated = [breadcrumbs[0], { ...breadcrumbs[1], disabled: false }, { label: module.name, disabled: true }];
 
     if (paramName === 'crossfade') {
       this.crossfadeBreadcrumbs = updated;
@@ -351,7 +373,7 @@ export class ModuleConfiguratorComponent implements OnInit {
 
     const baseBreadcrumbs: MenuItem[] = [
       { label: this.moduleFocus?.name ?? 'Module' },
-      { label: paramName, disabled: true }
+      { label: paramName, disabled: true },
     ];
 
     if (paramName === 'crossfade') {
@@ -365,12 +387,15 @@ export class ModuleConfiguratorComponent implements OnInit {
   public onCrossfadeBreadcrumbNavigate(item: MenuItem, paramName: 'crossfade' | 'fade_in') {
     if (item.label === (this.moduleFocus?.name ?? 'Module')) {
       if (paramName === 'crossfade') {
-        this.crossfadePopupVisible = false; 
+        this.crossfadePopupVisible = false;
       } else {
-        this.fadeInPopupVisible = false; 
+        this.fadeInPopupVisible = false;
       }
+      this.currentCrossfadeParamName = '';
+      this.crossfadePopupView = 'list';
+      this.crossfadePopupSelectedModule = null;
     } else {
-      this.backToCrossfadeList(paramName); 
+      this.backToCrossfadeList(paramName);
     }
   }
 
@@ -385,21 +410,30 @@ export class ModuleConfiguratorComponent implements OnInit {
     this.crossfadePopupView = 'list';
     this.crossfadePopupSelectedModule = null;
     console.log('dopo confirm:', this.currentCrossfadeParamName, this.fadeInPopupVisible);
-
   }
-  
+
   //metodo per ottenere i moduli di crossfade o fade_in in base al parametro
   public getCrossfadeModules(paramName: string): ModuleWithCount[] {
-    const param = this.moduleFocus?.settings.find(s => s.name === paramName);
+    const param = this.moduleFocus?.settings.find((s) => s.name === paramName);
     return Array.isArray(param?.value) ? param.value : [];
   }
 
-
+  //metodo di cancellazione per i popup crossfade e fade_in, con reset del modulo selezionato e gestione breadcrumbs
+  public onCrossfadeCancel(paramName: 'crossfade' | 'fade_in') {
+    if (paramName === 'crossfade') {
+      this.crossfadePopupVisible = false;
+    } else {
+      this.fadeInPopupVisible = false;
+    }
+    this.currentCrossfadeParamName = '';
+    this.crossfadePopupView = 'list';
+    this.crossfadePopupSelectedModule = null;
+  }
 
   private readonly unsubAll$ = new Subject<void>();
 
   constructor(
-    private readonly modulesClient: ModulesClient, 
+    private readonly modulesClient: ModulesClient,
     public runConfigService: RunConfiguratorService,
   ) {}
 
