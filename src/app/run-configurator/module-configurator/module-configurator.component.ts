@@ -31,7 +31,7 @@ const suggestedBands: number[] = [200, 1000, 2000];
 
 const crossfadeNameParameters: string[] = ['crossfade', 'fade_in'];
 
-const bandSettingsOmittedParams: string[] = ['crossfade', 'fade_in', 'crossfade_frequencies', 'crossover_order'];
+const bandSettingsOmittedParams: string[] = [];
 
 export type ModuleWithCount = Module & {
   id?: number;
@@ -149,6 +149,11 @@ export class ModuleConfiguratorComponent implements OnInit {
   public crossfadePopupSelectedModule: ModuleWithCount | null = null;
 
   public currentCrossfadeParamName: string = '';
+
+  // CROSSFADE ANNIDATO IN ADVANCED PLC
+  public isNestedCrossfade = false;
+
+  public nestedCrossfadeChannel: 'left' | 'right' | 'mid' | 'side' | 'linked' | null = null;
 
   //metodo per aprire il popup di configurazione del canale selezionato
   public openChannelPopup(channel: 'left' | 'right' | 'mid' | 'side' | 'linked', paramName: string) {
@@ -355,9 +360,15 @@ export class ModuleConfiguratorComponent implements OnInit {
     this.crossfadePopupSelectedModule = module;
     this.crossfadePopupView = 'detail';
 
-    const breadcrumbs = paramName === 'crossfade' ? this.crossfadeBreadcrumbs : this.fadeInBreadcrumbs;
+    const currentBreadcrumbs = paramName === 'crossfade' ? this.crossfadeBreadcrumbs : this.fadeInBreadcrumbs;
 
-    const updated = [breadcrumbs[0], { ...breadcrumbs[1], disabled: false }, { label: module.name, disabled: true }];
+
+    const updated: MenuItem[] = [
+      ...currentBreadcrumbs.slice(0, -1).map(b => ({ ...b, disabled: false })),
+      { ...currentBreadcrumbs[currentBreadcrumbs.length - 1], disabled: false },
+      { label: module.name, disabled: true }
+    ];
+
 
     if (paramName === 'crossfade') {
       this.crossfadeBreadcrumbs = updated;
@@ -370,21 +381,42 @@ export class ModuleConfiguratorComponent implements OnInit {
   public backToCrossfadeList(paramName: 'crossfade' | 'fade_in') {
     this.crossfadePopupView = 'list';
     this.crossfadePopupSelectedModule = null;
+    if (this.isNestedCrossfade && this.nestedCrossfadeChannel) {
+      const channelBreadcrumbs = {
+        left: this.leftBreadcrumbs,
+        right: this.rightBreadcrumbs,
+        mid: this.midBreadcrumbs,
+        side: this.sideBreadcrumbs,
+        linked: this.linkedBreadcrumbs,
+      }[this.nestedCrossfadeChannel];
 
-    const baseBreadcrumbs: MenuItem[] = [
-      { label: this.moduleFocus?.name ?? 'Module' },
-      { label: paramName, disabled: true },
-    ];
+      const nestedBreadcrumbs = [
+        ...channelBreadcrumbs.slice(0, -1),
+        { label: paramName, disabled: true }
+      ];
 
-    if (paramName === 'crossfade') {
-      this.crossfadeBreadcrumbs = baseBreadcrumbs;
+      if (paramName === 'crossfade') {
+        this.crossfadeBreadcrumbs = nestedBreadcrumbs;
+      } else {
+        this.fadeInBreadcrumbs = nestedBreadcrumbs;
+      }
     } else {
-      this.fadeInBreadcrumbs = baseBreadcrumbs;
+      const baseBreadcrumbs: MenuItem[] = [
+        { label: this.moduleFocus?.name ?? 'Module' },
+        { label: paramName, disabled: true },
+      ];
+
+      if (paramName === 'crossfade') {
+        this.crossfadeBreadcrumbs = baseBreadcrumbs;
+      } else {
+        this.fadeInBreadcrumbs = baseBreadcrumbs;
+      }
     }
   }
 
-  //metodo di conferma per i popup crossfade e fade_in
+  //metodo per gestire la navigazione tramite breadcrumbs all'interno del popup dei crossfade modules
   public onCrossfadeBreadcrumbNavigate(item: MenuItem, paramName: 'crossfade' | 'fade_in') {
+    // click su nome algoritmo 
     if (item.label === (this.moduleFocus?.name ?? 'Module')) {
       if (paramName === 'crossfade') {
         this.crossfadePopupVisible = false;
@@ -394,10 +426,74 @@ export class ModuleConfiguratorComponent implements OnInit {
       this.currentCrossfadeParamName = '';
       this.crossfadePopupView = 'list';
       this.crossfadePopupSelectedModule = null;
-    } else {
-      this.backToCrossfadeList(paramName);
+      this.isNestedCrossfade = false;
+      this.nestedCrossfadeChannel = null;
+      return;
     }
+
+    // click su "Advanced PLC" (primo breadcrumb nel caso nested)
+    if (item.label === 'Advanced PLC') {
+      if (paramName === 'crossfade') {
+        this.crossfadePopupVisible = false;
+      } else {
+        this.fadeInPopupVisible = false;
+      }
+      this.currentCrossfadeParamName = '';
+      this.crossfadePopupView = 'list';
+      this.crossfadePopupSelectedModule = null;
+      this.isNestedCrossfade = false;
+      this.nestedCrossfadeChannel = null;
+
+      if (this.nestedCrossfadeChannel) {
+        switch (this.nestedCrossfadeChannel) {
+          case 'left': this.leftOptionPopupVisible = false; break;
+          case 'right': this.rightOptionPopupVisible = false; break;
+          case 'mid': this.midOptionPopupVisible = false; break;
+          case 'side': this.sideOptionPopupVisible = false; break;
+          case 'linked': this.linkedOptionPopupVisible = false; break;
+        }
+      }
+      return;
+    }
+
+    // click su nome canale 
+    const channelLabels = ['Left', 'Right', 'Mid', 'Side', 'Linked'];
+    if (channelLabels.includes(item.label ?? '')) {
+      if (paramName === 'crossfade') {
+        this.crossfadePopupVisible = false;
+      } else {
+        this.fadeInPopupVisible = false;
+      }
+      this.currentCrossfadeParamName = '';
+      this.crossfadePopupView = 'list';
+      this.crossfadePopupSelectedModule = null;
+      this.isNestedCrossfade = false;
+      this.nestedCrossfadeChannel = null;
+
+      if (this.currentPopupChannel) {
+        this.backToChannelList(this.currentPopupChannel);
+      }
+      return;
+    }
+
+    // click su nome modulo 
+    if (this.isNestedCrossfade) {
+      if (paramName === 'crossfade') {
+        this.crossfadePopupVisible = false;
+      } else {
+        this.fadeInPopupVisible = false;
+      }
+      this.currentCrossfadeParamName = '';
+      this.crossfadePopupView = 'list';
+      this.crossfadePopupSelectedModule = null;
+      this.isNestedCrossfade = false;
+      this.nestedCrossfadeChannel = null;
+      return;
+    }
+
+    this.backToCrossfadeList(paramName);
   }
+
 
   //metodo di conferma per i popup crossfade e fade_in
   public onCrossfadeConfirm(paramName: 'crossfade' | 'fade_in') {
@@ -409,13 +505,19 @@ export class ModuleConfiguratorComponent implements OnInit {
     this.currentCrossfadeParamName = '';
     this.crossfadePopupView = 'list';
     this.crossfadePopupSelectedModule = null;
-    console.log('dopo confirm:', this.currentCrossfadeParamName, this.fadeInPopupVisible);
+    this.isNestedCrossfade = false;
+    this.nestedCrossfadeChannel = null;
   }
 
   //metodo per ottenere i moduli di crossfade o fade_in in base al parametro
   public getCrossfadeModules(paramName: string): ModuleWithCount[] {
-    const param = this.moduleFocus?.settings.find((s) => s.name === paramName);
-    return Array.isArray(param?.value) ? param.value : [];
+    const moduleSource = this.isNestedCrossfade
+      ? this.popupSelectedModule
+      : this.moduleFocus;
+
+    const crossfadeParam = moduleSource?.settings.find((s) => s.name === paramName);
+
+    return Array.isArray(crossfadeParam?.value) ? crossfadeParam.value : [];
   }
 
   //metodo di cancellazione per i popup crossfade e fade_in, con reset del modulo selezionato e gestione breadcrumbs
@@ -428,6 +530,41 @@ export class ModuleConfiguratorComponent implements OnInit {
     this.currentCrossfadeParamName = '';
     this.crossfadePopupView = 'list';
     this.crossfadePopupSelectedModule = null;
+    this.isNestedCrossfade = false;
+    this.nestedCrossfadeChannel = null;
+  }
+
+  //metodo per aprire il popup di configurazione dei crossfade modules annidati in Advanced PLC
+  public openNestedCrossfadePopup(paramName: 'crossfade' | 'fade_in', channel: 'left' | 'right' | 'mid' | 'side' | 'linked') {
+
+    this.isNestedCrossfade = true;
+    this.nestedCrossfadeChannel = channel;
+    this.currentCrossfadeParamName = paramName;
+    this.crossfadePopupView = 'list';
+    this.crossfadePopupSelectedModule = null;
+
+    // breadcrumb del canale + modulo selezionato + paramName
+    const channelBreadcrumbs = {
+      left: this.leftBreadcrumbs,
+      right: this.rightBreadcrumbs,
+      mid: this.midBreadcrumbs,
+      side: this.sideBreadcrumbs,
+      linked: this.linkedBreadcrumbs,
+    }[channel];
+
+    const nestedBreadcrumbs: MenuItem[] = [
+      ...channelBreadcrumbs.map(b => ({ ...b, disabled: false })), //cliccabili 
+      { label: paramName, disabled: true } //ultimo breadcrumb, non cliccabile
+    ];
+
+
+    if (paramName === 'crossfade') {
+      this.crossfadePopupVisible = true;
+      this.crossfadeBreadcrumbs = nestedBreadcrumbs;
+    } else {
+      this.fadeInPopupVisible = true;
+      this.fadeInBreadcrumbs = nestedBreadcrumbs;
+    }
   }
 
   private readonly unsubAll$ = new Subject<void>();
@@ -435,7 +572,7 @@ export class ModuleConfiguratorComponent implements OnInit {
   constructor(
     private readonly modulesClient: ModulesClient,
     public runConfigService: RunConfiguratorService,
-  ) {}
+  ) { }
 
   get modulesSelection(): ModuleWithCount[] {
     return this.runConfigService.modulesSelection.value[this.moduleType];
@@ -563,12 +700,14 @@ export class ModuleConfiguratorComponent implements OnInit {
     );
   }
 
+  //metodo per aggiungere un modulo di crossfade o fade_in alla configurazione
   public addCrossfadeModule(crossfadeModule: ModuleWithCount | null, paramName: string): void {
     if (!crossfadeModule) {
       return;
     }
 
-    const parentModuleSetting = this.moduleFocus?.settings.find((setting) => setting.name === paramName);
+    const source = this.isNestedCrossfade ? this.popupSelectedModule : this.moduleFocus;
+    const parentModuleSetting = source?.settings.find((setting) => setting.name === paramName);
     if (parentModuleSetting) {
       parentModuleSetting.value = parentModuleSetting.value || [];
       parentModuleSetting.value.push({
@@ -581,20 +720,22 @@ export class ModuleConfiguratorComponent implements OnInit {
     this.selectedCrossfadeModuleProxy = null;
   }
 
+  //metodo per rimuovere un modulo di crossfade o fade_in dalla configurazione
   public removeFromCrossfadeModulesSelection(moduleId: number): void {
+    const source = this.isNestedCrossfade ? this.popupSelectedModule : this.moduleFocus;
     const crossfadeModuleParentList: ModuleWithCount[][] =
-      this.moduleFocus?.settings
+      source?.settings
         .filter((s) => crossfadeNameParameters.includes(s.name) && s.value !== null)
         .map((s) => s.value ?? []) ?? [];
 
-    const crossfadeModuleList = crossfadeModuleParentList.find((s) => s.some((module) => module.id === moduleId)) ?? [];
-
-    const moduleToRemoveIndex: number = crossfadeModuleList.findIndex((module) => module.id === moduleId) ?? -1;
+    const crossfadeModuleList =
+      crossfadeModuleParentList.find((s) => s.some((module) => module.id === moduleId)) ?? [];
+    const moduleToRemoveIndex: number =
+      crossfadeModuleList.findIndex((module) => module.id === moduleId) ?? -1;
 
     if (moduleToRemoveIndex === -1 || crossfadeModuleList.length === 0) {
       return;
     }
-
     if (crossfadeModuleList[moduleToRemoveIndex]?.id === this.crossfadeModuleFocus?.id) {
       this.crossfadeModuleFocus = null;
     }

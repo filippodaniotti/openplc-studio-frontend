@@ -1,35 +1,18 @@
 <p-splitter styleClass=" min-h-[600px] mb-8" [panelSizes]="[20, 80]" [minSizes]="[15, 50]">
   <ng-template #panel>
     <div class="flex-col w-full h-full">
-      <p-autocomplete
-        [(ngModel)]="selectedModuleProxy"
-        [suggestions]="availableModulesFilter"
-        [optionLabel]="'name'"
-        class="flex-1 module-selection-autocomplete"
-        (completeMethod)="searchModules($event)"
-        (onSelect)="addModule(selectedModuleProxy)"
-        appendTo="body"
-        [dropdown]="true"
-      />
+      <p-autocomplete [(ngModel)]="selectedModuleProxy" [suggestions]="availableModulesFilter" [optionLabel]="'name'"
+        class="flex-1 module-selection-autocomplete" (completeMethod)="searchModules($event)"
+        (onSelect)="addModule(selectedModuleProxy)" appendTo="body" [dropdown]="true" />
       <ng-container *ngIf="modulesSelection.length > 0; else noModulesSelected">
-        <p-listbox
-          [options]="modulesSelection"
-          [(ngModel)]="moduleFocus"
-          [optionLabel]="'id'"
-          class="w-full !min-h-full"
-        >
+        <p-listbox [options]="modulesSelection" [(ngModel)]="moduleFocus" [optionLabel]="'id'"
+          class="w-full !min-h-full">
           <ng-template let-item let-index="index" #item>
             <div class="flex flex-row flex-auto">
               <p>{{ item.name }}</p>
               <div class="flex-auto"></div>
-              <p-button
-                icon="pi pi-times"
-                [rounded]="true"
-                severity="danger"
-                [outlined]="true"
-                size="small"
-                (onClick)="$event.stopPropagation(); removeFromModulesSelection(index)"
-              />
+              <p-button icon="pi pi-times" [rounded]="true" severity="danger" [outlined]="true" size="small"
+                (onClick)="$event.stopPropagation(); removeFromModulesSelection(index)" />
             </div>
           </ng-template>
         </p-listbox>
@@ -43,95 +26,48 @@
       </ng-container>
 
       <!-- POPUP CROSSFADE -->
-      <app-popup-modal
-        *ngIf="currentCrossfadeParamName === 'crossfade'"
-        [(visible)]="crossfadePopupVisible"
-        (onCancel)="onCrossfadeCancel('crossfade')"
-        class="w-full h-full"
-        [header]="'Configurazione ' + currentCrossfadeParamName"
-        [breadcrumbs]="crossfadeBreadcrumbs"
+      <app-popup-modal *ngIf="currentCrossfadeParamName === 'crossfade'" [(visible)]="crossfadePopupVisible"
+        (onCancel)="onCrossfadeCancel('crossfade')" class="w-full h-full"
+        [header]="'Configurazione ' + currentCrossfadeParamName" [breadcrumbs]="crossfadeBreadcrumbs"
         (breadcrumbClick)="onCrossfadeBreadcrumbNavigate($event, 'crossfade')"
-        (onConfirm)="onCrossfadeConfirm('crossfade')"
-      >
+        (onConfirm)="onCrossfadeConfirm('crossfade')">
         <ng-container *ngIf="crossfadePopupView === 'list'">
-          <p-autocomplete
-            [(ngModel)]="selectedCrossfadeModuleProxy"
-            [suggestions]="availableCrossfadeModulesFilter"
-            [optionLabel]="'name'"
-            class="w-full advanced-plc-autocomplete"
+          <p-autocomplete [(ngModel)]="selectedCrossfadeModuleProxy" [suggestions]="availableCrossfadeModulesFilter"
+            [optionLabel]="'name'" class="w-full advanced-plc-autocomplete"
             (completeMethod)="searchCrossfadeModules($event)"
-            (onSelect)="addCrossfadeModule(selectedCrossfadeModuleProxy, currentCrossfadeParamName)"
-            appendTo="body"
-            [dropdown]="true"
-          ></p-autocomplete>
-          <p-listbox
-            [options]="getCrossfadeModules(currentCrossfadeParamName)"
-            [(ngModel)]="crossfadeModuleFocus"
-            [optionLabel]="'id'"
-            class="w-full mt-2"
-          >
+            (onSelect)="addCrossfadeModule(selectedCrossfadeModuleProxy, currentCrossfadeParamName)" appendTo="body"
+            [dropdown]="true"></p-autocomplete>
+          <p-listbox [options]="getCrossfadeModules(currentCrossfadeParamName)" [(ngModel)]="crossfadeModuleFocus"
+            [optionLabel]="'id'" class="w-full mt-2">
             <ng-template let-item let-index="index" #item>
               <div class="flex flex-row flex-auto">
                 <p (click)="openCrossfadeModuleDetail(item, 'crossfade')" class="cursor-pointer flex-1">
                   {{ item.name }}
                 </p>
-                <p-button
-                  class="small-icon-btn"
-                  icon="pi pi-times"
-                  [rounded]="true"
-                  severity="danger"
-                  [outlined]="true"
-                  size="small"
-                  (onClick)="$event.stopPropagation(); removeFromCrossfadeModulesSelection(item.id)"
-                />
+                <p-button class="small-icon-btn" icon="pi pi-times" [rounded]="true" severity="danger" [outlined]="true"
+                  size="small" (onClick)="$event.stopPropagation(); removeFromCrossfadeModulesSelection(item.id)" />
               </div>
             </ng-template>
           </p-listbox>
         </ng-container>
 
         <ng-container *ngIf="crossfadePopupView === 'detail' && crossfadePopupSelectedModule">
-          <p-button
-            label="Back"
-            icon="pi pi-arrow-left"
-            severity="secondary"
-            [style]="{ 'min-width': '100px' }"
-            (onClick)="backToCrossfadeList('crossfade')"
-          ></p-button>
+          <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [style]="{ 'min-width': '100px' }"
+            (onClick)="backToCrossfadeList('crossfade')"></p-button>
           <div class="flex flex-col gap-2">
             <ng-container *ngFor="let param of $any(crossfadePopupSelectedModule.settings)">
               <div class="w-full flex flex-row min-h-10">
                 <p class="min-w-56 flex items-center">{{ param.name }}</p>
                 <ng-container [ngSwitch]="param.type">
-                  <p-inputnumber
-                    *ngSwitchCase="'int'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                  />
-                  <p-inputnumber
-                    *ngSwitchCase="'float'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                    [minFractionDigits]="0"
-                    [maxFractionDigits]="5"
-                  />
+                  <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" />
+                  <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
                   <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
-                  <p-checkbox
-                    *ngSwitchCase="'bool'"
-                    [(ngModel)]="param.value"
-                    binary="true"
-                    class="content-center"
-                  ></p-checkbox>
-                  <p-select
-                    *ngSwitchCase="'Enum'"
-                    [(ngModel)]="param.value"
-                    [options]="param.availableValues"
-                    class="flex-1"
-                    appendTo="body"
-                  ></p-select>
+                  <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true"
+                    class="content-center"></p-checkbox>
+                  <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues"
+                    class="flex-1" appendTo="body"></p-select>
                 </ng-container>
               </div>
             </ng-container>
@@ -140,95 +76,48 @@
       </app-popup-modal>
 
       <!-- POPUP FADE_IN -->
-      <app-popup-modal
-        *ngIf="currentCrossfadeParamName === 'fade_in'"
-        [(visible)]="fadeInPopupVisible"
-        (onCancel)="onCrossfadeCancel('fade_in')"
-        class="w-full h-full"
-        [header]="'Configurazione ' + currentCrossfadeParamName"
-        [breadcrumbs]="fadeInBreadcrumbs"
+      <app-popup-modal *ngIf="currentCrossfadeParamName === 'fade_in'" [(visible)]="fadeInPopupVisible"
+        (onCancel)="onCrossfadeCancel('fade_in')" class="w-full h-full"
+        [header]="'Configurazione ' + currentCrossfadeParamName" [breadcrumbs]="fadeInBreadcrumbs"
         (breadcrumbClick)="onCrossfadeBreadcrumbNavigate($event, 'fade_in')"
-        (onConfirm)="onCrossfadeConfirm('fade_in')"
-      >
+        (onConfirm)="onCrossfadeConfirm('fade_in')">
         <ng-container *ngIf="crossfadePopupView === 'list'">
-          <p-autocomplete
-            [(ngModel)]="selectedCrossfadeModuleProxy"
-            [suggestions]="availableCrossfadeModulesFilter"
-            [optionLabel]="'name'"
-            class="w-full advanced-plc-autocomplete"
+          <p-autocomplete [(ngModel)]="selectedCrossfadeModuleProxy" [suggestions]="availableCrossfadeModulesFilter"
+            [optionLabel]="'name'" class="w-full advanced-plc-autocomplete"
             (completeMethod)="searchCrossfadeModules($event)"
-            (onSelect)="addCrossfadeModule(selectedCrossfadeModuleProxy, currentCrossfadeParamName)"
-            appendTo="body"
-            [dropdown]="true"
-          ></p-autocomplete>
-          <p-listbox
-            [options]="getCrossfadeModules(currentCrossfadeParamName)"
-            [(ngModel)]="crossfadeModuleFocus"
-            [optionLabel]="'id'"
-            class="w-full mt-2"
-          >
+            (onSelect)="addCrossfadeModule(selectedCrossfadeModuleProxy, currentCrossfadeParamName)" appendTo="body"
+            [dropdown]="true"></p-autocomplete>
+          <p-listbox [options]="getCrossfadeModules(currentCrossfadeParamName)" [(ngModel)]="crossfadeModuleFocus"
+            [optionLabel]="'id'" class="w-full mt-2">
             <ng-template let-item let-index="index" #item>
               <div class="flex flex-row flex-auto">
                 <p (click)="openCrossfadeModuleDetail(item, 'fade_in')" class="cursor-pointer flex-1">
                   {{ item.name }}
                 </p>
-                <p-button
-                  class="small-icon-btn"
-                  icon="pi pi-times"
-                  [rounded]="true"
-                  severity="danger"
-                  [outlined]="true"
-                  size="small"
-                  (onClick)="$event.stopPropagation(); removeFromCrossfadeModulesSelection(item.id)"
-                />
+                <p-button class="small-icon-btn" icon="pi pi-times" [rounded]="true" severity="danger" [outlined]="true"
+                  size="small" (onClick)="$event.stopPropagation(); removeFromCrossfadeModulesSelection(item.id)" />
               </div>
             </ng-template>
           </p-listbox>
         </ng-container>
 
         <ng-container *ngIf="crossfadePopupView === 'detail' && crossfadePopupSelectedModule">
-          <p-button
-            label="Back"
-            icon="pi pi-arrow-left"
-            severity="secondary"
-            [style]="{ 'min-width': '100px' }"
-            (onClick)="backToCrossfadeList('fade_in')"
-          ></p-button>
+          <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [style]="{ 'min-width': '100px' }"
+            (onClick)="backToCrossfadeList('fade_in')"></p-button>
           <div class="flex flex-col gap-2">
             <ng-container *ngFor="let param of $any(crossfadePopupSelectedModule.settings)">
               <div class="w-full flex flex-row min-h-10">
                 <p class="min-w-56 flex items-center">{{ param.name }}</p>
                 <ng-container [ngSwitch]="param.type">
-                  <p-inputnumber
-                    *ngSwitchCase="'int'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                  />
-                  <p-inputnumber
-                    *ngSwitchCase="'float'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                    [minFractionDigits]="0"
-                    [maxFractionDigits]="5"
-                  />
+                  <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" />
+                  <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
                   <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
-                  <p-checkbox
-                    *ngSwitchCase="'bool'"
-                    [(ngModel)]="param.value"
-                    binary="true"
-                    class="content-center"
-                  ></p-checkbox>
-                  <p-select
-                    *ngSwitchCase="'Enum'"
-                    [(ngModel)]="param.value"
-                    [options]="param.availableValues"
-                    class="flex-1"
-                    appendTo="body"
-                  ></p-select>
+                  <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true"
+                    class="content-center"></p-checkbox>
+                  <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues"
+                    class="flex-1" appendTo="body"></p-select>
                 </ng-container>
               </div>
             </ng-container>
@@ -237,94 +126,49 @@
       </app-popup-modal>
 
       <!-- POPUP LINKED -->
-      <app-popup-modal
-        *ngIf="linkedOptionPopupVisible"
-        [(visible)]="linkedOptionPopupVisible"
-        class="w-full h-full"
-        header="Configurazione Option Linked"
-        [breadcrumbs]="linkedBreadcrumbs"
-        (breadcrumbClick)="onBreadcrumbNavigate($event, 'linked')"
-        (onConfirm)="onLinkedOptionConfirm()"
-      >
+      <app-popup-modal *ngIf="linkedOptionPopupVisible" [(visible)]="linkedOptionPopupVisible" class="w-full h-full"
+        header="Configurazione Option Linked" [breadcrumbs]="linkedBreadcrumbs"
+        (breadcrumbClick)="onBreadcrumbNavigate($event, 'linked')" (onConfirm)="onLinkedOptionConfirm()">
         <ng-container *ngIf="popupView === 'list'">
-          <p-autocomplete
-            [(ngModel)]="bandSettingsSelectedModuleProxy"
-            [suggestions]="availableModulesFilter"
-            [optionLabel]="'name'"
-            class="w-full advanced-plc-autocomplete"
-            (completeMethod)="searchModules($event, true)"
-            (onSelect)="
+          <p-autocomplete [(ngModel)]="bandSettingsSelectedModuleProxy" [suggestions]="availableModulesFilter"
+            [optionLabel]="'name'" class="w-full advanced-plc-autocomplete"
+            (completeMethod)="searchModules($event, true)" (onSelect)="
               addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'linked')
-            "
-            appendTo="body"
-            typeahead="false"
-            [dropdown]="true"
-          ></p-autocomplete>
-          <p-listbox
-            [options]="getChannelModules('linked')"
-            [(ngModel)]="bandSettingModuleFocus"
-            [optionLabel]="'id'"
-            class="w-full mt-2"
-          >
+            " appendTo="body" typeahead="false" [dropdown]="true"></p-autocomplete>
+          <p-listbox [options]="getChannelModules('linked')" [(ngModel)]="bandSettingModuleFocus" [optionLabel]="'id'"
+            class="w-full mt-2">
             <ng-template let-item let-index="index" #item>
               <div class="flex flex-row flex-auto">
                 <p (click)="openModuleDetail(item, 'linked')" class="cursor-pointer flex-1">{{ item.name }}</p>
-                <p-button
-                  icon="pi pi-times"
-                  [rounded]="true"
-                  severity="danger"
-                  [outlined]="true"
-                  size="small"
-                  (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
-                />
+                <p-button icon="pi pi-times" [rounded]="true" severity="danger" [outlined]="true" size="small"
+                  (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)" />
               </div>
             </ng-template>
           </p-listbox>
         </ng-container>
 
         <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
-          <p-button
-            label="Back"
-            icon="pi pi-arrow-left"
-            severity="secondary"
-            [style]="{ 'min-width': '100px' }"
-            (onClick)="backToChannelList('linked')"
-          ></p-button>
+          <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [style]="{ 'min-width': '100px' }"
+            (onClick)="backToChannelList('linked')"></p-button>
           <div class="flex flex-col gap-2">
             <ng-container *ngFor="let param of $any(popupSelectedModule.settings)">
               <div class="w-full flex flex-row min-h-10">
                 <p class="min-w-56 flex items-center">{{ param.name }}</p>
                 <ng-container [ngSwitch]="param.type">
-                  <p-inputnumber
-                    *ngSwitchCase="'int'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                  />
-                  <p-inputnumber
-                    *ngSwitchCase="'float'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                    [minFractionDigits]="0"
-                    [maxFractionDigits]="5"
-                  />
+                  <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" />
+                  <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
                   <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
-                  <p-checkbox
-                    *ngSwitchCase="'bool'"
-                    [(ngModel)]="param.value"
-                    binary="true"
-                    class="content-center"
-                  ></p-checkbox>
-                  <p-select
-                    *ngSwitchCase="'Enum'"
-                    [(ngModel)]="param.value"
-                    [options]="param.availableValues"
-                    class="flex-1"
-                    appendTo="body"
-                  ></p-select>
+                  <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true"
+                    class="content-center"></p-checkbox>
+                  <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues"
+                    class="flex-1" appendTo="body"></p-select>
+                  <ng-container *ngSwitchCase="'list_CrossfadeSettings'">
+                    <p-button [label]="param.name" icon="pi pi-sliders-h" severity="secondary"
+                      [style]="{ 'min-width': '100px' }"
+                      (onClick)="openNestedCrossfadePopup(param.name, currentPopupChannel)"></p-button>
+                  </ng-container>
                 </ng-container>
               </div>
             </ng-container>
@@ -333,94 +177,49 @@
       </app-popup-modal>
 
       <!-- POPUP MID -->
-      <app-popup-modal
-        *ngIf="midOptionPopupVisible"
-        [(visible)]="midOptionPopupVisible"
-        class="w-full h-full"
-        header="Configurazione Option Mid"
-        [breadcrumbs]="midBreadcrumbs"
-        (breadcrumbClick)="onBreadcrumbNavigate($event, 'mid')"
-        (onConfirm)="onMidOptionConfirm()"
-      >
+      <app-popup-modal *ngIf="midOptionPopupVisible" [(visible)]="midOptionPopupVisible" class="w-full h-full"
+        header="Configurazione Option Mid" [breadcrumbs]="midBreadcrumbs"
+        (breadcrumbClick)="onBreadcrumbNavigate($event, 'mid')" (onConfirm)="onMidOptionConfirm()">
         <ng-container *ngIf="popupView === 'list'">
-          <p-autocomplete
-            [(ngModel)]="bandSettingsSelectedModuleProxy"
-            [suggestions]="availableModulesFilter"
-            [optionLabel]="'name'"
-            class="w-full advanced-plc-autocomplete"
-            (completeMethod)="searchModules($event, true)"
-            (onSelect)="
+          <p-autocomplete [(ngModel)]="bandSettingsSelectedModuleProxy" [suggestions]="availableModulesFilter"
+            [optionLabel]="'name'" class="w-full advanced-plc-autocomplete"
+            (completeMethod)="searchModules($event, true)" (onSelect)="
               addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'mid')
-            "
-            appendTo="body"
-            typeahead="false"
-            [dropdown]="true"
-          ></p-autocomplete>
-          <p-listbox
-            [options]="getChannelModules('mid')"
-            [(ngModel)]="bandSettingModuleFocus"
-            [optionLabel]="'id'"
-            class="w-full mt-2"
-          >
+            " appendTo="body" typeahead="false" [dropdown]="true"></p-autocomplete>
+          <p-listbox [options]="getChannelModules('mid')" [(ngModel)]="bandSettingModuleFocus" [optionLabel]="'id'"
+            class="w-full mt-2">
             <ng-template let-item let-index="index" #item>
               <div class="flex flex-row flex-auto">
                 <p (click)="openModuleDetail(item, 'mid')" class="cursor-pointer flex-1">{{ item.name }}</p>
-                <p-button
-                  icon="pi pi-times"
-                  [rounded]="true"
-                  severity="danger"
-                  [outlined]="true"
-                  size="small"
-                  (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
-                />
+                <p-button icon="pi pi-times" [rounded]="true" severity="danger" [outlined]="true" size="small"
+                  (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)" />
               </div>
             </ng-template>
           </p-listbox>
         </ng-container>
 
         <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
-          <p-button
-            label="Back"
-            icon="pi pi-arrow-left"
-            severity="secondary"
-            [style]="{ 'min-width': '100px' }"
-            (onClick)="backToChannelList('mid')"
-          ></p-button>
+          <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [style]="{ 'min-width': '100px' }"
+            (onClick)="backToChannelList('mid')"></p-button>
           <div class="flex flex-col gap-2">
             <ng-container *ngFor="let param of $any(popupSelectedModule.settings)">
               <div class="w-full flex flex-row min-h-10">
                 <p class="min-w-56 flex items-center">{{ param.name }}</p>
                 <ng-container [ngSwitch]="param.type">
-                  <p-inputnumber
-                    *ngSwitchCase="'int'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                  />
-                  <p-inputnumber
-                    *ngSwitchCase="'float'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                    [minFractionDigits]="0"
-                    [maxFractionDigits]="5"
-                  />
+                  <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" />
+                  <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
                   <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
-                  <p-checkbox
-                    *ngSwitchCase="'bool'"
-                    [(ngModel)]="param.value"
-                    binary="true"
-                    class="content-center"
-                  ></p-checkbox>
-                  <p-select
-                    *ngSwitchCase="'Enum'"
-                    [(ngModel)]="param.value"
-                    [options]="param.availableValues"
-                    class="flex-1"
-                    appendTo="body"
-                  ></p-select>
+                  <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true"
+                    class="content-center"></p-checkbox>
+                  <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues"
+                    class="flex-1" appendTo="body"></p-select>
+                  <ng-container *ngSwitchCase="'list_CrossfadeSettings'">
+                    <p-button [label]="param.name" icon="pi pi-sliders-h" severity="secondary"
+                      [style]="{ 'min-width': '100px' }"
+                      (onClick)="openNestedCrossfadePopup(param.name, currentPopupChannel)"></p-button>
+                  </ng-container>
                 </ng-container>
               </div>
             </ng-container>
@@ -429,94 +228,49 @@
       </app-popup-modal>
 
       <!-- POPUP SIDE -->
-      <app-popup-modal
-        *ngIf="sideOptionPopupVisible"
-        [(visible)]="sideOptionPopupVisible"
-        class="w-full h-full"
-        header="Configurazione Option Side"
-        [breadcrumbs]="sideBreadcrumbs"
-        (breadcrumbClick)="onBreadcrumbNavigate($event, 'side')"
-        (onConfirm)="onSideOptionConfirm()"
-      >
+      <app-popup-modal *ngIf="sideOptionPopupVisible" [(visible)]="sideOptionPopupVisible" class="w-full h-full"
+        header="Configurazione Option Side" [breadcrumbs]="sideBreadcrumbs"
+        (breadcrumbClick)="onBreadcrumbNavigate($event, 'side')" (onConfirm)="onSideOptionConfirm()">
         <ng-container *ngIf="popupView === 'list'">
-          <p-autocomplete
-            [(ngModel)]="bandSettingsSelectedModuleProxy"
-            [suggestions]="availableModulesFilter"
-            [optionLabel]="'name'"
-            class="w-full advanced-plc-autocomplete"
-            (completeMethod)="searchModules($event, true)"
-            (onSelect)="
+          <p-autocomplete [(ngModel)]="bandSettingsSelectedModuleProxy" [suggestions]="availableModulesFilter"
+            [optionLabel]="'name'" class="w-full advanced-plc-autocomplete"
+            (completeMethod)="searchModules($event, true)" (onSelect)="
               addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'side')
-            "
-            appendTo="body"
-            typeahead="false"
-            [dropdown]="true"
-          ></p-autocomplete>
-          <p-listbox
-            [options]="getChannelModules('side')"
-            [(ngModel)]="bandSettingModuleFocus"
-            [optionLabel]="'id'"
-            class="w-full mt-2"
-          >
+            " appendTo="body" typeahead="false" [dropdown]="true"></p-autocomplete>
+          <p-listbox [options]="getChannelModules('side')" [(ngModel)]="bandSettingModuleFocus" [optionLabel]="'id'"
+            class="w-full mt-2">
             <ng-template let-item let-index="index" #item>
               <div class="flex flex-row flex-auto">
                 <p (click)="openModuleDetail(item, 'side')" class="cursor-pointer flex-1">{{ item.name }}</p>
-                <p-button
-                  icon="pi pi-times"
-                  [rounded]="true"
-                  severity="danger"
-                  [outlined]="true"
-                  size="small"
-                  (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
-                />
+                <p-button icon="pi pi-times" [rounded]="true" severity="danger" [outlined]="true" size="small"
+                  (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)" />
               </div>
             </ng-template>
           </p-listbox>
         </ng-container>
 
         <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
-          <p-button
-            label="Back"
-            icon="pi pi-arrow-left"
-            severity="secondary"
-            [style]="{ 'min-width': '100px' }"
-            (onClick)="backToChannelList('side')"
-          ></p-button>
+          <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [style]="{ 'min-width': '100px' }"
+            (onClick)="backToChannelList('side')"></p-button>
           <div class="flex flex-col gap-2">
             <ng-container *ngFor="let param of $any(popupSelectedModule.settings)">
               <div class="w-full flex flex-row min-h-10">
                 <p class="min-w-56 flex items-center">{{ param.name }}</p>
                 <ng-container [ngSwitch]="param.type">
-                  <p-inputnumber
-                    *ngSwitchCase="'int'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                  />
-                  <p-inputnumber
-                    *ngSwitchCase="'float'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                    [minFractionDigits]="0"
-                    [maxFractionDigits]="5"
-                  />
+                  <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" />
+                  <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
                   <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
-                  <p-checkbox
-                    *ngSwitchCase="'bool'"
-                    [(ngModel)]="param.value"
-                    binary="true"
-                    class="content-center"
-                  ></p-checkbox>
-                  <p-select
-                    *ngSwitchCase="'Enum'"
-                    [(ngModel)]="param.value"
-                    [options]="param.availableValues"
-                    class="flex-1"
-                    appendTo="body"
-                  ></p-select>
+                  <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true"
+                    class="content-center"></p-checkbox>
+                  <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues"
+                    class="flex-1" appendTo="body"></p-select>
+                  <ng-container *ngSwitchCase="'list_CrossfadeSettings'">
+                    <p-button [label]="param.name" icon="pi pi-sliders-h" severity="secondary"
+                      [style]="{ 'min-width': '100px' }"
+                      (onClick)="openNestedCrossfadePopup(param.name, currentPopupChannel)"></p-button>
+                  </ng-container>
                 </ng-container>
               </div>
             </ng-container>
@@ -525,47 +279,23 @@
       </app-popup-modal>
 
       <!-- Popup Left -->
-      <app-popup-modal
-        *ngIf="leftOptionPopupVisible"
-        [(visible)]="leftOptionPopupVisible"
-        class="w-full h-full"
-        header="Configurazione Option Left"
-        [breadcrumbs]="leftBreadcrumbs"
-        (breadcrumbClick)="onBreadcrumbNavigate($event, 'left')"
-        (onConfirm)="onLeftOptionConfirm()"
-      >
+      <app-popup-modal *ngIf="leftOptionPopupVisible" [(visible)]="leftOptionPopupVisible" class="w-full h-full"
+        header="Configurazione Option Left" [breadcrumbs]="leftBreadcrumbs"
+        (breadcrumbClick)="onBreadcrumbNavigate($event, 'left')" (onConfirm)="onLeftOptionConfirm()">
         <!-- VISTA LISTA -->
         <ng-container *ngIf="popupView === 'list'">
-          <p-autocomplete
-            [(ngModel)]="bandSettingsSelectedModuleProxy"
-            [suggestions]="availableModulesFilter"
-            [optionLabel]="'name'"
-            class="w-full advanced-plc-autocomplete"
-            (completeMethod)="searchModules($event, true)"
-            (onSelect)="
+          <p-autocomplete [(ngModel)]="bandSettingsSelectedModuleProxy" [suggestions]="availableModulesFilter"
+            [optionLabel]="'name'" class="w-full advanced-plc-autocomplete"
+            (completeMethod)="searchModules($event, true)" (onSelect)="
               addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'left')
-            "
-            appendTo="body"
-            typeahead="false"
-            [dropdown]="true"
-          ></p-autocomplete>
-          <p-listbox
-            [options]="getChannelModules('left')"
-            [(ngModel)]="bandSettingModuleFocus"
-            [optionLabel]="'id'"
-            class="w-full mt-2"
-          >
+            " appendTo="body" typeahead="false" [dropdown]="true"></p-autocomplete>
+          <p-listbox [options]="getChannelModules('left')" [(ngModel)]="bandSettingModuleFocus" [optionLabel]="'id'"
+            class="w-full mt-2">
             <ng-template let-item let-index="index" #item>
               <div class="flex flex-row flex-auto">
                 <p (click)="openModuleDetail(item, 'left')" class="cursor-pointer flex-1">{{ item.name }}</p>
-                <p-button
-                  icon="pi pi-times"
-                  [rounded]="true"
-                  severity="danger"
-                  [outlined]="true"
-                  size="small"
-                  (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
-                />
+                <p-button icon="pi pi-times" [rounded]="true" severity="danger" [outlined]="true" size="small"
+                  (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)" />
               </div>
             </ng-template>
           </p-listbox>
@@ -573,48 +303,27 @@
 
         <!-- VISTA DETTAGLIO MODULO -->
         <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
-          <p-button
-            label="Back"
-            icon="pi pi-arrow-left"
-            severity="secondary"
-            [style]="{ 'min-width': '100px' }"
-            (onClick)="backToChannelList('left')"
-          ></p-button>
+          <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [style]="{ 'min-width': '100px' }"
+            (onClick)="backToChannelList('left')"></p-button>
           <div class="flex flex-col gap-2">
             <ng-container *ngFor="let param of $any(popupSelectedModule.settings)">
               <div class="w-full flex flex-row min-h-10">
                 <p class="min-w-56 flex items-center">{{ param.name }}</p>
                 <ng-container [ngSwitch]="param.type">
-                  <p-inputnumber
-                    *ngSwitchCase="'int'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                  />
-                  <p-inputnumber
-                    *ngSwitchCase="'float'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                    [minFractionDigits]="0"
-                    [maxFractionDigits]="5"
-                  />
+                  <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" />
+                  <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
                   <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
-                  <p-checkbox
-                    *ngSwitchCase="'bool'"
-                    [(ngModel)]="param.value"
-                    binary="true"
-                    class="content-center"
-                  ></p-checkbox>
-                  <p-select
-                    *ngSwitchCase="'Enum'"
-                    [(ngModel)]="param.value"
-                    [options]="param.availableValues"
-                    class="flex-1"
-                    appendTo="body"
-                  ></p-select>
+                  <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true"
+                    class="content-center"></p-checkbox>
+                  <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues"
+                    class="flex-1" appendTo="body"></p-select>
+                  <ng-container *ngSwitchCase="'list_CrossfadeSettings'">
+                    <p-button [label]="param.name" icon="pi pi-sliders-h" severity="secondary"
+                      [style]="{ 'min-width': '100px' }"
+                      (onClick)="openNestedCrossfadePopup(param.name, currentPopupChannel)"></p-button>
+                  </ng-container>
                 </ng-container>
               </div>
             </ng-container>
@@ -623,47 +332,23 @@
       </app-popup-modal>
 
       <!--Popup Right-->
-      <app-popup-modal
-        *ngIf="rightOptionPopupVisible"
-        [(visible)]="rightOptionPopupVisible"
-        class="w-full h-full"
-        header="Configurazione Option Right"
-        [breadcrumbs]="rightBreadcrumbs"
-        (breadcrumbClick)="onBreadcrumbNavigate($event, 'right')"
-        (onConfirm)="onRightOptionConfirm()"
-      >
+      <app-popup-modal *ngIf="rightOptionPopupVisible" [(visible)]="rightOptionPopupVisible" class="w-full h-full"
+        header="Configurazione Option Right" [breadcrumbs]="rightBreadcrumbs"
+        (breadcrumbClick)="onBreadcrumbNavigate($event, 'right')" (onConfirm)="onRightOptionConfirm()">
         <!-- VISTA LISTA -->
         <ng-container *ngIf="popupView === 'list'">
-          <p-autocomplete
-            [(ngModel)]="bandSettingsSelectedModuleProxy"
-            [suggestions]="availableModulesFilter"
-            [optionLabel]="'name'"
-            class="w-full advanced-plc-autocomplete"
-            (completeMethod)="searchModules($event, true)"
-            (onSelect)="
+          <p-autocomplete [(ngModel)]="bandSettingsSelectedModuleProxy" [suggestions]="availableModulesFilter"
+            [optionLabel]="'name'" class="w-full advanced-plc-autocomplete"
+            (completeMethod)="searchModules($event, true)" (onSelect)="
               addAdvancedPLCBandSettingModule(bandSettingsSelectedModuleProxy, currentBandSettingsParamName, 'right')
-            "
-            appendTo="body"
-            typeahead="false"
-            [dropdown]="true"
-          ></p-autocomplete>
-          <p-listbox
-            [options]="getChannelModules('right')"
-            [(ngModel)]="bandSettingModuleFocus"
-            [optionLabel]="'id'"
-            class="w-full mt-2"
-          >
+            " appendTo="body" typeahead="false" [dropdown]="true"></p-autocomplete>
+          <p-listbox [options]="getChannelModules('right')" [(ngModel)]="bandSettingModuleFocus" [optionLabel]="'id'"
+            class="w-full mt-2">
             <ng-template let-item let-index="index" #item>
               <div class="flex flex-row flex-auto">
                 <p (click)="openModuleDetail(item, 'right')" class="cursor-pointer flex-1">{{ item.name }}</p>
-                <p-button
-                  icon="pi pi-times"
-                  [rounded]="true"
-                  severity="danger"
-                  [outlined]="true"
-                  size="small"
-                  (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)"
-                />
+                <p-button icon="pi pi-times" [rounded]="true" severity="danger" [outlined]="true" size="small"
+                  (onClick)="$event.stopPropagation(); removeFromBandSettingsModulesSelection(item.id)" />
               </div>
             </ng-template>
           </p-listbox>
@@ -671,54 +356,34 @@
 
         <!-- VISTA DETTAGLIO MODULO -->
         <ng-container *ngIf="popupView === 'detail' && popupSelectedModule">
-          <p-button
-            label="Back"
-            icon="pi pi-arrow-left"
-            severity="secondary"
-            [style]="{ 'min-width': '100px' }"
-            (onClick)="backToChannelList('right')"
-          ></p-button>
+          <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [style]="{ 'min-width': '100px' }"
+            (onClick)="backToChannelList('right')"></p-button>
           <div class="flex flex-col gap-2">
             <ng-container *ngFor="let param of $any(popupSelectedModule.settings)">
               <div class="w-full flex flex-row min-h-10">
                 <p class="min-w-56 flex items-center">{{ param.name }}</p>
                 <ng-container [ngSwitch]="param.type">
-                  <p-inputnumber
-                    *ngSwitchCase="'int'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                  />
-                  <p-inputnumber
-                    *ngSwitchCase="'float'"
-                    class="flex-1"
-                    [(ngModel)]="param.value"
-                    mode="decimal"
-                    useGrouping="false"
-                    [minFractionDigits]="0"
-                    [maxFractionDigits]="5"
-                  />
+                  <p-inputnumber *ngSwitchCase="'int'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" />
+                  <p-inputnumber *ngSwitchCase="'float'" class="flex-1" [(ngModel)]="param.value" mode="decimal"
+                    useGrouping="false" [minFractionDigits]="0" [maxFractionDigits]="5" />
                   <input *ngSwitchCase="'str'" class="flex-1" [(ngModel)]="param.value" />
-                  <p-checkbox
-                    *ngSwitchCase="'bool'"
-                    [(ngModel)]="param.value"
-                    binary="true"
-                    class="content-center"
-                  ></p-checkbox>
-                  <p-select
-                    *ngSwitchCase="'Enum'"
-                    [(ngModel)]="param.value"
-                    [options]="param.availableValues"
-                    class="flex-1"
-                    appendTo="body"
-                  ></p-select>
+                  <p-checkbox *ngSwitchCase="'bool'" [(ngModel)]="param.value" binary="true"
+                    class="content-center"></p-checkbox>
+                  <p-select *ngSwitchCase="'Enum'" [(ngModel)]="param.value" [options]="param.availableValues"
+                    class="flex-1" appendTo="body"></p-select>
+                  <ng-container *ngSwitchCase="'list_CrossfadeSettings'">
+                    <p-button [label]="param.name" icon="pi pi-sliders-h" severity="secondary"
+                      [style]="{ 'min-width': '100px' }"
+                      (onClick)="openNestedCrossfadePopup(param.name, currentPopupChannel)"></p-button>
+                  </ng-container>
                 </ng-container>
               </div>
             </ng-container>
           </div>
         </ng-container>
       </app-popup-modal>
+
     </div>
   </ng-template>
 </p-splitter>
@@ -780,14 +445,8 @@
               </ng-template>
 
               <ng-template #floatInput>
-                <p-inputnumber
-                  class="flex-1"
-                  [(ngModel)]="param.value"
-                  mode="decimal"
-                  useGrouping="false"
-                  [minFractionDigits]="0"
-                  [maxFractionDigits]="5"
-                />
+                <p-inputnumber class="flex-1" [(ngModel)]="param.value" mode="decimal" useGrouping="false"
+                  [minFractionDigits]="0" [maxFractionDigits]="5" />
               </ng-template>
 
               <ng-template #boolInput>
@@ -795,99 +454,53 @@
               </ng-template>
 
               <ng-template #enumInput>
-                <p-select
-                  [(ngModel)]="param.value"
-                  [options]="param.availableValues"
-                  class="flex-1"
-                  appendTo="body"
-                ></p-select>
+                <p-select [(ngModel)]="param.value" [options]="param.availableValues" class="flex-1"
+                  appendTo="body"></p-select>
               </ng-template>
 
               <ng-template #listIntInput>
-                <p-autocomplete
-                  [(ngModel)]="param.value"
-                  [suggestions]="suggestedBands"
-                  class="flex-1"
-                  (completeMethod)="searchBands($event)"
-                  appendTo="body"
-                  multiple
-                  typeahead="false"
-                  [dropdown]="true"
-                  type="number"
-                ></p-autocomplete>
+                <p-autocomplete [(ngModel)]="param.value" [suggestions]="suggestedBands" class="flex-1"
+                  (completeMethod)="searchBands($event)" appendTo="body" multiple typeahead="false" [dropdown]="true"
+                  type="number"></p-autocomplete>
               </ng-template>
 
               <ng-template #listCrossfadeInput>
-                <p-button
-                  [label]="param.name"
-                  icon="pi pi-sliders-h"
-                  severity="secondary"
-                  [style]="{ 'min-width': '100px' }"
-                  (onClick)="openCrossfadePopup(param.name)"
-                ></p-button>
+                <p-button [label]="param.name" icon="pi pi-sliders-h" severity="secondary"
+                  [style]="{ 'min-width': '100px' }" (onClick)="openCrossfadePopup(param.name)"></p-button>
               </ng-template>
 
               <ng-template #bandSettingsInput>
                 <!-- linked -->
                 <div *ngIf="isAdvancedPLCLinked()" class="flex flex-row w-full gap-5">
-                  <p-button
-                    label="Linked"
-                    icon="pi pi-sliders-h"
-                    severity="secondary"
-                    [style]="{ 'min-width': '100px' }"
-                    (onClick)="openChannelPopup('linked', param.name)"
-                  ></p-button>
+                  <p-button label="Linked" icon="pi pi-sliders-h" severity="secondary"
+                    [style]="{ 'min-width': '100px' }" (onClick)="openChannelPopup('linked', param.name)"></p-button>
                 </div>
 
                 <!-- MID -->
-                <div
-                  *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'mid_side'"
-                  class="flex flex-row w-full gap-5"
-                >
+                <div *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'mid_side'"
+                  class="flex flex-row w-full gap-5">
                   <div class="flex flex-col flex-1">
-                    <p-button
-                      label="Mid"
-                      icon="pi pi-sliders-h"
-                      severity="secondary"
-                      [style]="{ 'min-width': '100px' }"
-                      (onClick)="openChannelPopup('mid', param.name)"
-                    ></p-button>
+                    <p-button label="Mid" icon="pi pi-sliders-h" severity="secondary" [style]="{ 'min-width': '100px' }"
+                      (onClick)="openChannelPopup('mid', param.name)"></p-button>
                   </div>
                   <!-- SIDE -->
                   <div class="flex flex-col flex-1">
-                    <p-button
-                      label="Side"
-                      icon="pi pi-sliders-h"
-                      severity="secondary"
-                      [style]="{ 'min-width': '100px' }"
-                      (onClick)="openChannelPopup('side', param.name)"
-                    ></p-button>
+                    <p-button label="Side" icon="pi pi-sliders-h" severity="secondary"
+                      [style]="{ 'min-width': '100px' }" (onClick)="openChannelPopup('side', param.name)"></p-button>
                   </div>
                 </div>
 
-                <div
-                  *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'dual_mono'"
-                  class="flex flex-row w-full gap-5"
-                >
+                <div *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'dual_mono'"
+                  class="flex flex-row w-full gap-5">
                   <!-- LEFT -->
                   <div class="flex flex-col flex-1">
-                    <p-button
-                      label="Left"
-                      icon="pi pi-sliders-h"
-                      severity="secondary"
-                      [style]="{ 'min-width': '100px' }"
-                      (onClick)="openChannelPopup('left', param.name)"
-                    ></p-button>
+                    <p-button label="Left" icon="pi pi-sliders-h" severity="secondary"
+                      [style]="{ 'min-width': '100px' }" (onClick)="openChannelPopup('left', param.name)"></p-button>
                   </div>
 
                   <div class="flex flex-col flex-1">
-                    <p-button
-                      label="Right"
-                      icon="pi pi-sliders-h"
-                      severity="secondary"
-                      [style]="{ 'min-width': '100px' }"
-                      (onClick)="openChannelPopup('right', param.name)"
-                    ></p-button>
+                    <p-button label="Right" icon="pi pi-sliders-h" severity="secondary"
+                      [style]="{ 'min-width': '100px' }" (onClick)="openChannelPopup('right', param.name)"></p-button>
                   </div>
                 </div>
               </ng-template>
@@ -896,83 +509,39 @@
                 <div *ngIf="isAdvancedPLCLinked()" class="flex flex-row w-full gap-5">
                   <p-inputgroup class="flex-1">
                     <p-inputgroup-addon>Linked</p-inputgroup-addon>
-                    <p-autocomplete
-                      [(ngModel)]="param.value['linked']"
-                      [suggestions]="suggestedBands"
-                      class="flex-1 advanced-plc-autocomplete"
-                      (completeMethod)="searchBands($event)"
-                      appendTo="body"
-                      multiple
-                      typeahead="false"
-                      [dropdown]="true"
-                      type="number"
-                    ></p-autocomplete>
+                    <p-autocomplete [(ngModel)]="param.value['linked']" [suggestions]="suggestedBands"
+                      class="flex-1 advanced-plc-autocomplete" (completeMethod)="searchBands($event)" appendTo="body"
+                      multiple typeahead="false" [dropdown]="true" type="number"></p-autocomplete>
                   </p-inputgroup>
                 </div>
-                <div
-                  *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'mid_side'"
-                  class="flex flex-row w-full gap-5"
-                >
+                <div *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'mid_side'"
+                  class="flex flex-row w-full gap-5">
                   <p-inputgroup class="flex-1">
                     <p-inputgroup-addon>Mid</p-inputgroup-addon>
-                    <p-autocomplete
-                      [(ngModel)]="param.value['mid']"
-                      [suggestions]="suggestedBands"
-                      class="flex-1 advanced-plc-autocomplete"
-                      (completeMethod)="searchBands($event)"
-                      appendTo="body"
-                      multiple
-                      typeahead="false"
-                      [dropdown]="true"
-                      type="number"
-                    ></p-autocomplete>
+                    <p-autocomplete [(ngModel)]="param.value['mid']" [suggestions]="suggestedBands"
+                      class="flex-1 advanced-plc-autocomplete" (completeMethod)="searchBands($event)" appendTo="body"
+                      multiple typeahead="false" [dropdown]="true" type="number"></p-autocomplete>
                   </p-inputgroup>
                   <p-inputgroup class="flex-1">
                     <p-inputgroup-addon>Side</p-inputgroup-addon>
-                    <p-autocomplete
-                      [(ngModel)]="param.value['side']"
-                      [suggestions]="suggestedBands"
-                      class="flex-1 advanced-plc-autocomplete"
-                      (completeMethod)="searchBands($event)"
-                      appendTo="body"
-                      multiple
-                      typeahead="false"
-                      [dropdown]="true"
-                      type="number"
-                    ></p-autocomplete>
+                    <p-autocomplete [(ngModel)]="param.value['side']" [suggestions]="suggestedBands"
+                      class="flex-1 advanced-plc-autocomplete" (completeMethod)="searchBands($event)" appendTo="body"
+                      multiple typeahead="false" [dropdown]="true" type="number"></p-autocomplete>
                   </p-inputgroup>
                 </div>
-                <div
-                  *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'dual_mono'"
-                  class="flex flex-row w-full gap-5"
-                >
+                <div *ngIf="!isAdvancedPLCLinked() && getAdvancedPLCStereoImageProcessingValue() === 'dual_mono'"
+                  class="flex flex-row w-full gap-5">
                   <p-inputgroup class="flex-1">
                     <p-inputgroup-addon>Left</p-inputgroup-addon>
-                    <p-autocomplete
-                      [(ngModel)]="param.value['left']"
-                      [suggestions]="suggestedBands"
-                      class="flex-1 advanced-plc-autocomplete"
-                      (completeMethod)="searchBands($event)"
-                      appendTo="body"
-                      multiple
-                      typeahead="false"
-                      [dropdown]="true"
-                      type="number"
-                    ></p-autocomplete>
+                    <p-autocomplete [(ngModel)]="param.value['left']" [suggestions]="suggestedBands"
+                      class="flex-1 advanced-plc-autocomplete" (completeMethod)="searchBands($event)" appendTo="body"
+                      multiple typeahead="false" [dropdown]="true" type="number"></p-autocomplete>
                   </p-inputgroup>
                   <p-inputgroup class="flex-1">
                     <p-inputgroup-addon>Right</p-inputgroup-addon>
-                    <p-autocomplete
-                      [(ngModel)]="param.value['right']"
-                      [suggestions]="suggestedBands"
-                      class="flex-1 advanced-plc-autocomplete"
-                      (completeMethod)="searchBands($event)"
-                      appendTo="body"
-                      multiple
-                      typeahead="false"
-                      [dropdown]="true"
-                      type="number"
-                    ></p-autocomplete>
+                    <p-autocomplete [(ngModel)]="param.value['right']" [suggestions]="suggestedBands"
+                      class="flex-1 advanced-plc-autocomplete" (completeMethod)="searchBands($event)" appendTo="body"
+                      multiple typeahead="false" [dropdown]="true" type="number"></p-autocomplete>
                   </p-inputgroup>
                 </div>
               </ng-template>
