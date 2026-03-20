@@ -72,7 +72,7 @@ export class ModuleConfiguratorComponent implements OnInit {
 
   public modules: BehaviorSubject<ModuleWithCount[]> = new BehaviorSubject<ModuleWithCount[]>([]);
 
-  public moduleFocus: ModuleWithCount | null = null;
+  private _moduleFocus: ModuleWithCount | null = null;
 
   public suggestedBands: string[] = [];
 
@@ -195,6 +195,15 @@ export class ModuleConfiguratorComponent implements OnInit {
     }
 
     this.channelPopupData = { channel };
+  }
+
+  get moduleFocus(): ModuleWithCount | null {
+    return this._moduleFocus;
+  }
+
+  set moduleFocus(value: ModuleWithCount | null) {
+    this._moduleFocus = value;
+    this.closeAllPopups();
   }
 
   //metodo per verificare se è aperto un popup di configurazione
@@ -565,6 +574,23 @@ export class ModuleConfiguratorComponent implements OnInit {
       this.fadeInPopupVisible = true;
       this.fadeInBreadcrumbs = nestedBreadcrumbs;
     }
+  }
+
+  private closeAllPopups(): void {
+    this.crossfadePopupVisible = false;
+    this.fadeInPopupVisible = false;
+    this.linkedOptionPopupVisible = false;
+    this.midOptionPopupVisible = false;
+    this.sideOptionPopupVisible = false;
+    this.leftOptionPopupVisible = false;
+    this.rightOptionPopupVisible = false;
+    this.currentCrossfadeParamName = '';
+    this.crossfadePopupView = 'list';
+    this.crossfadePopupSelectedModule = null;
+    this.popupView = 'list';
+    this.popupSelectedModule = null;
+    this.isNestedCrossfade = false;
+    this.nestedCrossfadeChannel = null;
   }
 
   private readonly unsubAll$ = new Subject<void>();
