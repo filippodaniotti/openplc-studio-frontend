@@ -450,8 +450,7 @@ export class ModuleConfiguratorComponent implements OnInit {
       this.currentCrossfadeParamName = '';
       this.crossfadePopupView = 'list';
       this.crossfadePopupSelectedModule = null;
-      this.isNestedCrossfade = false;
-      this.nestedCrossfadeChannel = null;
+     
 
       if (this.nestedCrossfadeChannel) {
         switch (this.nestedCrossfadeChannel) {
@@ -462,6 +461,12 @@ export class ModuleConfiguratorComponent implements OnInit {
           case 'linked': this.linkedOptionPopupVisible = false; break;
         }
       }
+
+      this.popupView = 'list';
+      this.popupSelectedModule = null;
+
+      this.isNestedCrossfade = false;
+      this.nestedCrossfadeChannel = null;
       return;
     }
 
