@@ -1,42 +1,29 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { filter, Observable, share } from 'rxjs';
+import { webSocket } from 'rxjs/webSocket';
+
+interface BaseWSMessage {
+  type: string;
+}
+
+export interface RunCompleteMessage extends BaseWSMessage {
+  type: 'run.complete';
+  // ...
+}
+
+export type WsMessage = RunCompleteMessage | any;
 
 @Injectable({
   providedIn: 'root',
 })
 export class WsService {
-  private websocket?: WebSocket;
-  private messages: Subject<any> = new Subject();
+  private wsEndpoint = '/ws';
+  private socket$ = webSocket<WsMessage>(this.wsEndpoint).pipe(share());
+  private completionMessages$: Observable<RunCompleteMessage> = this.socket$.pipe(
+    filter((msg: WsMessage) => msg.type == 'run.complete'),
+  );
 
-  constructor() {
-    this.connect();
-  }
-
-  private connect() {
-    this.websocket = new WebSocket('/ws');
-
-    this.websocket.onmessage = (event) => {
-      console.log(event);
-
-      this.messages.next(event.data);
-    };
-
-    this.websocket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    this.websocket.onclose = () => {
-      console.log('WebSocket connection closed');
-    };
-  }
-
-  public sendMessage(message: any) {
-    if (this.websocket?.readyState === WebSocket.OPEN) {
-      this.websocket.send(JSON.stringify(message));
-    }
-  }
-
-  public getMessages(): Observable<any> {
-    return this.messages.asObservable();
+  public getCompletionMessages(): Observable<RunCompleteMessage> {
+    return this.completionMessages$;
   }
 }

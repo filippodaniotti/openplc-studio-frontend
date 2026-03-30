@@ -7,7 +7,7 @@ import { HeaderComponent } from './header/header.component';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { WsService } from './shared/services/ws.service';
-import { debounceTime, tap } from 'rxjs';
+import { debounceTime, Subject, takeUntil, tap } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +19,8 @@ import { debounceTime, tap } from 'rxjs';
 export class AppComponent implements OnInit {
   public title = 'PLC Testbench Platform';
 
+  private destroy$ = new Subject<void>();
+
   constructor(
     private readonly messageService: MessageService,
     private readonly wsService: WsService,
@@ -26,15 +28,23 @@ export class AppComponent implements OnInit {
 
   public ngOnInit(): void {
     this.wsService
-      .getMessages()
+      .getCompletionMessages()
       .pipe(
+        takeUntil(this.destroy$),
         debounceTime(300),
         tap((message: any) =>
-          this.messageService.add({ severity: 'success', summary: 'Run completed', detail: JSON.parse(message).msg }),
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Run completed',
+            detail: `Run ${JSON.parse(message).msg} has completed`,
+          }),
         ),
       )
       .subscribe();
+  }
 
-    setTimeout(() => this.wsService.sendMessage({ msg: 'aaa' }), 100);
+  public ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
