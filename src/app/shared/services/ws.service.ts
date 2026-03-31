@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core';
 import { filter, Observable, share } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
 
-interface BaseWSMessage {
+interface BaseWsMessage {
   type: string;
 }
 
-export interface RunCompleteMessage extends BaseWSMessage {
+export interface RunCompleteMessage extends BaseWsMessage {
   type: 'run.complete';
   // ...
 }

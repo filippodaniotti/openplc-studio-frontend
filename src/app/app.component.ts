@@ -7,7 +7,7 @@ import { HeaderComponent } from './header/header.component';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { WsService } from './shared/services/ws.service';
-import { debounceTime, Subject, takeUntil, tap } from 'rxjs';
+import { Subject, takeUntil, tap } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -31,12 +31,11 @@ export class AppComponent implements OnInit {
       .getCompletionMessages()
       .pipe(
         takeUntil(this.destroy$),
-        debounceTime(300),
         tap((message: any) =>
           this.messageService.add({
             severity: 'success',
             summary: 'Run completed',
-            detail: `Run ${JSON.parse(message).msg} has completed`,
+            detail: `Run ${message.msg} has completed`,
           }),
         ),
       )
