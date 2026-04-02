@@ -29,3 +29,20 @@
   background-color: transparent;
   border-radius: 10px;
 }
+
+.p-breadcrumb.p-breadcrumb {
+  .p-breadcrumb-item-link {
+    text-decoration: none;
+
+    &:hover {
+      .p-breadcrumb-item-label {
+        color: var(--p-primary-color);
+        text-decoration: underline;
+      }
+
+      .p-breadcrumb-item-icon {
+        color: var(--p-primary-color);
+      }
+    }
+  }
+}

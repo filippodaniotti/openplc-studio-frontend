@@ -1,5 +1,5 @@
 :host ::ng-deep {
-  // ... stili esistenti dei bottoni ...
+  
 
   .p-dialog-header {
     padding-bottom: 0.5rem;
@@ -9,6 +9,7 @@
     padding: 0.5rem 0 1rem 0;
     margin-bottom: 1rem;
     border-bottom: 1px solid #e5e7eb;
+    padding-left: 8px;
 
     .p-breadcrumb {
       background: transparent;
@@ -17,9 +18,10 @@
 
       .p-menuitem-link {
         cursor: pointer;
-
-        &:hover {
+        &:hover,
+        &:hover * {
           color: #3b82f6;
+          text-decoration: underline !important;
         }
       }
 
@@ -29,6 +31,7 @@
     }
   }
 }
+
 
 :host {
   display: flex;
