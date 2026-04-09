@@ -17,7 +17,7 @@ export type WsMessage = RunCompleteMessage | any;
   providedIn: 'root',
 })
 export class WsService {
-  private wsEndpoint = '/ws';
+  private wsEndpoint = 'ws://localhost:8000/ws/runs';
   private socket$ = webSocket<WsMessage>(this.wsEndpoint).pipe(share());
   private completionMessages$: Observable<RunCompleteMessage> = this.socket$.pipe(
     filter((msg: WsMessage) => msg.type == 'run.complete'),

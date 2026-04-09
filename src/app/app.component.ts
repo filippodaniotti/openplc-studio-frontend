@@ -35,7 +35,7 @@ export class AppComponent implements OnInit {
           this.messageService.add({
             severity: 'success',
             summary: 'Run completed',
-            detail: `Run ${message.msg} has completed`,
+            detail: `La run ${message.run_name} è stata completata con successo`,
           }),
         ),
       )
