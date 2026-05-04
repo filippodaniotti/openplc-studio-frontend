@@ -8,6 +8,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { WsService } from './shared/services/ws.service';
 import { Subject, takeUntil, tap } from 'rxjs';
+import { RunCompletionMessage } from './shared/interfaces/ws.interface';
 
 @Component({
   selector: 'app-root',
@@ -31,11 +32,11 @@ export class AppComponent implements OnInit {
       .getCompletionMessages()
       .pipe(
         takeUntil(this.destroy$),
-        tap((message: any) =>
+        tap((message: RunCompletionMessage) =>
           this.messageService.add({
             severity: 'success',
             summary: 'Run completed',
-            detail: `La run ${message.run_name} è stata completata con successo`,
+            detail: `Run ${message.run_name} has successfully completed`,
           }),
         ),
       )
