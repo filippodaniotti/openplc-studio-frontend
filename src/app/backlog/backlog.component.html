@@ -1,40 +1,41 @@
 @if (runs && runs.length > 0) {
-  <div class="flex justify-content-between align-items-center mb-4 ml-4">
-    <h2 class="text-2xl font-semibold text-color m-0">Run history</h2>
-  </div>
-  <p-table [value]="runs" [tableStyle]="{ 'min-width': '50rem' }">
-    <ng-template #header>
-      <tr>
-        <th>Name</th>
-        <th>Created</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </ng-template>
-    <ng-template #body let-run>
-      <tr>
-        <td>{{ run.name }}</td>
-        <td>{{ run.created | date: 'MMM dd, yyyy HH:mm' }}</td>
-        <td><plc-run-status-badge [runStatus]="run.status"></plc-run-status-badge></td>
-        <td>
-          <p-button type="button" class="p-button-text" severity="info" (click)="onAnalyse(run)">
-            <i class="pi pi-chart-bar"></i>
-          </p-button>
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+<div class="flex justify-content-between align-items-center mb-4 ml-4">
+  <h2 class="text-2xl font-semibold text-color m-0">Run history</h2>
+</div>
+<p-table [value]="runs" [tableStyle]="{ 'min-width': '50rem' }">
+  <ng-template #header>
+    <tr>
+      <th>Name</th>
+      <th>Created</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-run>
+    <tr>
+      <td>{{ run.name }}</td>
+      <td>{{ run.created | date: 'MMM dd, yyyy HH:mm' }}</td>
+      <td><plc-run-status-badge [runStatus]="run.status"></plc-run-status-badge></td>
+      <td>
+        <p-button type="button" class="p-button-text" severity="info" pTooltip="Vai all'analisi" tooltipPosition="top"
+          (click)="onAnalyse(run)">
+          <i class="pi pi-chart-bar"></i>
+        </p-button>
+        <p-button type="button" class="p-button-text" severity="info" pTooltip="Vedi progresso" tooltipPosition="top"
+          (click)="onViewProgress(run)">
+          <i class="pi pi-spinner"></i>
+        </p-button>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
 }
 <div *ngIf="!runs || runs.length === 0" class="min-h-[400px] flex items-center justify-center">
   <div class="text-center">
     <i class="pi pi-inbox text-6xl mb-4 opacity-60"></i>
     <h3 class="text-xl font-semibold mb-2">No runs to show</h3>
     <p class="mb-4">Get started by creating your first run to analyze audio data.</p>
-    <p-button
-      label="Create First Run"
-      icon="pi pi-plus"
-      (click)="router.navigate(['/run-configurator'])"
-      class="p-button-lg"
-    ></p-button>
+    <p-button label="Create First Run" icon="pi pi-plus" (click)="router.navigate(['/run-configurator'])"
+      class="p-button-lg"></p-button>
   </div>
 </div>

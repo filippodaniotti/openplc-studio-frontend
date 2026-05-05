@@ -8,4 +8,16 @@ export interface RunCompletionMessage extends BaseWsMessage {
   success: boolean;
 }
 
-export type WsMessage = RunCompletionMessage | any;
+export interface NodeProgress {
+  description: string;
+  current: number;
+  total: number | null;
+}
+
+export interface RunProgressMessage extends BaseWsMessage {
+  type: 'run.progress';
+  run_name: string;
+  nodes: NodeProgress[];
+}
+
+export type WsMessage = RunCompletionMessage | RunProgressMessage | any;

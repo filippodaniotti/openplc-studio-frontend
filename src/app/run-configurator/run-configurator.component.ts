@@ -47,7 +47,7 @@ export class RunConfiguratorComponent implements OnInit {
     private readonly messageService: MessageService,
     private readonly router: Router,
     public runConfigService: RunConfiguratorService,
-  ) {}
+  ) { }
 
   get packetLossSimulatorConfig(): ModuleWithCount[] {
     return this.runConfigService.modulesSelection.value[ModuleType.PacketLossSimulator];
@@ -86,7 +86,7 @@ export class RunConfiguratorComponent implements OnInit {
     return true;
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void { }
 
   private isModuleArray(val: unknown): val is Module[] {
     return Array.isArray(val) && val.every((v) => v && typeof v === 'object' && 'name' in v && 'settings' in v);
@@ -154,7 +154,7 @@ export class RunConfiguratorComponent implements OnInit {
           }),
         ),
         tap(() => this.runConfigService.resetModuleSelection()),
-        tap(() => this.router.navigate(['/backlog'])),
+        tap((createdRun) => this.router.navigate(['/run-progress', createdRun.id])),
       )
       .subscribe();
   }

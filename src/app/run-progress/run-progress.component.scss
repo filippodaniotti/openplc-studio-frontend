@@ -1,0 +1,13 @@
+.run-progress-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.nodes-list {
+  .node-item {
+    &:not(:last-child) {
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--surface-border);
+    }
+  }
+}
