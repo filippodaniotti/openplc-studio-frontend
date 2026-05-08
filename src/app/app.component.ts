@@ -13,7 +13,7 @@ import { RunCompletionMessage } from './shared/interfaces/ws.interface';
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, ButtonModule, ToggleButtonModule, FormsModule, HeaderComponent, ToastModule],
-  providers: [MessageService, WsService],
+  providers: [MessageService],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })

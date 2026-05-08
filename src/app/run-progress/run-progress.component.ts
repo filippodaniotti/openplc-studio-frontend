@@ -47,7 +47,16 @@ export class RunProgressComponent implements OnInit, OnDestroy {
       .pipe(
         takeUntil(this.destroy$),
         tap((message: RunProgressMessage) => {
-          this.nodes = message.nodes;
+          const updated = [...this.nodes];
+          message.nodes.forEach(incomingNode => {
+            const index = updated.findIndex(n => n.description === incomingNode.description);
+            if (index >= 0) {
+              updated[index] = { ...incomingNode };
+            } else {
+              updated.push({ ...incomingNode });
+            }
+          });
+          this.nodes = updated;
         }),
       )
       .subscribe();
@@ -61,6 +70,10 @@ export class RunProgressComponent implements OnInit, OnDestroy {
           if (this.run) {
             this.run = { ...this.run, status: RunStatus.COMPLETED };
           }
+          this.nodes = this.nodes.map(node => ({
+            ...node,
+            current: node.total ?? node.current,
+          }));
         }),
       )
       .subscribe();

@@ -1,43 +1,52 @@
 @if (run) {
-<div class="run-progress-container p-4">
+  <div class="run-progress-container p-4">
 
-  <div class="flex align-items-center justify-content-between mb-4">
-    <div class="flex align-items-center gap-3">
-      <h2 class="text-2xl font-semibold text-color m-0">{{ run.name }}</h2>
+    <div class="mb-4">
+      <h2 class="text-2xl font-semibold text-color m-0 mb-2">{{ run.name }}</h2>
       <plc-run-status-badge [runStatus]="run.status"></plc-run-status-badge>
     </div>
-    <p-button label="Vai all'analisi" icon="pi pi-chart-bar" severity="info" [disabled]="!isCompleted"
-      (click)="onGoToAnalysis()"></p-button>
-  </div>
 
-  @if (nodes.length > 0) {
-  <p-card>
-    <div class="nodes-list flex flex-column gap-3">
-      @for (node of nodes; track node.description) {
-      <div class="node-item">
-        <div class="flex justify-content-between align-items-center mb-1">
-          <span class="text-sm font-medium text-color">{{ node.description }}</span>
-          <span class="text-sm text-color-secondary">
-            {{ node.current }}{{ node.total ? ' / ' + node.total : '' }}
-          </span>
+    @if (nodes.length > 0) {
+      <p-card>
+        <div class="nodes-list flex flex-column gap-2">
+          @for (node of nodes; track node.description) {
+            <div class="node-item flex align-items-center gap-3">
+              <span class="node-label text-sm text-color">{{ node.description }}</span>
+              <div class="flex-1">
+                <p-progressBar
+                  [value]="getPercentage(node)"
+                  [showValue]="false"
+                ></p-progressBar>
+              </div>
+              <span class="text-sm text-color-secondary white-space-nowrap">
+                {{ node.current }}{{ node.total ? ' / ' + node.total : '' }}
+              </span>
+            </div>
+          }
         </div>
-        <p-progressBar [value]="getPercentage(node)" [showValue]="true"></p-progressBar>
-      </div>
-      }
-    </div>
-  </p-card>
-  } @else {
-  <p-card>
-    <div class="flex align-items-center justify-content-center gap-2 py-4">
-      <i class="pi pi-spin pi-spinner text-2xl text-primary"></i>
-      <span class="text-color-secondary">In attesa dei dati di progresso...</span>
-    </div>
-  </p-card>
-  }
+      </p-card>
+    } @else {
+      <p-card>
+        <div class="flex align-items-center justify-content-center gap-2 py-4">
+          <i class="pi pi-spin pi-spinner text-2xl text-primary"></i>
+          <span class="text-color-secondary">In attesa dei dati di progresso...</span>
+        </div>
+      </p-card>
+    }
 
-</div>
+    <div class="flex justify-content-center mt-4">
+      <p-button
+        label="Vai all'analisi"
+        icon="pi pi-chart-bar"
+        severity="info"
+        [disabled]="!isCompleted"
+        (click)="onGoToAnalysis()"
+      ></p-button>
+    </div>
+
+  </div>
 } @else {
-<div class="flex align-items-center justify-content-center min-h-screen">
-  <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
-</div>
+  <div class="flex align-items-center justify-content-center min-h-screen">
+    <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+  </div>
 }
