@@ -11,6 +11,7 @@ import { Run } from '../shared/interfaces/run.interface';
 import { NodeProgress, RunProgressMessage } from '../shared/interfaces/ws.interface';
 import { RunStatusBadgeComponent } from '../shared/components/run-status-badge/run-status-badge.component';
 import { RunStatus } from '../shared/enums/run-status.enum';
+import { ViewEncapsulation } from '@angular/core';
 
 @Component({
   selector: 'plc-run-progress',
@@ -18,6 +19,7 @@ import { RunStatus } from '../shared/enums/run-status.enum';
   imports: [CommonModule, ButtonModule, ProgressBarModule, CardModule, RunStatusBadgeComponent],
   templateUrl: './run-progress.component.html',
   styleUrl: './run-progress.component.scss',
+  encapsulation: ViewEncapsulation.None,
 })
 export class RunProgressComponent implements OnInit, OnDestroy {
   public run: Run | null = null;

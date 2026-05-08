@@ -8,17 +8,18 @@
 
     @if (nodes.length > 0) {
       <p-card>
-        <div class="nodes-list flex flex-column gap-2">
+        <div class="nodes-list">
           @for (node of nodes; track node.description) {
-            <div class="node-item flex align-items-center gap-3">
-              <span class="node-label text-sm text-color">{{ node.description }}</span>
-              <div class="flex-1">
+            <div class="node-item">
+              <span class="node-label">{{ node.description }}</span>
+              <div class="node-progress-wrapper">
                 <p-progressBar
-                  [value]="getPercentage(node)"
+                  [value]="getPercentage(node) || 0"
                   [showValue]="false"
+                  styleClass="run-progress-bar"
                 ></p-progressBar>
               </div>
-              <span class="text-sm text-color-secondary white-space-nowrap">
+              <span class="node-counter">
                 {{ node.current }}{{ node.total ? ' / ' + node.total : '' }}
               </span>
             </div>
