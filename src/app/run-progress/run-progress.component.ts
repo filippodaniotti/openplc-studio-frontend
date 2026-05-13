@@ -12,6 +12,7 @@ import { NodeProgress, RunProgressMessage } from '../shared/interfaces/ws.interf
 import { RunStatusBadgeComponent } from '../shared/components/run-status-badge/run-status-badge.component';
 import { RunStatus } from '../shared/enums/run-status.enum';
 import { ViewEncapsulation } from '@angular/core';
+import { ModuleType } from '../shared/enums/module-type.enum';
 
 @Component({
   selector: 'plc-run-progress',
@@ -36,12 +37,33 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     private readonly runsClient: RunsClient,
   ) { }
 
+  private buildNodesFromRun(run: Run): NodeProgress[] {
+    const nodes: NodeProgress[] = [];
+    const moduleTypes = [
+      ModuleType.PacketLossSimulator,
+      ModuleType.PLCAlgorithm,
+      ModuleType.OutputAnalyser,
+    ] as const;
+    for (const type of moduleTypes) {
+      for (const module of run.modules[type]) {
+        nodes.push({ description: module.name, current: 1, total: 1 });
+      }
+    }
+    return nodes;
+  }
+
   public ngOnInit(): void {
     this.runId = this.route.snapshot.paramMap.get('id')!;
 
     this.runsClient
       .getRun(this.runId)
-      .pipe(tap((run: Run) => (this.run = run)))
+      .pipe(tap((run: Run) => {
+        this.run = run;
+        if (run.status === RunStatus.COMPLETED || run.status === RunStatus.FAILED) {
+          this.isCompleted = true;
+          this.nodes = this.buildNodesFromRun(run);
+        }
+      }))
       .subscribe();
 
     this.wsService
@@ -49,6 +71,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
       .pipe(
         takeUntil(this.destroy$),
         tap((message: RunProgressMessage) => {
+          console.log('Progress message:', JSON.stringify(message));
           const updated = [...this.nodes];
           message.nodes.forEach(incomingNode => {
             const index = updated.findIndex(n => n.description === incomingNode.description);

@@ -33,22 +33,20 @@
 .node-progress-wrapper {
   flex: 1;
   min-width: 0;
-}
 
-
-.run-progress-bar {
-  height: 12px;
-  border-radius: 6px;
-  background: var(--surface-300);
-  overflow: hidden;
-
-  .p-progressbar-value {
-    background: var(--primary-color) !important;
+  .p-progressbar {
+    height: 12px;
     border-radius: 6px;
-  }
+    background: var(--surface-300);
 
-  .p-progressbar-label {
-    display: none !important;
+    .p-progressbar-value {
+      background: var(--primary-color);
+      border-radius: 6px;
+    }
+
+    .p-progressbar-label {
+      display: none;
+    }
   }
 }
 
