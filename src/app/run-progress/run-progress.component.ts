@@ -37,7 +37,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     private readonly runsClient: RunsClient,
   ) { }
 
-  private buildNodesFromRun(run: Run, completed: boolean): NodeProgress[] { 
+  private buildNodesFromRun(run: Run, completed: boolean): NodeProgress[] {
     const nodes: NodeProgress[] = [];
     const moduleTypes = [
       ModuleType.PacketLossSimulator,
@@ -47,10 +47,10 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     for (const type of moduleTypes) {
       for (const module of run.modules[type]) {
         nodes.push({
-        description: module.name,
-        current: completed ? 1 : 0,
-        total: completed ? 1 : null,
-      });
+          description: module.name,
+          current: completed ? 1 : 0,
+          total: completed ? 1 : null,
+        });
       }
     }
     return nodes;
@@ -77,7 +77,9 @@ export class RunProgressComponent implements OnInit, OnDestroy {
       .pipe(
         takeUntil(this.destroy$),
         tap((message: RunProgressMessage) => {
-          console.log('Progress message:', JSON.stringify(message));
+          if (this.run && this.run.status === RunStatus.CREATED) {
+            this.run = { ...this.run, status: RunStatus.RUNNING };
+          }
           const updated = [...this.nodes];
           message.nodes.forEach(incomingNode => {
             const index = updated.findIndex(n => n.description === incomingNode.description);
