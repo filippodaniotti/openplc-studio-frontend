@@ -37,7 +37,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     private readonly runsClient: RunsClient,
   ) { }
 
-  private buildNodesFromRun(run: Run): NodeProgress[] {
+  private buildNodesFromRun(run: Run, completed: boolean): NodeProgress[] { 
     const nodes: NodeProgress[] = [];
     const moduleTypes = [
       ModuleType.PacketLossSimulator,
@@ -46,7 +46,11 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     ] as const;
     for (const type of moduleTypes) {
       for (const module of run.modules[type]) {
-        nodes.push({ description: module.name, current: 1, total: 1 });
+        nodes.push({
+        description: module.name,
+        current: completed ? 1 : 0,
+        total: completed ? 1 : null,
+      });
       }
     }
     return nodes;
@@ -61,7 +65,9 @@ export class RunProgressComponent implements OnInit, OnDestroy {
         this.run = run;
         if (run.status === RunStatus.COMPLETED || run.status === RunStatus.FAILED) {
           this.isCompleted = true;
-          this.nodes = this.buildNodesFromRun(run);
+          this.nodes = this.buildNodesFromRun(run, true);
+        } else {
+          this.nodes = this.buildNodesFromRun(run, false);
         }
       }))
       .subscribe();
