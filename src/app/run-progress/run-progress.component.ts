@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil, tap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
-import { ProgressBarModule } from 'primeng/progressbar';
+//import { ProgressBarModule } from 'primeng/progressbar';
 import { CardModule } from 'primeng/card';
 import { WsService } from '../shared/services/ws.service';
 import { RunsClient } from '../shared/clients/runs.client';
@@ -13,18 +13,19 @@ import { RunStatusBadgeComponent } from '../shared/components/run-status-badge/r
 import { RunStatus } from '../shared/enums/run-status.enum';
 import { ViewEncapsulation } from '@angular/core';
 import { ModuleType } from '../shared/enums/module-type.enum';
+import { TreeNode } from '../shared/interfaces/ws.interface';
 
 @Component({
   selector: 'plc-run-progress',
   standalone: true,
-  imports: [CommonModule, ButtonModule, ProgressBarModule, CardModule, RunStatusBadgeComponent],
+  imports: [CommonModule, ButtonModule,/* ProgressBarModule,*/ CardModule, RunStatusBadgeComponent],
   templateUrl: './run-progress.component.html',
   styleUrl: './run-progress.component.scss',
   encapsulation: ViewEncapsulation.None,
 })
 export class RunProgressComponent implements OnInit, OnDestroy {
   public run: Run | null = null;
-  public nodes: NodeProgress[] = [];
+  public nodes: TreeNode[] = [];
   public isCompleted = false;
 
   private runId!: string;
@@ -37,23 +38,31 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     private readonly runsClient: RunsClient,
   ) { }
 
-  private buildNodesFromRun(run: Run, completed: boolean): NodeProgress[] {
-    const nodes: NodeProgress[] = [];
-    const moduleTypes = [
-      ModuleType.PacketLossSimulator,
-      ModuleType.PLCAlgorithm,
-      ModuleType.OutputAnalyser,
-    ] as const;
-    for (const type of moduleTypes) {
-      for (const module of run.modules[type]) {
-        nodes.push({
-          description: module.name,
-          current: completed ? 1 : 0,
-          total: completed ? 1 : null,
-        });
-      }
-    }
-    return nodes;
+  private buildNodesFromRun(run: Run, completed: boolean): TreeNode[] {
+    const val = completed ? 1 : 0;
+    const tot = completed ? 1 : null;
+
+    return run.tracks.map(track => ({
+      description: track,
+      current: val,
+      total: tot,
+      children: run.modules[ModuleType.PacketLossSimulator].map(sim => ({
+        description: sim.name,
+        current: val,
+        total: tot,
+        children: run.modules[ModuleType.PLCAlgorithm].map(alg => ({
+          description: alg.name,
+          current: val,
+          total: tot,
+          children: run.modules[ModuleType.OutputAnalyser].map(out => ({
+            description: out.name,
+            current: val,
+            total: tot,
+            children: [],
+          })),
+        })),
+      })),
+    }));
   }
 
   public ngOnInit(): void {
@@ -84,9 +93,9 @@ export class RunProgressComponent implements OnInit, OnDestroy {
           message.nodes.forEach(incomingNode => {
             const index = updated.findIndex(n => n.description === incomingNode.description);
             if (index >= 0) {
-              updated[index] = { ...incomingNode };
+              updated[index] = { ...updated[index], current: incomingNode.current, total: incomingNode.total };
             } else {
-              updated.push({ ...incomingNode });
+              updated.push({ ...incomingNode, children: [] });
             }
           });
           this.nodes = updated;

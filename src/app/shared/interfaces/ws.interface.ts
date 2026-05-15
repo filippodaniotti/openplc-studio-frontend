@@ -20,4 +20,11 @@ export interface RunProgressMessage extends BaseWsMessage {
   nodes: NodeProgress[];
 }
 
+export interface TreeNode {
+  description: string;
+  current: number;
+  total: number | null;
+  children: TreeNode[];
+}
+
 export type WsMessage = RunCompletionMessage | RunProgressMessage | any;

@@ -1,44 +1,60 @@
-@if (run) {
-<div class="run-progress-container p-4">
-
-  <div class="mb-4">
-    <h2 class="text-2xl font-semibold text-color m-0 mb-2">{{ run.name }}</h2>
-    <plc-run-status-badge [runStatus]="run.status"></plc-run-status-badge>
-  </div>
-
-  @if (nodes.length > 0) {
+@if (nodes.length > 0) {
   <p-card>
     <div class="nodes-list">
       @for (node of nodes; track node.description) {
-      <div class="node-item">
-        <span class="node-label">{{ node.description }}</span>
-        <div class="node-progress-wrapper">
-          <div class="progress-track">
-            <div class="progress-fill" [style.width.%]="getPercentage(node)"></div>
+        <div class="node-item">
+          <span class="node-label">{{ node.description }}</span>
+          <div class="node-progress-wrapper">
+            <div class="progress-track">
+              <div class="progress-fill" [style.width.%]="getPercentage(node)"></div>
+            </div>
           </div>
+          <span class="node-counter">
+            {{ node.current }}{{ node.total ? ' / ' + node.total : '' }}
+          </span>
         </div>
-        <span class="node-counter">
-          {{ node.current }}{{ node.total ? ' / ' + node.total : '' }}
-        </span>
-      </div>
+        @for (child of node.children; track child.description) {
+          <div class="node-item node-level-1">
+            <span class="node-label">{{ child.description }}</span>
+            <div class="node-progress-wrapper">
+              <div class="progress-track">
+                <div class="progress-fill" [style.width.%]="getPercentage(child)"></div>
+              </div>
+            </div>
+            <span class="node-counter">
+              {{ child.current }}{{ child.total ? ' / ' + child.total : '' }}
+            </span>
+          </div>
+          @for (grandchild of child.children; track grandchild.description) {
+            <div class="node-item node-level-2">
+              <span class="node-label">{{ grandchild.description }}</span>
+              <div class="node-progress-wrapper">
+                <div class="progress-track">
+                  <div class="progress-fill" [style.width.%]="getPercentage(grandchild)"></div>
+                </div>
+              </div>
+              <span class="node-counter">
+                {{ grandchild.current }}{{ grandchild.total ? ' / ' + grandchild.total : '' }}
+              </span>
+            </div>
+            @for (leaf of grandchild.children; track leaf.description) {
+              <div class="node-item node-level-3">
+                <span class="node-label">{{ leaf.description }}</span>
+                <div class="node-progress-wrapper">
+                  <div class="progress-track">
+                    <div class="progress-fill" [style.width.%]="getPercentage(leaf)"></div>
+                  </div>
+                </div>
+                <span class="node-counter">
+                  {{ leaf.current }}{{ leaf.total ? ' / ' + leaf.total : '' }}
+                </span>
+              </div>
+            }
+          }
+        }
       }
     </div>
   </p-card>
-  } @else {
-  <p-card>
-    <div class="flex align-items-center justify-content-center gap-2 py-4">
-      <i class="pi pi-spin pi-spinner text-2xl text-primary"></i>
-      <span class="text-color-secondary">Waiting for progress data...</span>
-    </div>
-  </p-card>
-  }
-
-  <div class="flex justify-content-center mt-4">
-    <p-button label="Vai all'analisi" icon="pi pi-chart-bar" severity="info" [disabled]="!isCompleted"
-      (click)="onGoToAnalysis()"></p-button>
-  </div>
-
-</div>
 } @else {
 <div class="flex align-items-center justify-content-center min-h-screen">
   <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
