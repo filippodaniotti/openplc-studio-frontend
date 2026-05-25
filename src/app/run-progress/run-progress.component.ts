@@ -67,6 +67,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
 
   public ngOnInit(): void {
     this.runId = this.route.snapshot.paramMap.get('id')!;
+    this.wsService.sendRunId(this.runId);
 
     this.runsClient
       .getRun(this.runId)

@@ -4,6 +4,7 @@ interface BaseWsMessage {
 
 export interface RunCompletionMessage extends BaseWsMessage {
   type: 'run.complete';
+  run_id: string;
   run_name: string;
   success: boolean;
 }
@@ -16,6 +17,7 @@ export interface NodeProgress {
 
 export interface RunProgressMessage extends BaseWsMessage {
   type: 'run.progress';
+  run_id: string;
   run_name: string;
   nodes: NodeProgress[];
 }
