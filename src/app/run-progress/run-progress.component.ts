@@ -95,9 +95,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
             const index = updated.findIndex(n => n.description === incomingNode.description);
             if (index >= 0) {
               updated[index] = { ...updated[index], current: incomingNode.current, total: incomingNode.total };
-            } else {
-              updated.push({ ...incomingNode, children: [] });
-            }
+            } 
           });
           this.nodes = updated;
         }),
