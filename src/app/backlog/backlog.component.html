@@ -25,6 +25,11 @@
           (click)="onViewProgress(run)">
           <i class="pi pi-spinner"></i>
         </p-button>
+        <!--button for downloading config-->
+        <p-button type="button" class="p-button-text" severity="info" pTooltip="Download config" tooltipPosition="top"
+          (click)="onDownloadConfig(run)">
+          <i class="pi pi-download"></i>
+        </p-button>
       </td>
     </tr>
   </ng-template>

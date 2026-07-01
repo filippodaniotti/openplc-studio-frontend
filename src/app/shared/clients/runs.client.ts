@@ -15,7 +15,7 @@ export class RunsClient {
     Accept: 'application/json',
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   public createRun(run: Omit<Run, 'id' | 'created' | 'updated'>): Observable<Run> {
     return this.http
@@ -37,5 +37,15 @@ export class RunsClient {
 
   public getRunAssets(runId: string, depth: number): Observable<ArrayBuffer> {
     return this.http.get(`${this.api}/${runId}/assets/${depth}`, { responseType: 'arraybuffer' });
+  }
+
+  //method to export run config as a blob(Binary Large Object)
+  public exportRunConfig(runId: string): Observable<Blob> {
+    return this.http.get(`${this.api}/${runId}/config/export`, { responseType: 'blob' });
+  }
+
+  //method to validate run config
+  public validateRunConfig(config: object): Observable<object> {
+    return this.http.post(`${this.api}/config/validate`, config, { headers: this.headers });
   }
 }
