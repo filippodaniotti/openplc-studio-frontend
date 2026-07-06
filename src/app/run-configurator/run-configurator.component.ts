@@ -12,12 +12,13 @@ import { InputTextModule } from 'primeng/inputtext';
 import { LEFT, RIGHT } from './run-names-blueprint';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { tap } from 'rxjs';
+import { forkJoin, switchMap, tap } from 'rxjs';
 import { AudioTrackPickerComponent } from './audio-track-picker/audio-track-picker.component';
 import { Router } from '@angular/router';
 import { ModuleParameter, ModuleParameterSpec } from '../shared/interfaces/module-parameters.interface';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { RunConfiguratorService } from './run-configurator.service';
+import { ModulesClient } from '../shared/clients/modules.client';
 
 @Component({
   selector: 'plc-run-configurator',
@@ -44,6 +45,7 @@ export class RunConfiguratorComponent implements OnInit {
 
   constructor(
     private readonly runsClient: RunsClient,
+    private readonly modulesClient: ModulesClient, 
     private readonly messageService: MessageService,
     private readonly router: Router,
     public runConfigService: RunConfiguratorService,
@@ -161,5 +163,76 @@ export class RunConfiguratorComponent implements OnInit {
 
   public generateRandomRunName(): string {
     return `${LEFT[Math.floor(Math.random() * LEFT.length)]} ${RIGHT[Math.floor(Math.random() * RIGHT.length)]}`;
+  }
+
+  //sends config file to the backend for validation, 
+  //if valid, preloads the config into the configurator
+
+  public onUploadConfig(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const config = JSON.parse(reader.result as string);
+        this.runsClient.validateRunConfig(config).pipe(
+          switchMap((validatedConfig: any) =>
+            forkJoin({
+              [ModuleType.PacketLossSimulator]: this.modulesClient.getModuleTypes(ModuleType.PacketLossSimulator),
+              [ModuleType.PLCAlgorithm]: this.modulesClient.getModuleTypes(ModuleType.PLCAlgorithm),
+              [ModuleType.OutputAnalyser]: this.modulesClient.getModuleTypes(ModuleType.OutputAnalyser),
+              [ModuleType.CrossfadeSettings]: this.modulesClient.getModuleTypes(ModuleType.CrossfadeSettings),
+            }).pipe(
+              tap((specs: any) => {
+                const enriched: any = {};
+                for (const moduleType of Object.values(ModuleType)) {
+                  const configModules = validatedConfig.modules[moduleType] ?? [];
+                  const availableSpecs = specs[moduleType] ?? [];
+                  enriched[moduleType] = configModules.map((m: any) => {
+                    const spec = availableSpecs.find((s: any) => s.name === m.name);
+                    if (!spec) return m;
+                    return {
+                      ...spec,
+                      settings: spec.settings.map((specParam: any) => {
+                        const configParam = m.settings.find((p: any) => p.name === specParam.name);
+                        return {
+                          ...specParam,
+                          value: configParam?.value ?? specParam.default,
+                          availableValues: specParam.values,
+                        };
+                      }),
+                    };
+                  });
+                }
+                this.runName = validatedConfig.name;
+                this.audioTracksConfig = validatedConfig.tracks;
+                this.runConfigService.preloadConfig({ ...validatedConfig, modules: enriched });
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Config loaded',
+                  detail: `Configuration "${validatedConfig.name}" loaded successfully`,
+                });
+              })
+            )
+          ),
+        ).subscribe({
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Invalid config',
+              detail: 'The configuration file is invalid or contains unknown modules',
+            });
+          }
+        });
+      } catch {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Invalid file',
+          detail: 'The file is not a valid JSON',
+        });
+      }
+    };
+    reader.readAsText(file);
   }
 }

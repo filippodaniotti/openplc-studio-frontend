@@ -1,3 +1,12 @@
+<div class="flex justify-center mb-3">
+  <p-button
+    icon="pi pi-upload"
+    severity="secondary"
+    label="Load config"
+    (onClick)="fileInput.click()"
+  ></p-button>
+  <input #fileInput type="file" accept=".json" style="display:none" (change)="onUploadConfig($event)" />
+</div>
 <div class="flex justify-center">
   <div class="w-2/4">
     <p-inputgroup>
@@ -12,6 +21,7 @@
       ></p-button>
     </p-inputgroup>
   </div>
+  
 </div>
 <p-stepper [value]="1">
   <p-step-item [value]="1">
