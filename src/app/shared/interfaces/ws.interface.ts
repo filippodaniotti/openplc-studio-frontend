@@ -11,6 +11,7 @@ export interface RunCompletionMessage extends BaseWsMessage {
 
 export interface NodeProgress {
   description: string;
+  node_id: string | null;
   current: number;
   total: number | null;
 }
@@ -24,6 +25,7 @@ export interface RunProgressMessage extends BaseWsMessage {
 
 export interface TreeNode {
   description: string;
+  node_ids: string[];
   current: number;
   total: number | null;
   children: TreeNode[];

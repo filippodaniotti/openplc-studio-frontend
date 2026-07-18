@@ -38,24 +38,53 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     private readonly runsClient: RunsClient,
   ) { }
 
+  //function to update the tree nodes with the incoming node progress
+  private updateNodeByNodeId(node: TreeNode, incoming: NodeProgress): TreeNode {
+    if (node.node_ids.includes(incoming.node_id!)) {
+      return { ...node, current: incoming.current, total: incoming.total };
+    }
+    if (node.children.length === 0) {
+      return node;
+    }
+    return {
+      ...node,
+      children: node.children.map(child => this.updateNodeByNodeId(child, incoming)),
+    };
+  }
+
+  //function to build the tree nodes from the run object using slice to get the correct node_ids for each module type
   private buildNodesFromRun(run: Run, completed: boolean): TreeNode[] {
     const val = completed ? 1 : 0;
     const tot = completed ? 1 : null;
 
-    return run.tracks.map(track => ({
+    const plsModules = run.modules[ModuleType.PacketLossSimulator];
+    const plcModules = run.modules[ModuleType.PLCAlgorithm];
+    const oaModules = run.modules[ModuleType.OutputAnalyser];
+
+    const nPls = plsModules.length;
+    const nPlc = plcModules.length;
+
+    return run.tracks.map((track, trackIndex) => ({
       description: track,
+      node_ids: [],
       current: val,
       total: tot,
-      children: run.modules[ModuleType.PacketLossSimulator].map(sim => ({
+      children: plsModules.map(sim => ({
         description: sim.name,
+        node_ids: (sim.node_ids ?? []).slice(trackIndex, trackIndex + 1),
         current: val,
         total: tot,
-        children: run.modules[ModuleType.PLCAlgorithm].map(alg => ({
+        children: plcModules.map(alg => ({
           description: alg.name,
+          node_ids: (alg.node_ids ?? []).slice(trackIndex * nPls, (trackIndex + 1) * nPls),
           current: val,
           total: tot,
-          children: run.modules[ModuleType.OutputAnalyser].map(out => ({
+          children: oaModules.map(out => ({
             description: out.name,
+            node_ids: (out.node_ids ?? []).slice(
+              trackIndex * nPls * nPlc,
+              (trackIndex + 1) * nPls * nPlc,
+            ),
             current: val,
             total: tot,
             children: [],
@@ -65,6 +94,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     }));
   }
 
+  
   public ngOnInit(): void {
     this.runId = this.route.snapshot.paramMap.get('id')!;
     this.wsService.sendRunId(this.runId);
@@ -90,12 +120,11 @@ export class RunProgressComponent implements OnInit, OnDestroy {
           if (this.run && this.run.status === RunStatus.CREATED) {
             this.run = { ...this.run, status: RunStatus.RUNNING };
           }
-          const updated = [...this.nodes];
+          let updated = this.nodes;
           message.nodes.forEach(incomingNode => {
-            const index = updated.findIndex(n => n.description === incomingNode.description);
-            if (index >= 0) {
-              updated[index] = { ...updated[index], current: incomingNode.current, total: incomingNode.total };
-            } 
+            if (incomingNode.node_id) {
+              updated = updated.map(node => this.updateNodeByNodeId(node, incomingNode));
+            }
           });
           this.nodes = updated;
         }),
@@ -125,7 +154,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  public getPercentage(node: NodeProgress): number {
+  public getPercentage(node: TreeNode): number {
     if (!node.total || node.total === 0) return 0;
     return Math.round((node.current / node.total) * 100);
   }
