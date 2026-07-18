@@ -52,7 +52,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     };
   }
 
-  //function to build the tree nodes from the run object
+  //function to build the tree nodes from the run object using slice to get the correct node_ids for each module type
   private buildNodesFromRun(run: Run, completed: boolean): TreeNode[] {
     const val = completed ? 1 : 0;
     const tot = completed ? 1 : null;
