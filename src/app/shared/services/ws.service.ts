@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { filter, Observable, ReplaySubject, share, switchMap, take } from 'rxjs';
+import { filter, Observable, ReplaySubject, share } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { RunCompletionMessage, WsMessage, RunProgressMessage } from '../interfaces/ws.interface';
 
@@ -14,13 +14,9 @@ export class WsService {
   private runId$ = new ReplaySubject<string>(1);
 
   constructor() {
-    this.runId$.pipe(
-      take(1),
-      switchMap(runId => {
-        this.wsSubject$.next({ run_id: runId } as any);
-        return this.socket$;
-      })
-    ).subscribe();
+    this.runId$.subscribe(runId => {
+      this.wsSubject$.next({ run_id: runId } as any);
+    });
   }
 
   private completionMessages$: Observable<RunCompletionMessage> = this.socket$.pipe(
