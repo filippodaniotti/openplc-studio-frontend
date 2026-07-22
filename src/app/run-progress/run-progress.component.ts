@@ -38,6 +38,16 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     private readonly runsClient: RunsClient,
   ) { }
 
+  //function to fill the tree nodes as completed
+  private fillNodesAsCompleted(node: TreeNode): TreeNode {
+    return {
+      ...node,
+      current: 1,
+      total: 1,
+      children: node.children.map(child => this.fillNodesAsCompleted(child)),
+    };
+  }
+
   //function to update the tree nodes with the incoming node progress
   private updateNodeByNodeId(node: TreeNode, incoming: NodeProgress): TreeNode {
     if (node.node_ids.includes(incoming.node_id!)) {
@@ -51,6 +61,8 @@ export class RunProgressComponent implements OnInit, OnDestroy {
       children: node.children.map(child => this.updateNodeByNodeId(child, incoming)),
     };
   }
+
+
 
   //function to build the tree nodes from the run object using slice to get the correct node_ids for each module type
   private buildNodesFromRun(run: Run, completed: boolean): TreeNode[] {
@@ -94,7 +106,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     }));
   }
 
-  
+
   public ngOnInit(): void {
     this.runId = this.route.snapshot.paramMap.get('id')!;
     this.wsService.sendRunId(this.runId);
@@ -140,10 +152,11 @@ export class RunProgressComponent implements OnInit, OnDestroy {
           if (this.run) {
             this.run = { ...this.run, status: RunStatus.COMPLETED };
           }
-          this.nodes = this.nodes.map(node => ({
+          /*this.nodes = this.nodes.map(node => ({
             ...node,
             current: node.total ?? node.current,
-          }));
+          }));*/
+          this.nodes = this.nodes.map(node => this.fillNodesAsCompleted(node));
         }),
       )
       .subscribe();
