@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil, tap } from 'rxjs';
+import { Subject, takeUntil, tap, timer, switchMap, combineLatest  } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 //import { ProgressBarModule } from 'primeng/progressbar';
@@ -30,7 +30,8 @@ export class RunProgressComponent implements OnInit, OnDestroy {
 
   private runId!: string;
   private destroy$ = new Subject<void>();
-
+  private runRetchDone = new Subject<void>();
+  
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -111,37 +112,40 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     this.runId = this.route.snapshot.paramMap.get('id')!;
     this.wsService.sendRunId(this.runId);
 
-    this.runsClient
-      .getRun(this.runId)
-      .pipe(tap((run: Run) => {
-        this.run = run;
-        if (run.status === RunStatus.COMPLETED || run.status === RunStatus.FAILED) {
-          this.isCompleted = true;
-          this.nodes = this.buildNodesFromRun(run, true);
-        } else {
-          this.nodes = this.buildNodesFromRun(run, false);
-        }
-      }))
+    timer(400)
+      .pipe(
+        switchMap(() => this.runsClient.getRun(this.runId)),
+        tap((run: Run) => {
+          this.run = run;
+          if (run.status === RunStatus.COMPLETED || run.status === RunStatus.FAILED) {
+            this.isCompleted = true;
+            this.nodes = this.buildNodesFromRun(run, true);
+          } else {
+            this.nodes = this.buildNodesFromRun(run, false);
+          }
+        }),
+        tap(() => this.runRetchDone.next()),
+      )
       .subscribe();
 
-    this.wsService
-      .getProgressMessages()
+    combineLatest([this.wsService.getProgressMessages(), this.runRetchDone.asObservable()])
       .pipe(
-        takeUntil(this.destroy$),
-        tap((message: RunProgressMessage) => {
+        tap(([message, blank]: [RunProgressMessage, void]) => {
           if (this.run && this.run.status === RunStatus.CREATED) {
             this.run = { ...this.run, status: RunStatus.RUNNING };
           }
-          let updated = this.nodes;
-          message.nodes.forEach(incomingNode => {
+          let updated = structuredClone(this.nodes);
+          message.nodes.forEach((incomingNode) => {
             if (incomingNode.node_id) {
-              updated = updated.map(node => this.updateNodeByNodeId(node, incomingNode));
+              updated = updated.map((node) => this.updateNodeByNodeId(node, incomingNode));
             }
           });
           this.nodes = updated;
         }),
+        takeUntil(this.destroy$),
       )
       .subscribe();
+
 
     this.wsService
       .getCompletionMessages()
