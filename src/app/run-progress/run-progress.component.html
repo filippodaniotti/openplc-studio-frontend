@@ -7,7 +7,7 @@
       <span class="node-label">{{ node.description }}</span>
       <div class="node-progress-wrapper">
         <div class="progress-track">
-          <div class="progress-fill" [style.width.%]="getPercentage(node)"></div>
+          <div class="progress-fill" [style.width.%]="getPercentage(node, true)"></div>
         </div>
       </div>
 

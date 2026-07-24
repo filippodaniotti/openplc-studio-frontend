@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil, tap, timer, switchMap, combineLatest  } from 'rxjs';
+import { Subject, takeUntil, tap, timer, switchMap, combineLatest } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 //import { ProgressBarModule } from 'primeng/progressbar';
@@ -31,7 +31,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
   private runId!: string;
   private destroy$ = new Subject<void>();
   private runRetchDone = new Subject<void>();
-  
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -171,9 +171,23 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  public getPercentage(node: TreeNode): number {
+  public getPercentage(node: TreeNode, isRoot = false): number {
+    if (isRoot) {
+      const leafPercentages = this.collectLeafPercentages(node);
+      if (leafPercentages.length === 0) return 0;
+      const avg = leafPercentages.reduce((sum, p) => sum + p, 0) / leafPercentages.length;
+      return Math.round(avg);
+    }
     if (!node.total || node.total === 0) return 0;
     return Math.round((node.current / node.total) * 100);
+  }
+
+  private collectLeafPercentages(node: TreeNode): number[] {
+    if (node.children.length === 0) {
+      if (!node.total || node.total === 0) return [0];
+      return [Math.round((node.current / node.total) * 100)];
+    }
+    return node.children.flatMap(child => this.collectLeafPercentages(child));
   }
 
   public onGoToAnalysis(): void {
