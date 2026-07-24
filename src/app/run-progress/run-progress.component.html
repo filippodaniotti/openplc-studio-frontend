@@ -1,5 +1,6 @@
 @if (nodes.length > 0) {
 <p-card>
+  <h3 class="run-title">{{ run?.name }}</h3>
   <div class="nodes-list">
     @for (node of nodes; track node.description) {
     <div class="node-item">
@@ -9,9 +10,7 @@
           <div class="progress-fill" [style.width.%]="getPercentage(node)"></div>
         </div>
       </div>
-      <span class="node-counter">
-        {{ node.current }}{{ node.total ? ' / ' + node.total : '' }}
-      </span>
+
     </div>
     @for (child of node.children; track child.description) {
     <div class="node-item node-level-1">
@@ -21,9 +20,7 @@
           <div class="progress-fill" [style.width.%]="getPercentage(child)"></div>
         </div>
       </div>
-      <span class="node-counter">
-        {{ child.current }}{{ child.total ? ' / ' + child.total : '' }}
-      </span>
+
     </div>
     @for (grandchild of child.children; track grandchild.description) {
     <div class="node-item node-level-2">
@@ -33,9 +30,7 @@
           <div class="progress-fill" [style.width.%]="getPercentage(grandchild)"></div>
         </div>
       </div>
-      <span class="node-counter">
-        {{ grandchild.current }}{{ grandchild.total ? ' / ' + grandchild.total : '' }}
-      </span>
+
     </div>
     @for (leaf of grandchild.children; track leaf.description) {
     <div class="node-item node-level-3">
@@ -45,9 +40,7 @@
           <div class="progress-fill" [style.width.%]="getPercentage(leaf)"></div>
         </div>
       </div>
-      <span class="node-counter">
-        {{ leaf.current }}{{ leaf.total ? ' / ' + leaf.total : '' }}
-      </span>
+
     </div>
     }
     }
