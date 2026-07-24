@@ -14,11 +14,12 @@ import { RunStatus } from '../shared/enums/run-status.enum';
 import { ViewEncapsulation } from '@angular/core';
 import { ModuleType } from '../shared/enums/module-type.enum';
 import { TreeNode } from '../shared/interfaces/ws.interface';
+import { SkeletonModule } from 'primeng/skeleton';
 
 @Component({
   selector: 'plc-run-progress',
   standalone: true,
-  imports: [CommonModule, ButtonModule,/* ProgressBarModule,*/ CardModule, RunStatusBadgeComponent],
+  imports: [CommonModule, ButtonModule,/* ProgressBarModule,*/ CardModule, RunStatusBadgeComponent, SkeletonModule],
   templateUrl: './run-progress.component.html',
   styleUrl: './run-progress.component.scss',
   encapsulation: ViewEncapsulation.None,

@@ -54,7 +54,13 @@
   }
 </p-card>
 } @else {
-<div class="flex align-items-center justify-content-center min-h-screen">
-  <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+<p-card>
+<p-skeleton width="200px" height="1.5rem" styleClass="mb-3"></p-skeleton>
+  @for (i of [1,2,3,4]; track i) {
+<div class="flex align-items-center gap-3 mb-3">
+<p-skeleton width="140px" height="1rem"></p-skeleton>
+<p-skeleton width="300px" height="10px" borderRadius="5px"></p-skeleton>
 </div>
+  }
+</p-card>
 }
