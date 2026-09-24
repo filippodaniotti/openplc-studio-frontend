@@ -1,0 +1,55 @@
+<div class="spectral-heatmap">
+  @if (errorMessage) {
+    <p class="spectral-heatmap__message">{{ errorMessage }}</p>
+  } @else {
+    <div class="spectral-heatmap__controls">
+      @if (hasMultipleChannels) {
+        <div class="spectral-heatmap__control">
+          <span>Channel</span>
+          <p-selectbutton
+            [(ngModel)]="selectedChannel"
+            [options]="channelOptions"
+            [allowEmpty]="false"
+            size="small"
+            (ngModelChange)="onChannelChange()"
+          />
+        </div>
+      }
+
+      <div class="spectral-heatmap__control">
+        <span>Frequency scale</span>
+        <p-selectbutton
+          [(ngModel)]="frequencyScale"
+          [options]="frequencyScaleOptions"
+          [allowEmpty]="false"
+          size="small"
+          (ngModelChange)="onFrequencyScaleChange()"
+        />
+      </div>
+    </div>
+
+    <div class="spectral-heatmap__chart">
+      <canvas #canvas aria-label="Spectral energy heatmap"></canvas>
+      @if (tooltip) {
+        <div
+          class="spectral-heatmap__tooltip"
+          [style.left.px]="tooltip.x"
+          [style.top.px]="tooltip.y"
+          aria-live="polite"
+        >
+          <strong>{{ tooltip.channel }}</strong>
+          <span>{{ tooltip.time | number: '1.3-3' }} s</span>
+          <span>
+            @if (tooltipUsesKhz) {
+              {{ tooltip.frequency / 1000 | number: '1.2-2' }} kHz
+            } @else {
+              {{ tooltip.frequency | number: '1.0-0' }} Hz
+            }
+          </span>
+          <span>{{ tooltip.relativeDb | number: '1.1-1' }} dB</span>
+          <span>Energy: {{ formatEnergy(tooltip.rawEnergy) }}</span>
+        </div>
+      }
+    </div>
+  }
+</div>

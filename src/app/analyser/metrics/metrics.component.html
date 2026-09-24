@@ -1,16 +1,16 @@
-@if (!this.metrics) {
+@if (!metrics.length) {
   Select a Reconstructed track to analyze metrics
 }
 
 <p-multiselect
-  [options]="metricsWithLabels"
+  [options]="metricOptions"
   [(ngModel)]="displayMetrics"
   placeholder="Select Metrics"
   display="chip"
   styleClass="w-full"
   optionLabel="displayName"
   appendTo="body"
-  [style]="{ display: metrics ? 'flex' : 'none' }"
+  [style]="{ display: metrics.length ? 'flex' : 'none' }"
 >
   <ng-template pTemplate="item" let-option>
     {{ option | metricLabel }}
@@ -18,32 +18,50 @@
 </p-multiselect>
 
 <div #chartContainer>
-  @for (chartData of chartData; track chartData; let i = $index) {
-    <div [style]="{ display: displayMetricsIndexes.includes(i) ? 'block' : 'none' }">
-      <p-divider></p-divider>
+  @for (visualization of visualizations; track visualization.metric.index) {
+    @if (isMetricDisplayed(visualization.metric)) {
       <div>
-        <div class="flex flex-row items-center justify-center w-full gap-3">
-          <h1 class="font-sans text-xl">
-            {{ metrics[i] | metricLabel }}
-          </h1>
-          <p-button
-            type="button"
-            (click)="configDrawerVisible = true"
-            [rounded]="true"
-            severity="secondary"
-            icon="pi pi-info-circle"
-            size="small"
-          />
+        <p-divider />
+        <div>
+          <div class="flex flex-row items-center justify-center w-full gap-3">
+            <h1 class="font-sans text-xl">
+              {{ visualization.metric | metricLabel }}
+            </h1>
+            <p-button
+              type="button"
+              (click)="configDrawerVisible = true"
+              [rounded]="true"
+              severity="secondary"
+              icon="pi pi-info-circle"
+              size="small"
+            />
+          </div>
+
+          @switch (visualization.kind) {
+            @case ('chart') {
+              <div [attr.data-standard-metric-index]="visualization.metric.index">
+                <p-chart
+                  [type]="visualization.type"
+                  [data]="visualization.data"
+                  [options]="visualization.options"
+                  [width]="'100%'"
+                  [height]="'400px'"
+                />
+              </div>
+            }
+            @case ('spectral') {
+              <plc-spectral-energy-heatmap
+                [metric]="visualization.metric"
+                [fallbackIndex]="visualization.fallbackIndex"
+              />
+            }
+            @case ('unsupported') {
+              <p class="p-4 text-center text-muted-color">{{ visualization.message }}</p>
+            }
+          }
         </div>
-        <p-chart
-          [type]="chartTypes[i]"
-          [data]="chartData"
-          [options]="chartOptions[i]"
-          [width]="'100%'"
-          [height]="'400px'"
-        />
       </div>
-    </div>
+    }
   }
 </div>
 
