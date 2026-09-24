@@ -1,7 +1,20 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { WavesurferWrapperComponent } from './wavesurfer-wrapper/wavesurfer-wrapper.component';
 import { RunsClient } from '../shared/clients/runs.client';
-import { combineLatest, filter, from, map, of, ReplaySubject, Subject, switchMap, take, takeUntil, tap } from 'rxjs';
+import {
+  combineLatest,
+  filter,
+  from,
+  map,
+  Observable,
+  of,
+  ReplaySubject,
+  Subject,
+  switchMap,
+  take,
+  takeUntil,
+  tap,
+} from 'rxjs';
 import { FileDescription, parseTar } from 'tarparser';
 import { AnalysisService, FileDescriptionWithJson, MetricRaw, ReconstructedTrackRaw } from './analysis.service';
 import { FormsModule } from '@angular/forms';
@@ -18,6 +31,7 @@ import { MetricsComponent } from './metrics/metrics.component';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
 import { RunConfigurationDrawerComponent } from '../shared/components/run-configuration-drawer/run-configuration-drawer.component';
+import { RunStatus } from '../shared/enums/run-status.enum';
 
 Chart.register(zoomPlugin);
 
@@ -98,8 +112,7 @@ export class AnalyserComponent {
       .subscribe();
 
     // FETCH ORIGINAL TRACKS
-    this.runsClient
-      .getRunAssets(runId, 0)
+    this.getCompletedRunAssets(runId, 0)
       .pipe(
         take(1),
         switchMap((buf: ArrayBuffer) => from(parseTar(buf))),
@@ -121,7 +134,7 @@ export class AnalyserComponent {
 
     // FETCH SAMPLE MASKS
     combineLatest([
-      this.runsClient.getRunAssets(runId, 1).pipe(
+      this.getCompletedRunAssets(runId, 1).pipe(
         take(1),
         switchMap((buf) => from(parseTar(buf))),
         switchMap((files: FileDescription[]) => of(files.filter((f) => f.name !== '././@PaxHeader'))),
@@ -171,7 +184,7 @@ export class AnalyserComponent {
 
     // FETCH RECONSTRUCTED TRACKS
     combineLatest([
-      this.runsClient.getRunAssets(runId, 2).pipe(
+      this.getCompletedRunAssets(runId, 2).pipe(
         take(1),
         switchMap((buf: ArrayBuffer) => from(parseTar(buf))),
         switchMap((files: FileDescription[]) => of(files.filter((f) => f.name !== '././@PaxHeader'))),
@@ -215,7 +228,7 @@ export class AnalyserComponent {
 
     // FETCH METRICS
     combineLatest([
-      this.runsClient.getRunAssets(runId, 3).pipe(
+      this.getCompletedRunAssets(runId, 3).pipe(
         take(1),
         switchMap((buf) => from(parseTar(buf))),
         switchMap((files: FileDescription[]) => of(files.filter((f) => f.name !== '././@PaxHeader'))),
@@ -267,6 +280,14 @@ export class AnalyserComponent {
         tap(() => this.openPanel(AccordionPanels.ZOOM_LENS)),
       )
       .subscribe();
+  }
+
+  private getCompletedRunAssets(runId: string, depth: number): Observable<ArrayBuffer> {
+    return this.runFetchDone.pipe(
+      take(1),
+      filter(() => this.analysisService.run.value?.status === RunStatus.COMPLETED),
+      switchMap(() => this.runsClient.getRunAssets(runId, depth)),
+    );
   }
 
   public ngAfterViewInit() {

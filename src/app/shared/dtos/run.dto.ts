@@ -8,7 +8,7 @@ export interface RunDto {
   updated: string;
   author: string;
   name: string;
-  testbench_internal_id: string;
+  testbench_internal_id: string | null;
   status: RunStatus;
   tracks: string[];
   modules: {
@@ -20,8 +20,6 @@ export interface RunDto {
 export interface RunCreateDto {
   author: string;
   name: string;
-  testbench_internal_id: string;
-  status: RunStatus;
   tracks: string[];
   modules: {
     [ModuleType.PacketLossSimulator]: Module[];

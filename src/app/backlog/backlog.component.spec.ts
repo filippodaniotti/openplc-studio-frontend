@@ -15,24 +15,36 @@ describe('BacklogComponent run deletion', () => {
   let runsClient: jasmine.SpyObj<any>;
   let confirmationService: jasmine.SpyObj<any>;
   let messageService: jasmine.SpyObj<any>;
+  let router: jasmine.SpyObj<any>;
 
   beforeEach(() => {
     runsClient = jasmine.createSpyObj('RunsClient', ['getRunsPage', 'deleteRun']);
     confirmationService = jasmine.createSpyObj('ConfirmationService', ['confirm']);
     messageService = jasmine.createSpyObj('MessageService', ['add']);
+    router = jasmine.createSpyObj('Router', ['navigate']);
 
-    component = new BacklogComponent(
-      runsClient,
-      confirmationService,
-      messageService,
-      jasmine.createSpyObj('Router', ['navigate']),
-    );
+    component = new BacklogComponent(runsClient, confirmationService, messageService, router);
   });
 
-  it('allows deletion only for completed or failed runs', () => {
+  it('allows analysis only for completed runs', () => {
+    expect(component.isRunAnalyzable(completedRun)).toBeTrue();
+
+    for (const status of [RunStatus.CREATED, RunStatus.QUEUED, RunStatus.RUNNING, RunStatus.FAILED]) {
+      const run = { ...completedRun, status };
+      expect(component.isRunAnalyzable(run)).toBeFalse();
+      component.onAnalyse(run);
+    }
+
+    expect(router.navigate).not.toHaveBeenCalled();
+    component.onAnalyse(completedRun);
+    expect(router.navigate).toHaveBeenCalledOnceWith(['analyzer', completedRun.id]);
+  });
+
+  it('allows deletion for deferred or finished runs', () => {
     expect(component.isRunDeletable(completedRun)).toBeTrue();
     expect(component.isRunDeletable({ ...completedRun, status: RunStatus.FAILED })).toBeTrue();
-    expect(component.isRunDeletable({ ...completedRun, status: RunStatus.CREATED })).toBeFalse();
+    expect(component.isRunDeletable({ ...completedRun, status: RunStatus.CREATED })).toBeTrue();
+    expect(component.isRunDeletable({ ...completedRun, status: RunStatus.QUEUED })).toBeFalse();
     expect(component.isRunDeletable({ ...completedRun, status: RunStatus.RUNNING })).toBeFalse();
   });
 

@@ -17,9 +17,15 @@ export class RunsClient {
 
   constructor(private http: HttpClient) {}
 
-  public createRun(run: Omit<Run, 'id' | 'created' | 'updated'>): Observable<Run> {
+  public createRun(run: Pick<Run, 'author' | 'name' | 'tracks' | 'modules'>): Observable<Run> {
     return this.http
       .post<RunDto>(this.api, RunMapper.modelToCreateDto(run), { headers: this.headers })
+      .pipe(switchMap((dto: RunDto) => of(RunMapper.dtoToModel(dto))));
+  }
+
+  public executeRun(runId: string): Observable<Run> {
+    return this.http
+      .post<RunDto>(`${this.api}/${runId}/execute`, {}, { headers: this.headers })
       .pipe(switchMap((dto: RunDto) => of(RunMapper.dtoToModel(dto))));
   }
 

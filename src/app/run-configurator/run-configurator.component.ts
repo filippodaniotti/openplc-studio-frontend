@@ -6,14 +6,13 @@ import { StepperModule } from 'primeng/stepper';
 import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
 import { Module } from '../shared/interfaces/module.interface';
-import { RunStatus } from '../shared/enums/run-status.enum';
 import { Run } from '../shared/interfaces/run.interface';
 import { RunsClient } from '../shared/clients/runs.client';
 import { InputTextModule } from 'primeng/inputtext';
 import { LEFT, RIGHT } from './run-names-blueprint';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { forkJoin, switchMap, tap } from 'rxjs';
+import { catchError, finalize, forkJoin, of, switchMap, tap } from 'rxjs';
 import { AudioTrackPickerComponent } from './audio-track-picker/audio-track-picker.component';
 import { Router } from '@angular/router';
 import { ModuleParameter, ModuleParameterSpec } from '../shared/interfaces/module-parameters.interface';
@@ -41,6 +40,7 @@ export class RunConfiguratorComponent implements OnInit {
   public ModuleType: typeof ModuleType = ModuleType;
 
   public runName: string = this.generateRandomRunName();
+  public submitting = false;
 
   private _audioTracksConfig: string[] = [];
 
@@ -133,9 +133,12 @@ export class RunConfiguratorComponent implements OnInit {
   }
 
   private validationErrorMessage(error: unknown): string {
-    if (!(error instanceof HttpErrorResponse) || error.status !== 422 || !Array.isArray(error.error?.detail)) {
+    if (!(error instanceof HttpErrorResponse) || error.status !== 422) {
       return 'The run could not be created. Please try again.';
     }
+
+    if (typeof error.error?.detail === 'string') return error.error.detail;
+    if (!Array.isArray(error.error?.detail)) return 'The run configuration is invalid.';
 
     const messages = error.error.detail
       .map((detail: { module_name?: string; setting?: string | null; error?: string }) => {
@@ -147,12 +150,12 @@ export class RunConfiguratorComponent implements OnInit {
     return messages.length ? messages.join(' ') : 'The run configuration is invalid.';
   }
 
-  public createRun(): void {
+  public createRun(execute: boolean): void {
+    if (this.submitting) return;
+
     const run = {
       author: 'default',
       name: this.runName,
-      testbenchInternalId: '',
-      status: RunStatus.CREATED,
       tracks: this.audioTracksConfig,
       modules: {
         [ModuleType.PacketLossSimulator]: this.mapSpecToConfig(this.packetLossSimulatorConfig),
@@ -161,18 +164,41 @@ export class RunConfiguratorComponent implements OnInit {
       },
     };
 
+    this.submitting = true;
     this.runsClient
       .createRun(run)
       .pipe(
-        tap((createdRun: Run) =>
+        tap((createdRun: Run) => {
           this.messageService.add({
             severity: 'info',
             summary: 'Created',
             detail: `Run ${createdRun.name} was created`,
-          }),
-        ),
-        tap(() => this.runConfigService.resetModuleSelection()),
-        tap((createdRun) => this.router.navigate(['/run-progress', createdRun.id])),
+          });
+          this.runConfigService.resetModuleSelection();
+        }),
+        switchMap((createdRun: Run) => {
+          if (!execute) return of(createdRun);
+
+          return this.runsClient.executeRun(createdRun.id).pipe(
+            tap(() =>
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Queued',
+                detail: `Run ${createdRun.name} was queued for execution`,
+              }),
+            ),
+            catchError(() => {
+              this.messageService.add({
+                severity: 'warn',
+                summary: 'Run saved',
+                detail: 'The run was saved but could not be queued. You can execute it from the progress page.',
+              });
+              return of(createdRun);
+            }),
+          );
+        }),
+        tap((createdRun: Run) => this.router.navigate(['/run-progress', createdRun.id])),
+        finalize(() => (this.submitting = false)),
       )
       .subscribe({
         error: (error: unknown) => {

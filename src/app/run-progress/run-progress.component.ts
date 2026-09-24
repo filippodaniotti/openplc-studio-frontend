@@ -3,7 +3,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { Subject, takeUntil } from 'rxjs';
+import { finalize, Subject, takeUntil } from 'rxjs';
 import { RunsClient } from '../shared/clients/runs.client';
 import { WsService } from '../shared/services/ws.service';
 import {
@@ -17,6 +17,7 @@ import { Module } from '../shared/interfaces/module.interface';
 import { Run } from '../shared/interfaces/run.interface';
 import { NodeProgress, RunCompletionMessage, RunProgressMessage } from '../shared/interfaces/ws.interface';
 import { RunStatus } from '../shared/enums/run-status.enum';
+import { MessageService } from 'primeng/api';
 
 type ProgressKind = 'track' | 'packet-loss' | 'plc' | 'output';
 type ProgressState = 'waiting' | 'running' | 'complete' | 'interrupted';
@@ -53,6 +54,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
   public configDrawerVisible = false;
   public focusedModule: FocusedRunModule | null = null;
   public focusedTrackIndex: number | null = null;
+  public executing = false;
 
   private runId = '';
   private readonly progressByNodeId = new Map<string, NodeProgress>();
@@ -64,6 +66,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     private readonly wsService: WsService,
     private readonly runsClient: RunsClient,
+    private readonly messageService: MessageService,
   ) {}
 
   public ngOnInit(): void {
@@ -102,6 +105,10 @@ export class RunProgressComponent implements OnInit, OnDestroy {
 
   public get isAnalysisAvailable(): boolean {
     return this.run?.status === RunStatus.COMPLETED;
+  }
+
+  public get canExecute(): boolean {
+    return this.run?.status === RunStatus.CREATED;
   }
 
   public getNodeProgress(node: ProgressTreeNode): DisplayProgress {
@@ -171,6 +178,35 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     this.router.navigate(['/analyzer', this.runId]);
   }
 
+  public onExecute(): void {
+    if (!this.canExecute || this.executing) return;
+
+    this.executing = true;
+    this.runsClient
+      .executeRun(this.runId)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.executing = false)),
+      )
+      .subscribe({
+        next: (run) => {
+          this.run = run;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Queued',
+            detail: `Run ${run.name} was queued for execution`,
+          });
+        },
+        error: (error) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Could not execute run',
+            detail: error.error?.detail ?? 'Please try again.',
+          });
+        },
+      });
+  }
+
   private loadRun(): void {
     this.runsClient
       .getRun(this.runId)
@@ -203,7 +239,9 @@ export class RunProgressComponent implements OnInit, OnDestroy {
 
   private applyProgressMessage(message: RunProgressMessage): void {
     if (message.run_id !== this.runId) return;
-    if (this.run?.status === RunStatus.CREATED) this.run = { ...this.run, status: RunStatus.RUNNING };
+    if (this.run?.status === RunStatus.CREATED || this.run?.status === RunStatus.QUEUED) {
+      this.run = { ...this.run, status: RunStatus.RUNNING };
+    }
 
     message.nodes.forEach((node) => {
       if (node.node_id) this.progressByNodeId.set(node.node_id, node);

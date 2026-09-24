@@ -7,12 +7,24 @@
     <p-inputgroup>
       <input type="text" pInputText [(ngModel)]="runName" variant="filled" placeholder="Enter run name" size="large" />
       <p-button
+        icon="pi pi-save"
+        label="Save"
+        severity="secondary"
+        size="large"
+        class="create-run-button"
+        (onClick)="createRun(false)"
+        [disabled]="!isConfigurationValid || submitting"
+        [loading]="submitting"
+      ></p-button>
+      <p-button
         icon="pi pi-play"
+        label="Save & execute"
         severity="success"
         size="large"
         class="create-run-button"
-        (onClick)="createRun()"
-        [disabled]="!isConfigurationValid"
+        (onClick)="createRun(true)"
+        [disabled]="!isConfigurationValid || submitting"
+        [loading]="submitting"
       ></p-button>
     </p-inputgroup>
   </div>

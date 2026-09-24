@@ -7,6 +7,7 @@ import { WsService } from '../shared/services/ws.service';
 import { RunProgressComponent } from './run-progress.component';
 import { RunStatus } from '../shared/enums/run-status.enum';
 import { ModuleType } from '../shared/enums/module-type.enum';
+import { MessageService } from 'primeng/api';
 
 const run = {
   id: 'run-1',
@@ -27,16 +28,24 @@ const run = {
 describe('RunProgressComponent', () => {
   let component: RunProgressComponent;
   let fixture: ComponentFixture<RunProgressComponent>;
+  let runsClient: jasmine.SpyObj<RunsClient>;
+  let messageService: jasmine.SpyObj<MessageService>;
   const progress$ = new Subject<any>();
   const completion$ = new Subject<any>();
 
   beforeEach(async () => {
+    runsClient = jasmine.createSpyObj<RunsClient>('RunsClient', ['getRun', 'executeRun']);
+    runsClient.getRun.and.returnValue(of(run));
+    runsClient.executeRun.and.returnValue(of({ ...run, status: RunStatus.QUEUED }));
+    messageService = jasmine.createSpyObj<MessageService>('MessageService', ['add']);
+
     await TestBed.configureTestingModule({
       imports: [RunProgressComponent],
       providers: [
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'run-1' } } } },
         { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
-        { provide: RunsClient, useValue: { getRun: () => of(run) } },
+        { provide: RunsClient, useValue: runsClient },
+        { provide: MessageService, useValue: messageService },
         {
           provide: AssetsClient,
           useValue: {
@@ -82,6 +91,25 @@ describe('RunProgressComponent', () => {
     expect(component.configDrawerVisible).toBeTrue();
     expect(component.focusedTrackIndex).toBe(1);
     expect(component.focusedModule).toBeNull();
+  });
+
+  it('queues a deferred run only once', () => {
+    component.run = { ...run, status: RunStatus.CREATED };
+
+    component.onExecute();
+    component.onExecute();
+
+    expect(runsClient.executeRun).toHaveBeenCalledOnceWith(run.id);
+    expect(component.run?.status).toBe(RunStatus.QUEUED);
+    expect(messageService.add).toHaveBeenCalledWith(jasmine.objectContaining({ summary: 'Queued' }));
+  });
+
+  it('moves queued runs to running when progress arrives', () => {
+    component.run = { ...run, status: RunStatus.QUEUED };
+
+    progress$.next({ run_id: 'run-1', nodes: [] });
+
+    expect(component.run.status).toBe(RunStatus.RUNNING);
   });
 
   it('ignores unrelated progress and marks successful completion as analysable', () => {

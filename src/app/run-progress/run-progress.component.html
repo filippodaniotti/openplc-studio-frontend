@@ -22,9 +22,21 @@
             <span>{{ run.created | date: 'MMM dd, yyyy HH:mm' }}</span>
           </div>
         </div>
-        @if (isAnalysisAvailable) {
-          <p-button label="Go to analysis" icon="pi pi-chart-bar" (onClick)="onGoToAnalysis()" />
-        }
+        <div class="plc-summary-actions">
+          @if (canExecute) {
+            <p-button
+              label="Execute"
+              icon="pi pi-play"
+              severity="success"
+              [loading]="executing"
+              [disabled]="executing"
+              (onClick)="onExecute()"
+            />
+          }
+          @if (isAnalysisAvailable) {
+            <p-button label="Go to analysis" icon="pi pi-chart-bar" (onClick)="onGoToAnalysis()" />
+          }
+        </div>
       </div>
 
       <div class="plc-summary-stats" aria-label="Run configuration summary">

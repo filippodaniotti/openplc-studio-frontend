@@ -78,7 +78,12 @@ export class BacklogComponent implements OnInit {
   }
 
   public onAnalyse(run: Run): void {
+    if (!this.isRunAnalyzable(run)) return;
     this.router.navigate(['analyzer', run.id]);
+  }
+
+  public isRunAnalyzable(run: Run): boolean {
+    return run.status === RunStatus.COMPLETED;
   }
 
   public onViewProgress(run: Run): void {
@@ -91,7 +96,7 @@ export class BacklogComponent implements OnInit {
   }
 
   public isRunDeletable(run: Run): boolean {
-    return run.status === RunStatus.COMPLETED || run.status === RunStatus.FAILED;
+    return run.status === RunStatus.CREATED || run.status === RunStatus.COMPLETED || run.status === RunStatus.FAILED;
   }
 
   public onDelete(run: Run): void {

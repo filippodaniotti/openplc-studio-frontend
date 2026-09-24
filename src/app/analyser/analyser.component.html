@@ -1,67 +1,74 @@
 <div class="mx-auto text-center text-2xl">
   <h1>{{ analysisService.run.value?.name }}</h1>
 </div>
-<div class="w-full">
-  <div class="py-4">
-    @if (analysisService.trackGroups.value && analysisService.trackGroups.value.length !== 0) {
-      <div class="flex flex-row items-center justify-center w-full gap-3">
-        <div class="w-2/4">
-          <p-cascadeselect
-            [ngModel]="analysisService.selectedTrackPlayback.value"
-            (ngModelChange)="analysisService.selectedTrackPlayback.next($event)"
-            [options]="$any(analysisService.trackGroups.value)"
-            optionLabel="name"
-            optionGroupLabel="originalTrack"
-            [optionGroupChildren]="['reconstructedTracks']"
-            styleClass="w-full"
-            placeholder="Select a track"
+
+@if (analysisService.run.value && analysisService.run.value.status !== 'completed') {
+  <div class="flex justify-center py-8">
+    <p>Run analysis requires completion.</p>
+  </div>
+} @else {
+  <div class="w-full">
+    <div class="py-4">
+      @if (analysisService.trackGroups.value && analysisService.trackGroups.value.length !== 0) {
+        <div class="flex flex-row items-center justify-center w-full gap-3">
+          <div class="w-2/4">
+            <p-cascadeselect
+              [ngModel]="analysisService.selectedTrackPlayback.value"
+              (ngModelChange)="analysisService.selectedTrackPlayback.next($event)"
+              [options]="$any(analysisService.trackGroups.value)"
+              optionLabel="name"
+              optionGroupLabel="originalTrack"
+              [optionGroupChildren]="['reconstructedTracks']"
+              styleClass="w-full"
+              placeholder="Select a track"
+            />
+          </div>
+          <p-button
+            type="button"
+            [rounded]="true"
+            severity="secondary"
+            icon="pi pi-info-circle"
+            size="small"
+            (click)="configDrawerVisible = true"
           />
         </div>
-        <p-button
-          type="button"
-          [rounded]="true"
-          severity="secondary"
-          icon="pi pi-info-circle"
-          size="small"
-          (click)="configDrawerVisible = true"
-        />
-      </div>
-    } @else {
-      <p-skeleton width="auto" height="2.5rem"></p-skeleton>
-    }
-  </div>
+      } @else {
+        <p-skeleton width="auto" height="2.5rem"></p-skeleton>
+      }
+    </div>
 
-  <div>
-    <plc-wavesurfer-wrapper></plc-wavesurfer-wrapper>
-  </div>
+    <div>
+      <plc-wavesurfer-wrapper></plc-wavesurfer-wrapper>
+    </div>
 
-  <p-accordion [value]="activePanels" [multiple]="true">
-    <p-accordion-panel [value]="AccordionPanels.ZOOM_LENS">
-      <p-accordion-header>Zoom Lens</p-accordion-header>
-      <p-accordion-content>
-        @if (analysisService.selectedPacketBounds.value && analysisService.selectedPacketBounds.value.length !== 0) {
-          <plc-zoom-lens></plc-zoom-lens>
-        } @else {
-          <p>Select a packet for analysis</p>
-        }
-      </p-accordion-content>
-    </p-accordion-panel>
-    <p-accordion-panel [value]="AccordionPanels.METRICS">
-      <p-accordion-header>Metrics</p-accordion-header>
-      <p-accordion-content>
-        <plc-metrics></plc-metrics>
-      </p-accordion-content>
-    </p-accordion-panel>
-    <p-accordion-panel [value]="AccordionPanels.SPECTROGRAM">
-      <p-accordion-header>Spectrogram</p-accordion-header>
-      <p-accordion-content>
-        @if (!isSpectrogramReady) {
-          <p-skeleton height="400px"></p-skeleton>
-        }
-        <div #spectrogram id="wave-spectrogram"></div>
-      </p-accordion-content>
-    </p-accordion-panel>
-  </p-accordion>
-</div>
+    <p-accordion [value]="activePanels" [multiple]="true">
+      <p-accordion-panel [value]="AccordionPanels.ZOOM_LENS">
+        <p-accordion-header>Zoom Lens</p-accordion-header>
+        <p-accordion-content>
+          @if (analysisService.selectedPacketBounds.value && analysisService.selectedPacketBounds.value.length !== 0) {
+            <plc-zoom-lens></plc-zoom-lens>
+          } @else {
+            <p>Select a packet for analysis</p>
+          }
+        </p-accordion-content>
+      </p-accordion-panel>
+      <p-accordion-panel [value]="AccordionPanels.METRICS">
+        <p-accordion-header>Metrics</p-accordion-header>
+        <p-accordion-content>
+          <plc-metrics></plc-metrics>
+        </p-accordion-content>
+      </p-accordion-panel>
+      <p-accordion-panel [value]="AccordionPanels.SPECTROGRAM">
+        <p-accordion-header>Spectrogram</p-accordion-header>
+        <p-accordion-content>
+          @if (!isSpectrogramReady) {
+            <p-skeleton height="400px"></p-skeleton>
+          }
+          <div #spectrogram id="wave-spectrogram"></div>
+        </p-accordion-content>
+      </p-accordion-panel>
+    </p-accordion>
+  </div>
+}
 
 <plc-run-configuration-drawer [(visible)]="configDrawerVisible" [run]="analysisService.run.value" />

@@ -11,6 +11,8 @@ export class RunStatusBadgeSeverityPipe implements PipeTransform {
     switch (value) {
       case RunStatus.CREATED:
         return 'info';
+      case RunStatus.QUEUED:
+        return 'secondary';
       case RunStatus.RUNNING:
         return 'warn';
       case RunStatus.FAILED:

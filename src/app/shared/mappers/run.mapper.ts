@@ -3,12 +3,10 @@ import { ModuleType } from '../enums/module-type.enum';
 import { Run, RunPage } from '../interfaces/run.interface';
 
 export class RunMapper {
-  static modelToCreateDto(run: Omit<Run, 'id' | 'created' | 'updated'>): RunCreateDto {
+  static modelToCreateDto(run: Pick<Run, 'author' | 'name' | 'tracks' | 'modules'>): RunCreateDto {
     return {
       author: run.author,
       name: run.name,
-      testbench_internal_id: run.testbenchInternalId,
-      status: run.status,
       tracks: run.tracks,
       modules: {
         [ModuleType.PacketLossSimulator]: run.modules[ModuleType.PacketLossSimulator],

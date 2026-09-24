@@ -8,7 +8,7 @@ export interface Run {
   updated: string;
   author: string;
   name: string;
-  testbenchInternalId: string;
+  testbenchInternalId: string | null;
   status: RunStatus;
   tracks: string[];
   modules: {
