@@ -1,0 +1,92 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { RunStatus } from '../shared/enums/run-status.enum';
+import { Run } from '../shared/interfaces/run.interface';
+import { BacklogComponent } from './backlog.component';
+
+const completedRun = {
+  id: 'run-1',
+  name: 'Completed run',
+  status: RunStatus.COMPLETED,
+} as Run;
+
+describe('BacklogComponent run deletion', () => {
+  let component: BacklogComponent;
+  let runsClient: jasmine.SpyObj<any>;
+  let confirmationService: jasmine.SpyObj<any>;
+  let messageService: jasmine.SpyObj<any>;
+
+  beforeEach(() => {
+    runsClient = jasmine.createSpyObj('RunsClient', ['getRunsPage', 'deleteRun']);
+    confirmationService = jasmine.createSpyObj('ConfirmationService', ['confirm']);
+    messageService = jasmine.createSpyObj('MessageService', ['add']);
+
+    component = new BacklogComponent(
+      runsClient,
+      confirmationService,
+      messageService,
+      jasmine.createSpyObj('Router', ['navigate']),
+    );
+  });
+
+  it('allows deletion only for completed or failed runs', () => {
+    expect(component.isRunDeletable(completedRun)).toBeTrue();
+    expect(component.isRunDeletable({ ...completedRun, status: RunStatus.FAILED })).toBeTrue();
+    expect(component.isRunDeletable({ ...completedRun, status: RunStatus.CREATED })).toBeFalse();
+    expect(component.isRunDeletable({ ...completedRun, status: RunStatus.RUNNING })).toBeFalse();
+  });
+
+  it('confirms and deletes a finished run', () => {
+    runsClient.deleteRun.and.returnValue(of(undefined));
+    runsClient.getRunsPage.and.returnValue(of({ items: [], total: 0, page: 1, pageSize: 10 }));
+    component.runs = [completedRun];
+
+    component.onDelete(completedRun);
+    const confirmation = confirmationService.confirm.calls.mostRecent().args[0];
+    confirmation.accept();
+
+    expect(runsClient.deleteRun).toHaveBeenCalledOnceWith(completedRun.id);
+    expect(runsClient.getRunsPage).toHaveBeenCalledOnceWith(1, 10);
+    expect(messageService.add).toHaveBeenCalledWith(
+      jasmine.objectContaining({ severity: 'success', summary: 'Run deleted' }),
+    );
+    expect(component.deletingRunId).toBeNull();
+  });
+
+  it('moves to the previous page after deleting its only row', () => {
+    runsClient.deleteRun.and.returnValue(of(undefined));
+    runsClient.getRunsPage.and.returnValue(of({ items: [], total: 10, page: 1, pageSize: 10 }));
+    component.runs = [completedRun];
+    component.first = 10;
+    component.rows = 10;
+
+    component.onDelete(completedRun);
+    confirmationService.confirm.calls.mostRecent().args[0].accept();
+
+    expect(runsClient.getRunsPage).toHaveBeenCalledOnceWith(1, 10);
+    expect(component.first).toBe(0);
+  });
+
+  it('shows the API error and clears the loading state', () => {
+    runsClient.deleteRun.and.returnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: { detail: 'Run cannot be deleted while running' },
+          }),
+      ),
+    );
+
+    component.onDelete(completedRun);
+    confirmationService.confirm.calls.mostRecent().args[0].accept();
+
+    expect(messageService.add).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        severity: 'error',
+        detail: 'Run cannot be deleted while running',
+      }),
+    );
+    expect(component.deletingRunId).toBeNull();
+  });
+});

@@ -1,15 +1,19 @@
-import { Component, OnInit } from '@angular/core';
-import { RunsClient } from '../shared/clients/runs.client';
-import { Run, RunPage } from '../shared/interfaces/run.interface';
-import { tap } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
-import { TagModule } from 'primeng/tag';
-import { TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { RunStatusBadgeComponent } from '../shared/components/run-status-badge/run-status-badge.component';
-import { RunConfigurationDrawerComponent } from '../shared/components/run-configuration-drawer/run-configuration-drawer.component';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import { tap } from 'rxjs';
+import { RunsClient } from '../shared/clients/runs.client';
+import { RunConfigurationDrawerComponent } from '../shared/components/run-configuration-drawer/run-configuration-drawer.component';
+import { RunStatusBadgeComponent } from '../shared/components/run-status-badge/run-status-badge.component';
+import { RunStatus } from '../shared/enums/run-status.enum';
+import { Run, RunPage } from '../shared/interfaces/run.interface';
 
 @Component({
   selector: 'plc-backlog',
@@ -20,8 +24,10 @@ import { Router } from '@angular/router';
     CommonModule,
     RunStatusBadgeComponent,
     TooltipModule,
+    ConfirmDialogModule,
     RunConfigurationDrawerComponent,
   ],
+  providers: [ConfirmationService],
   standalone: true,
   templateUrl: './backlog.component.html',
   styleUrl: './backlog.component.scss',
@@ -36,9 +42,12 @@ export class BacklogComponent implements OnInit {
 
   public configDrawerVisible = false;
   public selectedRun: Run | null = null;
+  public deletingRunId: string | null = null;
 
   constructor(
     private runsClient: RunsClient,
+    private confirmationService: ConfirmationService,
+    private messageService: MessageService,
     public router: Router,
   ) {}
 
@@ -79,6 +88,49 @@ export class BacklogComponent implements OnInit {
   public onViewConfig(run: Run): void {
     this.selectedRun = run;
     this.configDrawerVisible = true;
+  }
+
+  public isRunDeletable(run: Run): boolean {
+    return run.status === RunStatus.COMPLETED || run.status === RunStatus.FAILED;
+  }
+
+  public onDelete(run: Run): void {
+    if (!this.isRunDeletable(run) || this.deletingRunId !== null) {
+      return;
+    }
+
+    this.confirmationService.confirm({
+      header: 'Delete run',
+      icon: 'pi pi-exclamation-triangle',
+      message: `Delete “${run.name}”? This action cannot be undone.`,
+      acceptButtonProps: { label: 'Delete', severity: 'danger' },
+      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      accept: () => this.deleteRun(run),
+    });
+  }
+
+  private deleteRun(run: Run): void {
+    this.deletingRunId = run.id;
+    this.runsClient.deleteRun(run.id).subscribe({
+      next: () => {
+        const nextFirst = this.runs.length === 1 && this.first > 0 ? Math.max(0, this.first - this.rows) : this.first;
+        this.deletingRunId = null;
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Run deleted',
+          detail: `Run ${run.name} was deleted`,
+        });
+        this.loadRuns({ first: nextFirst, rows: this.rows });
+      },
+      error: (error: HttpErrorResponse) => {
+        this.deletingRunId = null;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Could not delete run',
+          detail: error.error?.detail ?? 'Please try again.',
+        });
+      },
+    });
   }
 
   // Download the run configuration as a JSON file

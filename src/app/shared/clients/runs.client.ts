@@ -36,6 +36,10 @@ export class RunsClient {
       .pipe(switchMap((dto: RunPageDto) => of(RunMapper.pageDtoToModel(dto))));
   }
 
+  public deleteRun(runId: string): Observable<void> {
+    return this.http.delete<void>(`${this.api}/${runId}`);
+  }
+
   public getRunAssets(runId: string, depth: number): Observable<ArrayBuffer> {
     return this.http.get(`${this.api}/${runId}/assets/${depth}`, { responseType: 'arraybuffer' });
   }

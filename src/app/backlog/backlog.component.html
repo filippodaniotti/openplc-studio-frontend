@@ -90,6 +90,19 @@
               ariaLabel="Download config"
               (onClick)="onDownloadConfig(run)"
             ></p-button>
+            <p-button
+              icon="pi pi-trash"
+              severity="danger"
+              size="small"
+              [text]="true"
+              [rounded]="true"
+              [disabled]="!isRunDeletable(run) || (deletingRunId !== null && deletingRunId !== run.id)"
+              [loading]="deletingRunId === run.id"
+              [pTooltip]="isRunDeletable(run) ? 'Delete run' : 'Only completed or failed runs can be deleted'"
+              tooltipPosition="top"
+              ariaLabel="Delete run"
+              (onClick)="onDelete(run)"
+            ></p-button>
           </div>
         </td>
       </tr>
@@ -97,4 +110,5 @@
   </p-table>
 }
 
+<p-confirmdialog />
 <plc-run-configuration-drawer [(visible)]="configDrawerVisible" [run]="selectedRun" />
