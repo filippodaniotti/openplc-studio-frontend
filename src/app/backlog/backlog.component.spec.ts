@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { RunStatus } from '../shared/enums/run-status.enum';
 import { Run } from '../shared/interfaces/run.interface';
 import { BacklogComponent } from './backlog.component';
@@ -16,14 +16,19 @@ describe('BacklogComponent run deletion', () => {
   let confirmationService: jasmine.SpyObj<any>;
   let messageService: jasmine.SpyObj<any>;
   let router: jasmine.SpyObj<any>;
+  let stateChanges$: Subject<any>;
 
   beforeEach(() => {
     runsClient = jasmine.createSpyObj('RunsClient', ['getRunsPage', 'deleteRun']);
     confirmationService = jasmine.createSpyObj('ConfirmationService', ['confirm']);
     messageService = jasmine.createSpyObj('MessageService', ['add']);
     router = jasmine.createSpyObj('Router', ['navigate']);
+    stateChanges$ = new Subject();
 
-    component = new BacklogComponent(runsClient, confirmationService, messageService, router);
+    component = new BacklogComponent(runsClient, confirmationService, messageService, router, {
+      getStateChangeMessages: () => stateChanges$.asObservable(),
+    } as any);
+    component.ngOnInit();
   });
 
   it('allows analysis only for completed runs', () => {
@@ -46,6 +51,32 @@ describe('BacklogComponent run deletion', () => {
     expect(component.isRunDeletable({ ...completedRun, status: RunStatus.CREATED })).toBeTrue();
     expect(component.isRunDeletable({ ...completedRun, status: RunStatus.QUEUED })).toBeFalse();
     expect(component.isRunDeletable({ ...completedRun, status: RunStatus.RUNNING })).toBeFalse();
+  });
+
+  it('updates the displayed run state from a websocket message', () => {
+    component.runs = [completedRun];
+
+    stateChanges$.next({ run_id: completedRun.id, new_status: RunStatus.RUNNING });
+
+    expect(component.runs[0].status).toBe(RunStatus.RUNNING);
+    expect(component.isRunDeletable(component.runs[0])).toBeFalse();
+  });
+
+  it('ignores a websocket state change for a run outside the current page', () => {
+    component.runs = [completedRun];
+
+    stateChanges$.next({ run_id: 'other-run', new_status: RunStatus.RUNNING });
+
+    expect(component.runs).toEqual([completedRun]);
+  });
+
+  it('unsubscribes from websocket state changes when destroyed', () => {
+    component.runs = [completedRun];
+    component.ngOnDestroy();
+
+    stateChanges$.next({ run_id: completedRun.id, new_status: RunStatus.RUNNING });
+
+    expect(component.runs[0].status).toBe(RunStatus.COMPLETED);
   });
 
   it('confirms and deletes a finished run', () => {

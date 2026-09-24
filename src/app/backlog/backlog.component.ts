@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -8,12 +8,13 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { tap } from 'rxjs';
+import { Subject, takeUntil, tap } from 'rxjs';
 import { RunsClient } from '../shared/clients/runs.client';
 import { RunConfigurationDrawerComponent } from '../shared/components/run-configuration-drawer/run-configuration-drawer.component';
 import { RunStatusBadgeComponent } from '../shared/components/run-status-badge/run-status-badge.component';
 import { RunStatus } from '../shared/enums/run-status.enum';
 import { Run, RunPage } from '../shared/interfaces/run.interface';
+import { WsService } from '../shared/services/ws.service';
 
 @Component({
   selector: 'plc-backlog',
@@ -32,7 +33,7 @@ import { Run, RunPage } from '../shared/interfaces/run.interface';
   templateUrl: './backlog.component.html',
   styleUrl: './backlog.component.scss',
 })
-export class BacklogComponent implements OnInit {
+export class BacklogComponent implements OnInit, OnDestroy {
   public runs: Run[] = [];
   public totalRecords = 0;
   public rows = 10;
@@ -44,16 +45,30 @@ export class BacklogComponent implements OnInit {
   public selectedRun: Run | null = null;
   public deletingRunId: string | null = null;
 
+  private readonly destroy$ = new Subject<void>();
+
   constructor(
     private runsClient: RunsClient,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     public router: Router,
+    private readonly wsService: WsService,
   ) {}
 
   ngOnInit(): void {
     // The lazy p-table emits its initial `onLazyLoad` when it renders, which
     // triggers the first fetch. Fetching here as well would duplicate it.
+    this.wsService
+      .getStateChangeMessages()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((message) => {
+        this.runs = this.runs.map((run) => (run.id === message.run_id ? { ...run, status: message.new_status } : run));
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   public loadRuns(event: TableLazyLoadEvent): void {

@@ -4,6 +4,7 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import {
   RunCompletionMessage,
   RunProgressMessage,
+  RunStateChangeMessage,
   RunSubscriptionMessage,
   WsMessage,
 } from '../interfaces/ws.interface';
@@ -36,12 +37,20 @@ export class WsService {
     filter((msg: WsMessage) => msg.type === 'run.progress'),
   );
 
+  private stateChangeMessages$: Observable<RunStateChangeMessage> = this.socket$.pipe(
+    filter((msg: WsMessage) => msg.type === 'run.state_change'),
+  );
+
   public getCompletionMessages(): Observable<RunCompletionMessage> {
     return this.completionMessages$;
   }
 
   public getProgressMessages(): Observable<RunProgressMessage> {
     return this.progressMessages$;
+  }
+
+  public getStateChangeMessages(): Observable<RunStateChangeMessage> {
+    return this.stateChangeMessages$;
   }
 
   public sendRunId(runId: string): void {

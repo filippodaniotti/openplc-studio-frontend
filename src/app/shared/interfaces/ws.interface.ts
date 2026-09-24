@@ -1,3 +1,5 @@
+import { RunStatus } from '../enums/run-status.enum';
+
 interface BaseWsMessage {
   type: string;
 }
@@ -28,6 +30,14 @@ export interface RunProgressMessage extends BaseWsMessage {
   nodes: NodeProgress[];
 }
 
+export interface RunStateChangeMessage extends BaseWsMessage {
+  type: 'run.state_change';
+  run_id: string;
+  run_name: string;
+  previous_status: RunStatus;
+  new_status: RunStatus;
+}
+
 export interface TreeNode {
   description: string;
   node_ids: string[];
@@ -36,4 +46,4 @@ export interface TreeNode {
   children: TreeNode[];
 }
 
-export type WsMessage = RunSubscriptionMessage | RunCompletionMessage | RunProgressMessage;
+export type WsMessage = RunSubscriptionMessage | RunCompletionMessage | RunProgressMessage | RunStateChangeMessage;
