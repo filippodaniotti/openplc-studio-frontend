@@ -4,6 +4,17 @@ import { ModuleParameter, ModuleParameterSpec } from '../../interfaces/module-pa
 
 type SettingLike = ModuleParameter | ModuleParameterSpec;
 
+const advancedNestedAlgorithmOmittedFields = new Set([
+  'crossfade',
+  'fade_in',
+  'crossfade_frequencies',
+  'crossover_order',
+]);
+const optionalChannelFields = new Set(['left', 'right', 'mid', 'side', 'linked']);
+const linkedChannelFields = new Set(['linked']);
+const midSideChannelFields = new Set(['mid', 'side']);
+const leftRightChannelFields = new Set(['left', 'right']);
+
 @Component({
   selector: 'plc-parameter-tree',
   imports: [NgTemplateOutlet],
@@ -12,6 +23,14 @@ type SettingLike = ModuleParameter | ModuleParameterSpec;
 })
 export class ParameterTreeComponent {
   @Input() public settings: SettingLike[] | null = null;
+  @Input() public filterAdvancedChannels = false;
+  @Input() public omitNestedAlgorithmDetails = false;
+
+  public visibleSettings(items: SettingLike[] | null | undefined, nestedAlgorithm: boolean): SettingLike[] {
+    if (!Array.isArray(items)) return [];
+    if (!this.omitNestedAlgorithmDetails || !nestedAlgorithm) return items;
+    return items.filter((setting) => !advancedNestedAlgorithmOmittedFields.has(setting.name));
+  }
 
   public displayValue(setting: SettingLike | null | undefined): any {
     if (!setting) {
@@ -49,10 +68,13 @@ export class ParameterTreeComponent {
     if (!value || typeof value !== 'object') {
       return [];
     }
-    return Object.entries(value as Record<string, unknown>).map(([key, entryValue]) => ({
-      key,
-      value: entryValue as any,
-    }));
+    const selectedChannels = this.selectedAdvancedChannels();
+    return Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => !selectedChannels || !optionalChannelFields.has(key) || selectedChannels.has(key))
+      .map(([key, entryValue]) => ({
+        key,
+        value: entryValue as any,
+      }));
   }
 
   public formatScalar(value: any): string {
@@ -66,5 +88,21 @@ export class ParameterTreeComponent {
       return JSON.stringify(value);
     }
     return String(value);
+  }
+
+  private selectedAdvancedChannels(): ReadonlySet<string> | null {
+    if (!this.filterAdvancedChannels) return null;
+
+    const channelLink = this.displayValue(this.settings?.find((setting) => setting.name === 'channel_link'));
+    if (channelLink === true || channelLink === 'true') return linkedChannelFields;
+
+    const stereoImageProcessing = this.displayValue(
+      this.settings?.find((setting) => setting.name === 'stereo_image_processing'),
+    );
+    if (stereoImageProcessing === 'mid_side') return midSideChannelFields;
+    if (stereoImageProcessing === 'left_right' || stereoImageProcessing === 'dual_mono') {
+      return leftRightChannelFields;
+    }
+    return null;
   }
 }

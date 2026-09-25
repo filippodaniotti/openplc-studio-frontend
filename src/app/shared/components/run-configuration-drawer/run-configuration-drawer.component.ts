@@ -39,6 +39,12 @@ export class RunConfigurationDrawerComponent implements OnChanges {
   @Input() public focusedTrackIndex: number | null = null;
   @Output() public visibleChange = new EventEmitter<boolean>();
 
+  public drawerWidth = 672;
+
+  private readonly minimumDrawerWidth = 384;
+  private resizeStartX = 0;
+  private resizeStartWidth = 0;
+  private resizing = false;
   private trackMetadataByName = new Map<string, AudioTrackMetadataView>();
 
   public readonly moduleSections: ModuleSection[] = [
@@ -90,7 +96,50 @@ export class RunConfigurationDrawerComponent implements OnChanges {
     return (this.focusedModule === null && this.focusedModules.length === 0) || this.isFocused(type, index);
   }
 
+  public startResize(event: PointerEvent): void {
+    if (event.button !== 0) return;
+
+    this.resizing = true;
+    this.resizeStartX = event.clientX;
+    this.resizeStartWidth = this.drawerWidth;
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  public resize(event: PointerEvent): void {
+    if (!this.resizing) return;
+
+    const requestedWidth = this.resizeStartWidth + this.resizeStartX - event.clientX;
+    this.drawerWidth = this.constrainDrawerWidth(requestedWidth);
+  }
+
+  public stopResize(event: PointerEvent): void {
+    if (!this.resizing) return;
+
+    this.resizing = false;
+    const handle = event.currentTarget as HTMLElement;
+    if (handle.hasPointerCapture(event.pointerId)) {
+      handle.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  public resizeWithKeyboard(event: KeyboardEvent): void {
+    const step = event.shiftKey ? 64 : 16;
+    if (event.key === 'ArrowLeft') {
+      this.drawerWidth = this.constrainDrawerWidth(this.drawerWidth + step);
+    } else if (event.key === 'ArrowRight') {
+      this.drawerWidth = this.constrainDrawerWidth(this.drawerWidth - step);
+    } else {
+      return;
+    }
+    event.preventDefault();
+  }
+
   public onVisibleChange(visible: boolean): void {
     this.visibleChange.emit(visible);
+  }
+
+  private constrainDrawerWidth(width: number): number {
+    return Math.min(window.innerWidth, Math.max(this.minimumDrawerWidth, width));
   }
 }

@@ -1,3 +1,61 @@
+.plc-drawer-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.plc-drawer-resize-handle {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1rem;
+  cursor: ew-resize;
+  touch-action: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 2px;
+    background: var(--p-content-border-color);
+    transition: background-color 0.15s ease;
+  }
+
+  > span {
+    position: absolute;
+    top: 50%;
+    left: 0.2rem;
+    width: 0.25rem;
+    height: 2.5rem;
+    border-radius: 999px;
+    background: var(--p-text-muted-color);
+    opacity: 0.7;
+    transform: translateY(-50%);
+    transition:
+      background-color 0.15s ease,
+      opacity 0.15s ease;
+  }
+
+  &:hover::after,
+  &:focus-visible::after,
+  &:hover > span,
+  &:focus-visible > span {
+    background: var(--p-primary-color);
+  }
+
+  &:hover > span,
+  &:focus-visible > span {
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
 .plc-run-config-tracks {
   display: flex;
   flex-direction: column;
@@ -19,30 +77,101 @@
   background: color-mix(in srgb, var(--p-primary-color) 8%, transparent);
 }
 
-.plc-config-module > summary {
-  list-style: none;
+.plc-config-section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.75rem;
 
-  &::-webkit-details-marker {
-    display: none;
-  }
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+    color: var(--p-text-muted-color);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 
-  &::before {
-    content: '▸';
-    display: inline-block;
-    margin-right: 0.25rem;
-    transition: transform 0.15s ease;
+    &::after {
+      content: '';
+      height: 1px;
+      flex: 1;
+      background: var(--p-content-border-color);
+    }
   }
 }
 
-.plc-config-module[open] > summary::before {
-  transform: rotate(90deg);
+.plc-config-modules {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.plc-config-module {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius, 6px);
+  background: var(--p-content-background);
+
+  > summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 0.75rem;
+    list-style: none;
+    color: var(--p-text-color);
+    cursor: pointer;
+    font-weight: 600;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::before {
+      content: '▸';
+      flex: 0 0 auto;
+      color: var(--p-text-muted-color);
+      transition: transform 0.15s ease;
+    }
+
+    &:hover {
+      background: var(--p-content-hover-background);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--p-primary-color);
+      outline-offset: -2px;
+    }
+
+    .pi {
+      flex: 0 0 auto;
+      color: var(--p-primary-color);
+    }
+  }
+
+  &[open] > summary {
+    border-bottom: 1px solid var(--p-content-border-color);
+
+    &::before {
+      transform: rotate(90deg);
+    }
+  }
 }
 
 .plc-config-module-label {
-  min-width: 0;
   display: flex;
+  min-width: 0;
   flex-direction: column;
   line-height: 1.2;
+
+  > span {
+    overflow-wrap: anywhere;
+  }
 
   small {
     margin-top: 0.2rem;
@@ -52,9 +181,13 @@
   }
 }
 
+.plc-config-module-settings {
+  min-width: 0;
+  padding: 0.625rem 0.75rem 0.75rem;
+}
+
 .plc-config-module-focused {
-  border: 1px solid var(--p-primary-color);
-  border-radius: var(--p-content-border-radius, 6px);
-  padding: 0.5rem 0.75rem;
-  background: color-mix(in srgb, var(--p-primary-color) 8%, transparent);
+  border-color: var(--p-primary-color);
+  background: color-mix(in srgb, var(--p-primary-color) 5%, var(--p-content-background));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--p-primary-color) 25%, transparent);
 }

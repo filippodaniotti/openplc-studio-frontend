@@ -1,59 +1,75 @@
-<div class="flex flex-col gap-2 text-sm">
-  <ng-container *ngTemplateOutlet="settingsList; context: { $implicit: settings }"></ng-container>
+<div class="plc-parameter-tree">
+  <ng-container *ngTemplateOutlet="settingsList; context: { $implicit: settings, nestedAlgorithm: false }" />
 </div>
 
-<ng-template #settingsList let-items>
-  @for (setting of items ?? []; track setting.name) {
-    <div class="flex flex-col gap-1">
-      <div class="font-medium text-gray-500 dark:text-gray-300">{{ setting.name }}</div>
-      <div class="pl-2">
-        <ng-container *ngTemplateOutlet="valueNode; context: { $implicit: displayValue(setting) }"></ng-container>
+<ng-template #settingsList let-items let-nestedAlgorithm="nestedAlgorithm">
+  <div class="plc-pt-settings">
+    @for (setting of visibleSettings(items, nestedAlgorithm); track setting.name) {
+      <div class="plc-pt-setting">
+        <div class="plc-pt-key">{{ setting.name }}</div>
+        <div class="plc-pt-value">
+          <ng-container *ngTemplateOutlet="valueNode; context: { $implicit: displayValue(setting) }" />
+        </div>
       </div>
-    </div>
-  }
+    }
+  </div>
 </ng-template>
 
 <ng-template #valueNode let-value>
   @if (isModuleLike(value)) {
-    <details class="plc-pt-branch" open>
-      <summary class="cursor-pointer font-semibold text-gray-800 dark:text-gray-200">
-        <i class="pi pi-box mr-1"></i>
-        {{ value.name }}
-      </summary>
-      <div class="mt-1 ml-2 pl-3 border-l border-gray-300 dark:border-gray-600">
-        <ng-container *ngTemplateOutlet="settingsList; context: { $implicit: value.settings }"></ng-container>
+    @if (value.settings?.length) {
+      <details class="plc-pt-branch">
+        <summary>
+          <i class="pi pi-box" aria-hidden="true"></i>
+          <span>{{ value.name }}</span>
+        </summary>
+        <div class="plc-pt-children">
+          <ng-container
+            *ngTemplateOutlet="settingsList; context: { $implicit: value.settings, nestedAlgorithm: true }"
+          />
+        </div>
+      </details>
+    } @else {
+      <div class="plc-pt-module">
+        <i class="pi pi-box" aria-hidden="true"></i>
+        <span>{{ value.name }}</span>
       </div>
-    </details>
+    }
   } @else if (isArray(value)) {
     @if (value.length === 0) {
-      <span class="italic text-gray-500 dark:text-gray-300">empty</span>
+      <span class="plc-pt-empty">Empty</span>
     } @else if (isScalarArray(value)) {
-      <div class="flex flex-wrap gap-1">
+      <div class="plc-pt-tokens">
         @for (item of value; track $index) {
-          <span class="bg-gray-100 dark:bg-gray-500 rounded px-2 py-0.5 font-mono text-xs">
-            {{ formatScalar(item) }}
-          </span>
+          <span class="plc-pt-token">{{ formatScalar(item) }}</span>
         }
       </div>
     } @else {
-      <div class="flex flex-col gap-2">
+      <div class="plc-pt-list">
         @for (item of value; track $index) {
-          <ng-container *ngTemplateOutlet="valueNode; context: { $implicit: item }"></ng-container>
+          <ng-container *ngTemplateOutlet="valueNode; context: { $implicit: item }" />
         }
       </div>
     }
   } @else if (isPlainObject(value)) {
-    <div class="flex flex-col gap-2 ml-2 pl-3 border-l border-gray-300 dark:border-gray-600">
-      @for (entry of entries(value); track entry.key) {
-        <div class="flex flex-col gap-1">
-          <div class="font-medium text-gray-500 dark:text-gray-300">{{ entry.key }}</div>
-          <div class="pl-2">
-            <ng-container *ngTemplateOutlet="valueNode; context: { $implicit: entry.value }"></ng-container>
-          </div>
+    @let objectEntries = entries(value);
+    @if (objectEntries.length) {
+      <div class="plc-pt-children">
+        <div class="plc-pt-settings">
+          @for (entry of objectEntries; track entry.key) {
+            <div class="plc-pt-setting">
+              <div class="plc-pt-key">{{ entry.key }}</div>
+              <div class="plc-pt-value">
+                <ng-container *ngTemplateOutlet="valueNode; context: { $implicit: entry.value }" />
+              </div>
+            </div>
+          }
         </div>
-      }
-    </div>
+      </div>
+    } @else {
+      <span class="plc-pt-empty">Empty</span>
+    }
   } @else {
-    <span class="font-mono">{{ formatScalar(value) }}</span>
+    <span class="plc-pt-scalar">{{ formatScalar(value) }}</span>
   }
 </ng-template>

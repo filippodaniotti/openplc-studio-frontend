@@ -1,5 +1,103 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.plc-parameter-tree {
+  color: var(--p-text-color);
+  font-size: 0.875rem;
+}
+
+.plc-pt-settings,
+.plc-pt-list {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.plc-pt-setting {
+  display: grid;
+  grid-template-columns: minmax(8rem, 36%) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  min-width: 0;
+  padding: 0.375rem 0;
+
+  & + & {
+    border-top: 1px solid color-mix(in srgb, var(--p-content-border-color) 55%, transparent);
+  }
+}
+
+.plc-pt-key {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--p-text-muted-color);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.plc-pt-value {
+  min-width: 0;
+  color: var(--p-text-color);
+  line-height: 1.4;
+}
+
+.plc-pt-scalar {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+
+.plc-pt-empty {
+  color: var(--p-text-muted-color);
+  font-style: italic;
+}
+
+.plc-pt-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.plc-pt-token {
+  padding: 0.125rem 0.4rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 0.25rem;
+  background: var(--p-content-hover-background);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+.plc-pt-children {
+  min-width: 0;
+  margin-top: 0.375rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--p-content-border-color);
+}
+
+.plc-pt-module,
+.plc-pt-branch > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  color: var(--p-text-color);
+  font-weight: 600;
+
+  .pi {
+    flex: 0 0 auto;
+    color: var(--p-primary-color);
+  }
+
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
 .plc-pt-branch > summary {
   list-style: none;
+  cursor: pointer;
 
   &::-webkit-details-marker {
     display: none;
@@ -7,12 +105,19 @@
 
   &::before {
     content: '▸';
-    display: inline-block;
-    margin-right: 0.25rem;
+    flex: 0 0 auto;
+    color: var(--p-text-muted-color);
     transition: transform 0.15s ease;
   }
 }
 
 .plc-pt-branch[open] > summary::before {
   transform: rotate(90deg);
+}
+
+@media (max-width: 32rem) {
+  .plc-pt-setting {
+    grid-template-columns: 1fr;
+    gap: 0.125rem;
+  }
 }
