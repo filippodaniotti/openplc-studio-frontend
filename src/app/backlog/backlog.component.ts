@@ -1,19 +1,22 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { Subject, takeUntil, tap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, Subject, takeUntil, tap } from 'rxjs';
 import { RunsClient } from '../shared/clients/runs.client';
 import { RunConfigurationDrawerComponent } from '../shared/components/run-configuration-drawer/run-configuration-drawer.component';
 import { RunStatusBadgeComponent } from '../shared/components/run-status-badge/run-status-badge.component';
 import { RunStatus } from '../shared/enums/run-status.enum';
-import { Run, RunPage } from '../shared/interfaces/run.interface';
+import { Run, RunPage, RunSortDirection, RunSortField } from '../shared/interfaces/run.interface';
 import { WsService } from '../shared/services/ws.service';
 
 @Component({
@@ -21,6 +24,9 @@ import { WsService } from '../shared/services/ws.service';
   imports: [
     TableModule,
     ButtonModule,
+    FormsModule,
+    InputTextModule,
+    MultiSelectModule,
     TagModule,
     CommonModule,
     RunStatusBadgeComponent,
@@ -40,12 +46,24 @@ export class BacklogComponent implements OnInit, OnDestroy {
   public first = 0;
   public loading = false;
   public loaded = false;
+  public searchTerm = '';
+  public selectedStatuses: RunStatus[] = [];
+  public sortField: RunSortField = 'created';
+  public sortDirection: RunSortDirection = 'desc';
+  public readonly statusOptions = [
+    { label: 'Created', value: RunStatus.CREATED },
+    { label: 'Queued', value: RunStatus.QUEUED },
+    { label: 'Running', value: RunStatus.RUNNING },
+    { label: 'Completed', value: RunStatus.COMPLETED },
+    { label: 'Failed', value: RunStatus.FAILED },
+  ];
 
   public configDrawerVisible = false;
   public selectedRun: Run | null = null;
   public deletingRunId: string | null = null;
 
   private readonly destroy$ = new Subject<void>();
+  private readonly searchChanges = new Subject<string>();
 
   constructor(
     private runsClient: RunsClient,
@@ -58,10 +76,18 @@ export class BacklogComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // The lazy p-table emits its initial `onLazyLoad` when it renders, which
     // triggers the first fetch. Fetching here as well would duplicate it.
+    this.searchChanges
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe(() => this.reloadFromFirstPage());
+
     this.wsService
       .getStateChangeMessages()
       .pipe(takeUntil(this.destroy$))
       .subscribe((message) => {
+        if (this.selectedStatuses.length > 0 || this.sortField === 'status') {
+          this.reloadCurrentPage();
+          return;
+        }
         this.runs = this.runs.map((run) => (run.id === message.run_id ? { ...run, status: message.new_status } : run));
       });
   }
@@ -75,21 +101,53 @@ export class BacklogComponent implements OnInit, OnDestroy {
     const rows = event.rows ?? this.rows;
     const first = event.first ?? 0;
     const page = Math.floor(first / rows) + 1;
+    const requestedSort = Array.isArray(event.sortField) ? event.sortField[0] : event.sortField;
+    const sortField = this.isSortField(requestedSort) ? requestedSort : this.sortField;
+    const sortDirection: RunSortDirection = event.sortOrder === 1 ? 'asc' : 'desc';
 
     this.loading = true;
-    this.runsClient.getRunsPage(page, rows).subscribe({
-      next: (pageResult: RunPage) => {
-        this.runs = pageResult.items;
-        this.totalRecords = pageResult.total;
-        this.rows = rows;
-        this.first = first;
-        this.loaded = true;
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-      },
-    });
+    this.runsClient
+      .getRunsPage(page, rows, this.searchTerm, this.selectedStatuses, sortField, sortDirection)
+      .subscribe({
+        next: (pageResult: RunPage) => {
+          this.runs = pageResult.items;
+          this.totalRecords = pageResult.total;
+          this.rows = rows;
+          this.first = first;
+          this.sortField = sortField;
+          this.sortDirection = sortDirection;
+          this.loaded = true;
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+        },
+      });
+  }
+
+  public onSearchChange(value: string): void {
+    this.searchChanges.next(value);
+  }
+
+  public onStatusesChange(): void {
+    this.reloadFromFirstPage();
+  }
+
+  public clearFilters(): void {
+    this.searchTerm = '';
+    this.selectedStatuses = [];
+    this.reloadFromFirstPage();
+  }
+
+  public get hasActiveFilters(): boolean {
+    return this.searchTerm.trim().length > 0 || this.selectedStatuses.length > 0;
+  }
+
+  public sortIcon(field: RunSortField): string {
+    if (this.sortField !== field) return 'pi pi-sort-alt plc-sort-icon';
+    return this.sortDirection === 'asc'
+      ? 'pi pi-sort-amount-up-alt plc-sort-icon'
+      : 'pi pi-sort-amount-down plc-sort-icon';
   }
 
   public onAnalyse(run: Run): void {
@@ -140,7 +198,12 @@ export class BacklogComponent implements OnInit, OnDestroy {
           summary: 'Run deleted',
           detail: `Run ${run.name} was deleted`,
         });
-        this.loadRuns({ first: nextFirst, rows: this.rows });
+        this.loadRuns({
+          first: nextFirst,
+          rows: this.rows,
+          sortField: this.sortField,
+          sortOrder: this.sortDirection === 'asc' ? 1 : -1,
+        });
       },
       error: (error: HttpErrorResponse) => {
         this.deletingRunId = null;
@@ -151,6 +214,29 @@ export class BacklogComponent implements OnInit, OnDestroy {
         });
       },
     });
+  }
+
+  private reloadFromFirstPage(): void {
+    this.first = 0;
+    this.loadRuns({
+      first: 0,
+      rows: this.rows,
+      sortField: this.sortField,
+      sortOrder: this.sortDirection === 'asc' ? 1 : -1,
+    });
+  }
+
+  private reloadCurrentPage(): void {
+    this.loadRuns({
+      first: this.first,
+      rows: this.rows,
+      sortField: this.sortField,
+      sortOrder: this.sortDirection === 'asc' ? 1 : -1,
+    });
+  }
+
+  private isSortField(value: string | null | undefined): value is RunSortField {
+    return value === 'name' || value === 'created' || value === 'updated' || value === 'status';
   }
 
   // Download the run configuration as a JSON file

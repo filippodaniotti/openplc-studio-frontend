@@ -31,6 +31,25 @@ describe('BacklogComponent run deletion', () => {
     component.ngOnInit();
   });
 
+  it('loads server-side search, status filters, and sorting', () => {
+    runsClient.getRunsPage.and.returnValue(of({ items: [], total: 0, page: 1, pageSize: 25 }));
+    component.searchTerm = 'alice';
+    component.selectedStatuses = [RunStatus.RUNNING, RunStatus.COMPLETED];
+
+    component.loadRuns({ first: 0, rows: 25, sortField: 'name', sortOrder: 1 });
+
+    expect(runsClient.getRunsPage).toHaveBeenCalledOnceWith(
+      1,
+      25,
+      'alice',
+      [RunStatus.RUNNING, RunStatus.COMPLETED],
+      'name',
+      'asc',
+    );
+    expect(component.sortField).toBe('name');
+    expect(component.sortDirection).toBe('asc');
+  });
+
   it('allows analysis only for completed runs', () => {
     expect(component.isRunAnalyzable(completedRun)).toBeTrue();
 
@@ -89,7 +108,7 @@ describe('BacklogComponent run deletion', () => {
     confirmation.accept();
 
     expect(runsClient.deleteRun).toHaveBeenCalledOnceWith(completedRun.id);
-    expect(runsClient.getRunsPage).toHaveBeenCalledOnceWith(1, 10);
+    expect(runsClient.getRunsPage).toHaveBeenCalledOnceWith(1, 10, '', [], 'created', 'desc');
     expect(messageService.add).toHaveBeenCalledWith(
       jasmine.objectContaining({ severity: 'success', summary: 'Run deleted' }),
     );
@@ -106,7 +125,7 @@ describe('BacklogComponent run deletion', () => {
     component.onDelete(completedRun);
     confirmationService.confirm.calls.mostRecent().args[0].accept();
 
-    expect(runsClient.getRunsPage).toHaveBeenCalledOnceWith(1, 10);
+    expect(runsClient.getRunsPage).toHaveBeenCalledOnceWith(1, 10, '', [], 'created', 'desc');
     expect(component.first).toBe(0);
   });
 

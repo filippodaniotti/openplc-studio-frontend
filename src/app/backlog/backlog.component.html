@@ -1,115 +1,193 @@
-@if (loaded && totalRecords === 0) {
-  <div class="min-h-[400px] flex items-center justify-center">
-    <div class="text-center">
-      <i class="pi pi-inbox text-6xl mb-4 opacity-60"></i>
-      <h3 class="text-xl font-semibold mb-2">No runs to show</h3>
-      <p class="mb-4">Get started by creating your first run to analyze audio data.</p>
-      <p-button
-        label="Create First Run"
-        icon="pi pi-plus"
-        size="large"
-        (onClick)="router.navigate(['/run-configurator'])"
-      ></p-button>
+<div class="plc-backlog-page">
+  <div class="plc-backlog-heading">
+    <div>
+      <span class="text-sm text-muted-color">Testbench runs</span>
+      <h1>Run history</h1>
+      <p>Find, filter, and inspect saved and completed runs.</p>
     </div>
+    <p-button label="New run" icon="pi pi-plus" (onClick)="router.navigate(['/run-configurator'])" />
   </div>
-} @else {
-  <div class="flex justify-content-between align-items-center mb-4 ml-4">
-    <h2 class="text-2xl font-semibold text-color m-0">Run history</h2>
-  </div>
-  <p-table
-    [value]="runs"
-    [tableStyle]="{ 'min-width': '50rem' }"
-    styleClass="plc-backlog-table"
-    [lazy]="true"
-    [paginator]="true"
-    [rows]="rows"
-    [totalRecords]="totalRecords"
-    [rowsPerPageOptions]="[10, 25, 50]"
-    [loading]="loading"
-    [showCurrentPageReport]="true"
-    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} runs"
-    (onLazyLoad)="loadRuns($event)"
-  >
-    <ng-template #header>
-      <tr>
-        <th>Name</th>
-        <th>Created</th>
-        <th>Status</th>
-        <th class="plc-actions-header">Actions</th>
-      </tr>
-    </ng-template>
-    <ng-template #body let-run>
-      <tr>
-        <td>{{ run.name }}</td>
-        <td>{{ run.created | date: 'MMM dd, yyyy HH:mm' }}</td>
-        <td><plc-run-status-badge [runStatus]="run.status"></plc-run-status-badge></td>
-        <td class="plc-actions-cell">
-          <div class="flex align-items-center justify-content-center gap-1">
-            <p-button
-              icon="pi pi-sitemap"
-              severity="info"
-              size="small"
-              [text]="true"
-              [rounded]="true"
-              pTooltip="View configuration"
-              tooltipPosition="top"
-              ariaLabel="View configuration"
-              (onClick)="onViewConfig(run)"
-            ></p-button>
-            <p-button
-              icon="pi pi-chart-bar"
-              severity="info"
-              size="small"
-              [text]="true"
-              [rounded]="true"
-              [disabled]="!isRunAnalyzable(run)"
-              [pTooltip]="isRunAnalyzable(run) ? 'Go to analysis' : 'Analysis is available only for completed runs'"
-              tooltipPosition="top"
-              ariaLabel="Go to analysis"
-              (onClick)="onAnalyse(run)"
-            ></p-button>
-            <p-button
-              icon="pi pi-eye"
-              severity="info"
-              size="small"
-              [text]="true"
-              [rounded]="true"
-              pTooltip="View progress"
-              tooltipPosition="top"
-              ariaLabel="View progress"
-              (onClick)="onViewProgress(run)"
-            ></p-button>
-            <!--button for downloading config-->
-            <p-button
-              icon="pi pi-download"
-              severity="secondary"
-              size="small"
-              [text]="true"
-              [rounded]="true"
-              pTooltip="Download config"
-              tooltipPosition="top"
-              ariaLabel="Download config"
-              (onClick)="onDownloadConfig(run)"
-            ></p-button>
-            <p-button
-              icon="pi pi-trash"
-              severity="danger"
-              size="small"
-              [text]="true"
-              [rounded]="true"
-              [disabled]="!isRunDeletable(run) || (deletingRunId !== null && deletingRunId !== run.id)"
-              [loading]="deletingRunId === run.id"
-              [pTooltip]="isRunDeletable(run) ? 'Delete run' : 'Queued or running runs cannot be deleted'"
-              tooltipPosition="top"
-              ariaLabel="Delete run"
-              (onClick)="onDelete(run)"
-            ></p-button>
-          </div>
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
-}
+
+  <section class="plc-backlog-card">
+    <div class="plc-backlog-toolbar">
+      <span class="plc-backlog-search">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="search"
+          [(ngModel)]="searchTerm"
+          placeholder="Search runs or authors"
+          aria-label="Search runs or authors"
+          (ngModelChange)="onSearchChange($event)"
+        />
+      </span>
+
+      <p-multiselect
+        [(ngModel)]="selectedStatuses"
+        [options]="statusOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All statuses"
+        display="chip"
+        [showClear]="true"
+        [maxSelectedLabels]="2"
+        selectedItemsLabel="{0} statuses"
+        appendTo="body"
+        styleClass="plc-status-filter"
+        ariaLabel="Filter by run status"
+        (onChange)="onStatusesChange()"
+      />
+
+      @if (hasActiveFilters) {
+        <p-button
+          label="Clear filters"
+          icon="pi pi-filter-slash"
+          severity="secondary"
+          [text]="true"
+          (onClick)="clearFilters()"
+        />
+      }
+      <span class="flex-auto"></span>
+      <span class="text-sm text-muted-color">{{ totalRecords }} run(s)</span>
+    </div>
+
+    <p-table
+      [value]="runs"
+      [tableStyle]="{ 'min-width': '54rem' }"
+      styleClass="plc-backlog-table"
+      [lazy]="true"
+      [paginator]="true"
+      [rows]="rows"
+      [first]="first"
+      [totalRecords]="totalRecords"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [loading]="loading"
+      [showCurrentPageReport]="true"
+      [sortField]="sortField"
+      [sortOrder]="sortDirection === 'asc' ? 1 : -1"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} runs"
+      (onLazyLoad)="loadRuns($event)"
+    >
+      <ng-template #header>
+        <tr>
+          <th pSortableColumn="name">
+            Name
+            <i [class]="sortIcon('name')"></i>
+          </th>
+          <th pSortableColumn="created">
+            Created
+            <i [class]="sortIcon('created')"></i>
+          </th>
+          <th pSortableColumn="status">
+            Status
+            <i [class]="sortIcon('status')"></i>
+          </th>
+          <th class="plc-actions-header">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-run>
+        <tr>
+          <td>{{ run.name }}</td>
+          <td>{{ run.created | date: 'MMM dd, yyyy HH:mm' }}</td>
+          <td><plc-run-status-badge [runStatus]="run.status"></plc-run-status-badge></td>
+          <td class="plc-actions-cell">
+            <div class="flex align-items-center justify-content-center gap-1">
+              <p-button
+                icon="pi pi-sitemap"
+                severity="info"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                pTooltip="View configuration"
+                tooltipPosition="top"
+                ariaLabel="View configuration"
+                (onClick)="onViewConfig(run)"
+              ></p-button>
+              <p-button
+                icon="pi pi-chart-bar"
+                severity="info"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                [disabled]="!isRunAnalyzable(run)"
+                [pTooltip]="isRunAnalyzable(run) ? 'Go to analysis' : 'Analysis is available only for completed runs'"
+                tooltipPosition="top"
+                ariaLabel="Go to analysis"
+                (onClick)="onAnalyse(run)"
+              ></p-button>
+              <p-button
+                icon="pi pi-eye"
+                severity="info"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                pTooltip="View progress"
+                tooltipPosition="top"
+                ariaLabel="View progress"
+                (onClick)="onViewProgress(run)"
+              ></p-button>
+              <p-button
+                icon="pi pi-download"
+                severity="secondary"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                pTooltip="Download config"
+                tooltipPosition="top"
+                ariaLabel="Download config"
+                (onClick)="onDownloadConfig(run)"
+              ></p-button>
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                [disabled]="!isRunDeletable(run) || (deletingRunId !== null && deletingRunId !== run.id)"
+                [loading]="deletingRunId === run.id"
+                [pTooltip]="isRunDeletable(run) ? 'Delete run' : 'Queued or running runs cannot be deleted'"
+                tooltipPosition="top"
+                ariaLabel="Delete run"
+                (onClick)="onDelete(run)"
+              ></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="4">
+            <div class="plc-backlog-empty">
+              <i [class]="hasActiveFilters ? 'pi pi-search' : 'pi pi-inbox'"></i>
+              <h3>{{ hasActiveFilters ? 'No matching runs' : 'No runs to show' }}</h3>
+              <p>
+                {{
+                  hasActiveFilters
+                    ? 'Try changing the search term or status filters.'
+                    : 'Get started by creating your first run to analyze audio data.'
+                }}
+              </p>
+              @if (hasActiveFilters) {
+                <p-button
+                  label="Clear filters"
+                  icon="pi pi-filter-slash"
+                  severity="secondary"
+                  (onClick)="clearFilters()"
+                />
+              } @else {
+                <p-button
+                  label="Create first run"
+                  icon="pi pi-plus"
+                  (onClick)="router.navigate(['/run-configurator'])"
+                />
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</div>
 
 <p-confirmdialog />
 <plc-run-configuration-drawer [(visible)]="configDrawerVisible" [run]="selectedRun" />

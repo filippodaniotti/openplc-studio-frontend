@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, switchMap } from 'rxjs';
-import { Run, RunPage } from '../interfaces/run.interface';
+import { Run, RunPage, RunSortDirection, RunSortField } from '../interfaces/run.interface';
+import { RunStatus } from '../enums/run-status.enum';
 import { RunMapper } from '../mappers/run.mapper';
 import { RunDto, RunPageDto } from '../dtos/run.dto';
 
@@ -35,8 +36,21 @@ export class RunsClient {
       .pipe(switchMap((dto: RunDto) => of(RunMapper.dtoToModel(dto))));
   }
 
-  public getRunsPage(page: number, pageSize: number): Observable<RunPage> {
-    const params = new HttpParams().set('page', page).set('page_size', pageSize);
+  public getRunsPage(
+    page: number,
+    pageSize: number,
+    search = '',
+    statuses: RunStatus[] = [],
+    sortBy: RunSortField = 'created',
+    sortDirection: RunSortDirection = 'desc',
+  ): Observable<RunPage> {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('page_size', pageSize)
+      .set('sort_by', sortBy)
+      .set('sort_direction', sortDirection);
+    if (search.trim()) params = params.set('search', search.trim());
+    for (const status of statuses) params = params.append('status', status);
     return this.http
       .get<RunPageDto>(this.api, { headers: this.headers, params })
       .pipe(switchMap((dto: RunPageDto) => of(RunMapper.pageDtoToModel(dto))));

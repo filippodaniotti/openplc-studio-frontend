@@ -18,6 +18,9 @@ export interface Run {
   };
 }
 
+export type RunSortField = 'name' | 'created' | 'updated' | 'status';
+export type RunSortDirection = 'asc' | 'desc';
+
 export interface RunPage {
   items: Run[];
   total: number;
