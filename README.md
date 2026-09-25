@@ -2,6 +2,7 @@
 
 ![OpenPLC Studio banner](https://raw.githubusercontent.com/CIMIL/openplc-studio/main/assets/banner.png)
 
+[![Unit tests](https://github.com/filippodaniotti/openplc-studio-frontend/actions/workflows/tests.yml/badge.svg)](https://github.com/filippodaniotti/openplc-studio-frontend/actions/workflows/tests.yml)
 [![Build and publish](https://github.com/filippodaniotti/openplc-studio-frontend/actions/workflows/publish-image.yml/badge.svg)](https://github.com/filippodaniotti/openplc-studio-frontend/actions/workflows/publish-image.yml)
 [![Docker pulls](https://img.shields.io/docker/pulls/cimil/openplc-studio-frontend?logo=docker&label=Docker%20pulls)](https://hub.docker.com/r/cimil/openplc-studio-frontend)
 [![Angular](https://img.shields.io/badge/Angular-19-DD0031?logo=angular&logoColor=white)](https://angular.dev/)
