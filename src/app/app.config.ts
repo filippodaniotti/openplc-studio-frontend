@@ -9,12 +9,15 @@ import { routes } from './app.routes';
 import { providePrimeNG } from 'primeng/config';
 
 import Aura from '@primeng/themes/aura';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { MessageService } from 'primeng/api';
+import { serverUnreachableInterceptor } from './shared/interceptors/server-unreachable.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([serverUnreachableInterceptor])),
+    MessageService,
     importProvidersFrom(FormsModule),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideAnimationsAsync(),

@@ -13,7 +13,6 @@ import { RunCompletionMessage } from './shared/interfaces/ws.interface';
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, ButtonModule, ToggleButtonModule, FormsModule, HeaderComponent, ToastModule],
-  providers: [MessageService],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
@@ -25,7 +24,7 @@ export class AppComponent implements OnInit {
   constructor(
     private readonly messageService: MessageService,
     private readonly wsService: WsService,
-  ) { }
+  ) {}
 
   public ngOnInit(): void {
     this.wsService
@@ -36,15 +35,15 @@ export class AppComponent implements OnInit {
           this.messageService.add(
             message.success
               ? {
-                severity: 'success',
-                summary: 'Run completed',
-                detail: `Run ${message.run_name} has successfully completed`,
-              }
+                  severity: 'success',
+                  summary: 'Run completed',
+                  detail: `Run ${message.run_name} has successfully completed`,
+                }
               : {
-                severity: 'error',
-                summary: 'Run failed',
-                detail: `Run ${message.run_name} has failed`,
-              },
+                  severity: 'error',
+                  summary: 'Run failed',
+                  detail: `Run ${message.run_name} has failed`,
+                },
           ),
         ),
       )
