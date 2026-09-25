@@ -1,0 +1,58 @@
+<p-fileupload
+  #fileUpload
+  name="files"
+  [multiple]="true"
+  accept="audio/wav,.wav"
+  [maxFileSize]="maxFileSize"
+  [customUpload]="true"
+  [disabled]="uploading"
+  mode="advanced"
+  styleClass="w-full"
+  chooseLabel="Choose WAV files"
+  uploadLabel="Upload"
+  (uploadHandler)="upload($event)"
+  (onSelect)="onSelect($event)"
+  (onRemove)="onRemove($event)"
+  (onClear)="onClear()"
+>
+  <ng-template #empty>
+    <button type="button" class="plc-upload-empty" (click)="fileUpload.choose()">
+      <i class="pi pi-cloud-upload text-4xl text-muted-color"></i>
+      <span class="text-sm text-muted-color">Drag and drop WAV files here, or click to browse.</span>
+      <small class="text-muted-color">Maximum 100 MB per track</small>
+    </button>
+  </ng-template>
+
+  <ng-template let-file let-i="index" #file>
+    @let view = getView(file);
+    <div class="plc-upload-file flex items-center gap-3 w-full min-w-0">
+      <i class="pi pi-wave-pulse text-primary text-xl"></i>
+      <div class="flex flex-col min-w-0 flex-auto">
+        <span class="font-medium truncate">{{ file.name }}</span>
+        <span class="text-xs text-muted-color truncate">
+          @if (view.pending) {
+            <i class="pi pi-spin pi-spinner text-[10px] mr-1"></i>
+            Reading track info…
+          } @else if (view.available) {
+            {{ view.durationLabel }} · {{ view.sampleRateLabel }} · {{ view.channelLabel }} · {{ view.bitDepthLabel }}
+          } @else {
+            WAV metadata unavailable
+          }
+        </span>
+      </div>
+      <span class="text-xs text-muted-color whitespace-nowrap">{{ view.sizeLabel }}</span>
+      <p-button
+        icon="pi pi-times"
+        severity="danger"
+        size="small"
+        [text]="true"
+        [rounded]="true"
+        pTooltip="Remove"
+        ariaLabel="Remove file"
+        (onClick)="fileUpload.remove($event, i)"
+      ></p-button>
+    </div>
+  </ng-template>
+</p-fileupload>
+
+<p-confirmdialog key="track-upload-overwrite" [closable]="false" />

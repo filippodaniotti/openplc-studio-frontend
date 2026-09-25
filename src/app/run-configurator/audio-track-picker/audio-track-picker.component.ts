@@ -1,9 +1,8 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { FileRemoveEvent, FileSelectEvent, FileUpload, FileUploadEvent, FileUploadModule } from 'primeng/fileupload';
 import { PickListModule } from 'primeng/picklist';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
@@ -11,27 +10,14 @@ import { TooltipModule } from 'primeng/tooltip';
 import { catchError, map } from 'rxjs';
 import { AssetsClient } from '../../shared/clients/assets.client';
 import { AudioTrackMetadata } from '../../shared/interfaces/audio-track-metadata.interface';
-import { parseWavInfo, WavInfo } from '../../shared/utils/wavUtils';
+import { TrackUploadComponent } from '../../shared/components/track-upload/track-upload.component';
 import {
   AudioTrackMetadataView,
-  formatChannels,
   formatDuration,
-  formatSampleRate,
-  formatSize,
   toAudioTrackMetadataView,
 } from '../../shared/utils/audio-track-metadata';
 
 export type AudioTrackView = AudioTrackMetadataView;
-
-export interface QueuedFileView {
-  sizeLabel: string;
-  durationLabel: string;
-  sampleRateLabel: string;
-  channelLabel: string;
-  bitDepthLabel: string;
-  available: boolean;
-  pending: boolean;
-}
 
 const fallbackMetadata = (name: string): AudioTrackMetadata => ({
   name,
@@ -46,7 +32,15 @@ const fallbackMetadata = (name: string): AudioTrackMetadata => ({
   selector: 'plc-audio-track-picker',
   templateUrl: './audio-track-picker.component.html',
   styleUrls: ['./audio-track-picker.component.scss'],
-  imports: [CommonModule, FileUploadModule, ToastModule, PickListModule, ButtonModule, TooltipModule, SkeletonModule],
+  imports: [
+    CommonModule,
+    ToastModule,
+    PickListModule,
+    ButtonModule,
+    TooltipModule,
+    SkeletonModule,
+    TrackUploadComponent,
+  ],
   providers: [MessageService],
   animations: [
     trigger('uploadPanel', [
@@ -62,8 +56,6 @@ const fallbackMetadata = (name: string): AudioTrackMetadata => ({
   ],
 })
 export class AudioTrackPickerComponent implements OnInit, OnChanges {
-  @ViewChild('fileUpload') fileUpload!: FileUpload;
-
   @Input()
   public audioTracksSelection: string[] = [];
 
@@ -77,8 +69,6 @@ export class AudioTrackPickerComponent implements OnInit, OnChanges {
   public uploadPanelVisible = false;
 
   public loading = false;
-
-  public queuedFileViews = new Map<string, QueuedFileView>();
 
   private metadata: AudioTrackMetadata[] = [];
 
@@ -146,70 +136,9 @@ export class AudioTrackPickerComponent implements OnInit, OnChanges {
     this.uploadPanelVisible = true;
   }
 
-  public onUpload(event: FileUploadEvent): void {
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Upload complete',
-      detail: `${event.files.length} file(s) uploaded.`,
-    });
-    this.fileUpload.clear();
+  public onTracksUploaded(): void {
     this.uploadPanelVisible = false;
     this.loadTracks();
-  }
-
-  public onSelect(event: FileSelectEvent): void {
-    for (const file of event.files) {
-      this.queuedFileViews.set(this.queuedFileKey(file), this.toQueuedFileView(file, null, true));
-      this.inspectQueuedFile(file);
-    }
-  }
-
-  public onRemove(event: FileRemoveEvent): void {
-    this.queuedFileViews.delete(this.queuedFileKey(event.file));
-  }
-
-  public onClear(): void {
-    this.queuedFileViews.clear();
-  }
-
-  public getQueuedFileView(file: File): QueuedFileView {
-    return this.queuedFileViews.get(this.queuedFileKey(file)) ?? this.toQueuedFileView(file, null, true);
-  }
-
-  private queuedFileKey(file: File): string {
-    return `${file.name}:${file.size}:${file.lastModified}`;
-  }
-
-  private inspectQueuedFile(file: File): void {
-    // Only the header is needed, so read at most 64 KiB instead of the whole file.
-    const headerLength = Math.min(file.size, 65536);
-    file
-      .slice(0, headerLength)
-      .arrayBuffer()
-      .then((buffer: ArrayBuffer) => {
-        const info = parseWavInfo(new Uint8Array(buffer));
-        this.queuedFileViews.set(this.queuedFileKey(file), this.toQueuedFileView(file, info));
-      })
-      .catch(() => {
-        this.queuedFileViews.set(this.queuedFileKey(file), this.toQueuedFileView(file, null));
-      });
-  }
-
-  private toQueuedFileView(file: File, info: WavInfo | null, pending = false): QueuedFileView {
-    let durationSeconds: number | null = null;
-    if (info && info.byteRate > 0) {
-      const dataSize = info.dataSize > 0 && info.dataSize !== 0xffffffff ? info.dataSize : Math.max(file.size - 44, 0);
-      durationSeconds = dataSize / info.byteRate;
-    }
-    return {
-      pending,
-      available: info !== null,
-      sizeLabel: formatSize(file.size),
-      durationLabel: formatDuration(durationSeconds),
-      sampleRateLabel: info ? formatSampleRate(info.sampleRate) : '\u2014',
-      channelLabel: info ? formatChannels(info.channels) : '\u2014',
-      bitDepthLabel: info ? `${info.bitDepth}-bit` : '\u2014',
-    };
   }
 
   // PickList mutates `source`/`target` in place, so the arrays are already up to

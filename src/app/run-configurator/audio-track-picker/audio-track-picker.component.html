@@ -35,60 +35,7 @@
   <!-- Collapsible upload panel -->
   @if (uploadPanelVisible) {
     <div @uploadPanel class="overflow-hidden">
-      <p-fileupload
-        #fileUpload
-        name="files"
-        [url]="filesClient.api"
-        (onUpload)="onUpload($event)"
-        (onSelect)="onSelect($event)"
-        (onRemove)="onRemove($event)"
-        (onClear)="onClear()"
-        [multiple]="true"
-        accept="audio/wav"
-        maxFileSize="100000000"
-        mode="advanced"
-        styleClass="w-full"
-      >
-        <ng-template #empty>
-          <div class="flex flex-col items-center justify-center gap-2 p-6 cursor-pointer" (click)="fileUpload.choose()">
-            <i class="pi pi-cloud-upload text-4xl text-muted-color"></i>
-            <p class="m-0 text-sm text-muted-color">Drag and drop WAV files here, or click to browse.</p>
-          </div>
-        </ng-template>
-
-        <ng-template let-file let-i="index" #file>
-          @let view = getQueuedFileView(file);
-          <div class="plc-upload-file flex items-center gap-3 w-full min-w-0">
-            <i class="pi pi-wave-pulse text-primary text-xl"></i>
-            <div class="flex flex-col min-w-0 flex-auto">
-              <span class="font-medium truncate">{{ file.name }}</span>
-              <span class="text-xs text-muted-color truncate">
-                @if (view.pending) {
-                  <i class="pi pi-spin pi-spinner text-[10px] mr-1"></i>
-                  Reading track info…
-                } @else if (view.available) {
-                  {{ view.durationLabel }} · {{ view.sampleRateLabel }} · {{ view.channelLabel }} ·
-                  {{ view.bitDepthLabel }}
-                } @else {
-                  No track info available
-                }
-              </span>
-            </div>
-            <span class="text-xs text-muted-color whitespace-nowrap">{{ view.sizeLabel }}</span>
-            <p-button
-              icon="pi pi-times"
-              severity="danger"
-              size="small"
-              [text]="true"
-              [rounded]="true"
-              pTooltip="Remove"
-              tooltipPosition="top"
-              ariaLabel="Remove file"
-              (onClick)="fileUpload.remove($event, i)"
-            ></p-button>
-          </div>
-        </ng-template>
-      </p-fileupload>
+      <plc-track-upload (uploaded)="onTracksUploaded()" />
     </div>
   }
 

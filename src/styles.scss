@@ -30,6 +30,21 @@
   border-radius: 10px;
 }
 
+// Keep short action tooltips on one line while allowing longer messages to
+// wrap only between words. PrimeNG's default tooltip width can otherwise split
+// labels such as "Download track" in the middle of a word.
+.p-tooltip {
+  max-width: min(24rem, calc(100vw - 2rem));
+}
+
+.p-tooltip .p-tooltip-text {
+  width: max-content;
+  max-width: min(24rem, calc(100vw - 2rem));
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
 .p-breadcrumb.p-breadcrumb {
   .p-breadcrumb-item-link {
     text-decoration: none;

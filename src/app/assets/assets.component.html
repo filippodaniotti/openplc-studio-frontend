@@ -1,0 +1,345 @@
+<div class="plc-assets-page">
+  <div class="plc-assets-heading">
+    <div>
+      <span class="text-sm text-muted-color">Asset library</span>
+      <h1>Audio tracks</h1>
+      <p>Upload and manage the source audio used by testbench runs.</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <p-button
+        label="Delete selected"
+        icon="pi pi-trash"
+        severity="danger"
+        [outlined]="true"
+        [disabled]="bulkDeleteDisabled"
+        [loading]="deleting"
+        pTooltip="Tracks used by active runs cannot be deleted"
+        (onClick)="deleteSelected()"
+      />
+      <p-button label="Upload tracks" icon="pi pi-upload" (onClick)="uploadDialogVisible = true" />
+    </div>
+  </div>
+
+  <section class="plc-assets-card">
+    <div class="plc-assets-toolbar">
+      <span class="plc-search">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="search"
+          [(ngModel)]="searchTerm"
+          placeholder="Search tracks"
+          aria-label="Search tracks"
+          (ngModelChange)="onSearchChange($event)"
+        />
+      </span>
+      <span class="text-sm text-muted-color">{{ totalRecords }} track(s)</span>
+      <span class="flex-auto"></span>
+      <p-button
+        icon="pi pi-refresh"
+        severity="secondary"
+        [text]="true"
+        [rounded]="true"
+        ariaLabel="Refresh tracks"
+        pTooltip="Refresh tracks"
+        [loading]="loading"
+        (onClick)="refresh()"
+      />
+    </div>
+
+    <p-table
+      #tracksTable
+      [value]="tracks"
+      dataKey="name"
+      [lazy]="true"
+      [paginator]="true"
+      [rows]="rows"
+      [first]="first"
+      [totalRecords]="totalRecords"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [loading]="loading"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} tracks"
+      styleClass="plc-assets-table"
+      [tableStyle]="{ 'min-width': '68rem' }"
+      (onLazyLoad)="loadTracks($event)"
+    >
+      <ng-template #header>
+        <tr>
+          <th class="plc-selection-cell">
+            <p-checkbox
+              [binary]="true"
+              [ngModel]="allVisibleSelected"
+              (ngModelChange)="toggleVisibleSelection($event)"
+              ariaLabel="Select all visible tracks"
+            />
+          </th>
+          <th pSortableColumn="name">
+            Name
+            <i class="pi pi-sort-alt plc-sort-icon"></i>
+          </th>
+          <th pSortableColumn="duration_seconds">
+            Duration
+            <i class="pi pi-sort-alt plc-sort-icon"></i>
+          </th>
+          <th>Audio</th>
+          <th pSortableColumn="size_bytes">
+            Size
+            <i class="pi pi-sort-alt plc-sort-icon"></i>
+          </th>
+          <th pSortableColumn="last_modified">
+            Last modified
+            <i class="pi pi-sort-alt plc-sort-icon"></i>
+          </th>
+          <th>Usage</th>
+          <th class="plc-actions-header">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template #body let-track>
+        <tr>
+          <td class="plc-selection-cell">
+            <p-checkbox
+              [binary]="true"
+              [ngModel]="isSelected(track)"
+              (ngModelChange)="toggleTrackSelection(track, $event)"
+              [ariaLabel]="'Select ' + track.name"
+            />
+          </td>
+          <td>
+            <button type="button" class="plc-track-link" (click)="showDetails(track)">
+              <i class="pi pi-wave-pulse text-primary"></i>
+              <span class="truncate">{{ track.name }}</span>
+            </button>
+          </td>
+          <td>{{ formatDuration(track.durationSeconds) }}</td>
+          <td class="text-sm text-muted-color">
+            {{ formatSampleRate(track.sampleRate) }} · {{ formatChannels(track.channels) }} ·
+            {{ track.bitDepth !== null ? track.bitDepth + '-bit' : '—' }}
+          </td>
+          <td>{{ formatSize(track.sizeBytes) }}</td>
+          <td>{{ track.storage.lastModified | date: 'MMM dd, yyyy HH:mm' }}</td>
+          <td>
+            @if (hasBlockingUsage(track)) {
+              <p-tag
+                severity="danger"
+                icon="pi pi-lock"
+                styleClass="plc-usage-tag"
+                [rounded]="true"
+                [value]="track.usage.blocking + ' active'"
+              />
+            } @else if (hasUsage(track)) {
+              <p-tag
+                severity="info"
+                icon="pi pi-history"
+                styleClass="plc-usage-tag"
+                [rounded]="true"
+                [value]="track.usage.total + ' historical'"
+              />
+            } @else {
+              <span class="text-sm text-muted-color">Unused</span>
+            }
+          </td>
+          <td class="plc-actions-cell">
+            <div class="flex items-center gap-1">
+              <p-button
+                icon="pi pi-info-circle"
+                severity="info"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                ariaLabel="Inspect track"
+                pTooltip="Inspect details"
+                (onClick)="showDetails(track)"
+              />
+              <p-button
+                icon="pi pi-download"
+                severity="secondary"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                ariaLabel="Download track"
+                pTooltip="Download track"
+                (onClick)="download(track)"
+              />
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                ariaLabel="Delete track"
+                [disabled]="track.usage.blocking > 0 || deleting"
+                [pTooltip]="track.usage.blocking > 0 ? 'Referenced by an active run' : 'Delete track'"
+                (onClick)="deleteTrack(track)"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="8">
+            <div class="plc-empty-state">
+              <i class="pi pi-wave-pulse"></i>
+              <h3>{{ searchTerm ? 'No matching tracks' : 'No audio tracks uploaded' }}</h3>
+              <p>
+                {{ searchTerm ? 'Try a different search.' : 'Upload WAV files to start building your asset library.' }}
+              </p>
+              @if (!searchTerm) {
+                <p-button label="Upload tracks" icon="pi pi-upload" (onClick)="uploadDialogVisible = true" />
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</div>
+
+<p-dialog
+  header="Upload audio tracks"
+  [(visible)]="uploadDialogVisible"
+  [modal]="true"
+  [style]="{ width: 'min(54rem, 95vw)' }"
+  [draggable]="false"
+>
+  <plc-track-upload (uploaded)="onUploaded()" />
+</p-dialog>
+
+<p-drawer
+  [visible]="detailsVisible"
+  position="right"
+  [style]="{ width: 'min(44rem, 100vw)' }"
+  (visibleChange)="onDetailsVisibleChange($event)"
+>
+  <ng-template #header>
+    <div class="min-w-0">
+      <span class="text-sm text-muted-color">Audio track</span>
+      <h2 class="m-0 truncate">{{ selectedTrack?.name }}</h2>
+    </div>
+  </ng-template>
+
+  @if (selectedTrack; as track) {
+    <div class="plc-details">
+      <audio class="w-full" controls preload="metadata" [src]="contentUrl(track)"></audio>
+      <div class="flex gap-2">
+        <p-button label="Download" icon="pi pi-download" severity="secondary" (onClick)="download(track)" />
+        <p-button
+          label="Delete"
+          icon="pi pi-trash"
+          severity="danger"
+          [outlined]="true"
+          [disabled]="track.usage.blocking > 0 || deleting"
+          (onClick)="deleteTrack(track)"
+        />
+      </div>
+
+      <section>
+        <h3>Audio metadata</h3>
+        <dl class="plc-metadata-grid">
+          <div>
+            <dt>Duration</dt>
+            <dd>{{ formatDuration(track.durationSeconds) }}</dd>
+          </div>
+          <div>
+            <dt>Sample rate</dt>
+            <dd>{{ formatSampleRate(track.sampleRate) }}</dd>
+          </div>
+          <div>
+            <dt>Channels</dt>
+            <dd>{{ formatChannels(track.channels) }}</dd>
+          </div>
+          <div>
+            <dt>Bit depth</dt>
+            <dd>{{ track.bitDepth !== null ? track.bitDepth + '-bit' : '—' }}</dd>
+          </div>
+          <div>
+            <dt>Format</dt>
+            <dd>{{ track.format ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>Encoding</dt>
+            <dd>{{ track.subtype ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>Frames</dt>
+            <dd>{{ track.frames !== null ? (track.frames | number) : '—' }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section>
+        <h3>Storage metadata</h3>
+        <dl class="plc-metadata-grid">
+          <div>
+            <dt>Provider</dt>
+            <dd>{{ track.storage.provider }}</dd>
+          </div>
+          <div>
+            <dt>Key</dt>
+            <dd class="break-all">{{ track.storage.key }}</dd>
+          </div>
+          <div>
+            <dt>Content type</dt>
+            <dd>{{ track.storage.contentType }}</dd>
+          </div>
+          <div>
+            <dt>Size</dt>
+            <dd>{{ formatSize(track.storage.sizeBytes) }}</dd>
+          </div>
+          <div>
+            <dt>Last modified</dt>
+            <dd>{{ track.storage.lastModified | date: 'medium' }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section>
+        <div class="flex items-center gap-2 mb-3">
+          <h3 class="m-0">Run usage</h3>
+          @if (hasBlockingUsage(track)) {
+            <p-tag severity="danger" icon="pi pi-lock" [value]="track.usage.blocking + ' blocking'" />
+          } @else {
+            <p-tag severity="secondary" [value]="track.usage.total + ' total'" />
+          }
+        </div>
+        <p-table
+          [value]="usage"
+          [lazy]="true"
+          [paginator]="usageTotal > usageRows"
+          [rows]="usageRows"
+          [totalRecords]="usageTotal"
+          [loading]="usageLoading"
+          (onLazyLoad)="loadUsage($event)"
+          styleClass="plc-usage-table"
+        >
+          <ng-template #header>
+            <tr>
+              <th>Run</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-reference>
+            <tr>
+              <td>
+                <button type="button" class="plc-run-link" (click)="openRun(reference)">{{ reference.name }}</button>
+              </td>
+              <td><p-tag [value]="reference.status" /></td>
+              <td>{{ reference.created | date: 'short' }}</td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="3" class="text-center text-muted-color py-4">This track is not referenced by any run.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </section>
+    </div>
+  }
+</p-drawer>
+
+<p-confirmdialog />

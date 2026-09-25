@@ -20,6 +20,10 @@ export const routes: Routes = [
     component: BacklogComponent,
   },
   {
+    path: 'assets',
+    loadComponent: () => import('./assets/assets.component').then((module) => module.AssetsComponent),
+  },
+  {
     path: 'run-progress/:id',
     component: RunProgressComponent,
   },

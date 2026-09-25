@@ -1,0 +1,48 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+:host::ng-deep {
+  .p-fileupload {
+    border: 1px solid var(--p-content-border-color);
+  }
+
+  .p-fileupload-header {
+    justify-content: center;
+  }
+
+  .p-fileupload-file-list {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.plc-upload-empty {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.plc-upload-file {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius, 6px);
+  background: var(--p-content-background);
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: var(--p-content-hover-background, var(--p-highlight-background));
+  }
+
+  & + .plc-upload-file {
+    margin-top: 0.5rem;
+  }
+}
