@@ -1,8 +1,9 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { MetricRaw } from '../analysis.service';
+import { extractWorkerName } from '../../shared/utils/module-instance-presentation';
 
-export function metricLabelTransform(name: string) {
-  return name.split('.')[0].split('/').pop() ?? '';
+export function metricLabelTransform(name: string): string {
+  return extractWorkerName(name);
 }
 
 @Pipe({ name: 'metricLabel' })

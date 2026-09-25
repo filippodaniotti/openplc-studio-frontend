@@ -16,6 +16,7 @@ import { ParameterFieldComponent } from '../../shared/components/parameter-field
 import { moduleConstraintErrors, parameterError } from '../../shared/utils/parameter-validation';
 import { Module } from '../../shared/interfaces/module.interface';
 import { ModuleType } from '../../shared/enums/module-type.enum';
+import { buildModuleInstancePresentations } from '../../shared/utils/module-instance-presentation';
 
 import { AutoCompleteCompleteEvent, AutoCompleteModule } from 'primeng/autocomplete';
 import { RunConfiguratorService } from '../run-configurator.service';
@@ -612,6 +613,12 @@ export class ModuleConfiguratorComponent implements OnInit {
 
   get availableCrossfadeModules(): ModuleWithCount[] {
     return this.crossfadeModules.value;
+  }
+
+  public moduleDiscriminator(module: ModuleWithCount, siblings: ModuleWithCount[]): string | null {
+    const moduleIndex = siblings.indexOf(module);
+    if (moduleIndex < 0) return null;
+    return buildModuleInstancePresentations(siblings)[moduleIndex]?.discriminator ?? null;
   }
 
   public isParameterFieldType(param: { type: string }): boolean {

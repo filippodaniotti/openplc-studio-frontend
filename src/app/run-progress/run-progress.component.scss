@@ -271,10 +271,26 @@
   font: inherit;
   font-weight: 500;
 
-  span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .plc-module-label {
+    min-width: 0;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    line-height: 1.2;
+
+    > span,
+    small {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    small {
+      margin-top: 0.2rem;
+      color: var(--p-text-muted-color);
+      font-size: 0.75rem;
+      font-weight: 400;
+    }
   }
   i {
     color: var(--p-text-muted-color);

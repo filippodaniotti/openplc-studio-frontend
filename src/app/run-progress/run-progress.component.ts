@@ -17,6 +17,7 @@ import { Module } from '../shared/interfaces/module.interface';
 import { Run } from '../shared/interfaces/run.interface';
 import { NodeProgress, RunCompletionMessage, RunProgressMessage } from '../shared/interfaces/ws.interface';
 import { RunStatus } from '../shared/enums/run-status.enum';
+import { buildModuleInstancePresentations } from '../shared/utils/module-instance-presentation';
 import { MessageService } from 'primeng/api';
 
 type ProgressKind = 'track' | 'packet-loss' | 'plc' | 'output';
@@ -25,6 +26,7 @@ type ProgressState = 'waiting' | 'running' | 'complete' | 'interrupted';
 interface ProgressTreeNode {
   key: string;
   label: string;
+  discriminator: string | null;
   kind: ProgressKind;
   nodeIds: string[];
   children: ProgressTreeNode[];
@@ -260,15 +262,34 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     const outputModules = run.modules[ModuleType.OutputAnalyser] ?? [];
     const plsCount = plsModules.length;
     const plcCount = plcModules.length;
+    const discriminators = {
+      [ModuleType.PacketLossSimulator]: buildModuleInstancePresentations(plsModules).map(
+        ({ discriminator }) => discriminator,
+      ),
+      [ModuleType.PLCAlgorithm]: buildModuleInstancePresentations(plcModules).map(({ discriminator }) => discriminator),
+      [ModuleType.OutputAnalyser]: buildModuleInstancePresentations(outputModules).map(
+        ({ discriminator }) => discriminator,
+      ),
+    };
 
     return run.tracks.map((trackName, trackIndex) => ({
       key: `track:${trackIndex}`,
       label: trackName,
+      discriminator: null,
       kind: 'track' as const,
       nodeIds: [],
       trackIndex,
       children: plsModules.map((plsModule, plsIndex) =>
-        this.buildPlsNode(plsModule, plsIndex, trackIndex, plsCount, plcModules, plcCount, outputModules),
+        this.buildPlsNode(
+          plsModule,
+          plsIndex,
+          trackIndex,
+          plsCount,
+          plcModules,
+          plcCount,
+          outputModules,
+          discriminators,
+        ),
       ),
     }));
   }
@@ -281,10 +302,12 @@ export class RunProgressComponent implements OnInit, OnDestroy {
     plcModules: Module[],
     plcCount: number,
     outputModules: Module[],
+    discriminators: Record<RunModuleType, Array<string | null>>,
   ): ProgressTreeNode {
     return {
       key: `track:${trackIndex}:pls:${moduleIndex}`,
       label: module.name,
+      discriminator: discriminators[ModuleType.PacketLossSimulator][moduleIndex] ?? null,
       kind: 'packet-loss',
       nodeIds: this.sliceNodeId(module, trackIndex),
       moduleType: ModuleType.PacketLossSimulator,
@@ -292,6 +315,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
       children: plcModules.map((plcModule, plcIndex) => ({
         key: `track:${trackIndex}:pls:${moduleIndex}:plc:${plcIndex}`,
         label: plcModule.name,
+        discriminator: discriminators[ModuleType.PLCAlgorithm][plcIndex] ?? null,
         kind: 'plc',
         nodeIds: this.sliceNodeId(plcModule, trackIndex * plsCount + moduleIndex),
         moduleType: ModuleType.PLCAlgorithm,
@@ -299,6 +323,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
         children: outputModules.map((outputModule, outputIndex) => ({
           key: `track:${trackIndex}:pls:${moduleIndex}:plc:${plcIndex}:output:${outputIndex}`,
           label: outputModule.name,
+          discriminator: discriminators[ModuleType.OutputAnalyser][outputIndex] ?? null,
           kind: 'output',
           nodeIds: this.sliceNodeId(outputModule, trackIndex * plsCount * plcCount + plcIndex * plsCount + moduleIndex),
           moduleType: ModuleType.OutputAnalyser,

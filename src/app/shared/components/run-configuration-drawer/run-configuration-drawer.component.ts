@@ -8,6 +8,7 @@ import { Module } from '../../interfaces/module.interface';
 import { Run } from '../../interfaces/run.interface';
 import { AudioTrackMetadata } from '../../interfaces/audio-track-metadata.interface';
 import { AudioTrackMetadataView, toAudioTrackMetadataView } from '../../utils/audio-track-metadata';
+import { buildModuleInstancePresentations } from '../../utils/module-instance-presentation';
 import { ParameterTreeComponent } from '../parameter-tree/parameter-tree.component';
 import { RunStatusBadgeComponent } from '../run-status-badge/run-status-badge.component';
 
@@ -65,6 +66,13 @@ export class RunConfigurationDrawerComponent implements OnChanges {
 
   public getModules(type: RunModuleType): Module[] {
     return this.run?.modules[type] ?? [];
+  }
+
+  public moduleDiscriminator(module: Module, type: RunModuleType): string | null {
+    const modules = this.getModules(type);
+    const moduleIndex = modules.indexOf(module);
+    if (moduleIndex < 0) return null;
+    return buildModuleInstancePresentations(modules)[moduleIndex]?.discriminator ?? null;
   }
 
   public isFocused(type: RunModuleType, index: number): boolean {

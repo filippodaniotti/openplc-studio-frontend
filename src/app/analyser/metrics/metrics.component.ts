@@ -16,18 +16,16 @@ import { ModuleType } from '../../shared/enums/module-type.enum';
 import { ThemeService } from '../../shared/services/theme.service';
 import { AnalysisService, MetricRaw } from '../analysis.service';
 import { DARK_COLORS, LIGHT_COLORS } from '../utils';
-import { MetricLabelPipe, metricLabelTransform } from './metric-label.pipe';
+import { buildMetricPresentations, MetricPresentation } from './metric-presentation';
 import { SpectralEnergyHeatmapComponent } from './spectral-energy-heatmap/spectral-energy-heatmap.component';
 
 const TD_METRICS = ['MSECalculator', 'MAECalculator'];
 const TD_METRICS_CHANNEL_AGNOSTIC_METRICS = ['WindowedPEAQCalculator', 'PerceptualCalculator'];
 const SPECTRAL_ENERGY_METRIC = 'SpectralEnergyCalculator';
 
-type MetricOption = MetricRaw & { displayName: string };
-
 type ChartMetricVisualization = {
   kind: 'chart';
-  metric: MetricRaw;
+  metric: MetricPresentation;
   data: ChartData;
   options: ChartOptions;
   type: 'line' | 'bar';
@@ -35,13 +33,13 @@ type ChartMetricVisualization = {
 
 type SpectralMetricVisualization = {
   kind: 'spectral';
-  metric: MetricRaw;
+  metric: MetricPresentation;
   fallbackIndex: number;
 };
 
 type UnsupportedMetricVisualization = {
   kind: 'unsupported';
-  metric: MetricRaw;
+  metric: MetricPresentation;
   message: string;
 };
 
@@ -55,7 +53,6 @@ type MetricVisualization = ChartMetricVisualization | SpectralMetricVisualizatio
     SkeletonModule,
     ChartModule,
     MultiSelectModule,
-    MetricLabelPipe,
     ButtonModule,
     DividerModule,
     RunConfigurationDrawerComponent,
@@ -66,15 +63,17 @@ type MetricVisualization = ChartMetricVisualization | SpectralMetricVisualizatio
 export class MetricsComponent {
   public metrics: MetricRaw[] = [];
 
-  public metricOptions: MetricOption[] = [];
+  public metricOptions: MetricPresentation[] = [];
 
-  public displayMetrics: MetricOption[] = [];
+  public displayMetrics: MetricPresentation[] = [];
 
   public visualizations: MetricVisualization[] = [];
 
   public chartsReady = false;
 
   public configDrawerVisible = false;
+
+  public focusedOutputAnalyserModule: FocusedRunModule | null = null;
 
   private latestWaveformBounds: number[] = [];
 
@@ -120,10 +119,10 @@ export class MetricsComponent {
         tap(() => this.destroyCharts()),
         tap((metrics) => {
           this.metrics = metrics;
-          this.metricOptions = metrics.map((metric) => ({
-            ...metric,
-            displayName: metricLabelTransform(metric.name),
-          }));
+          const outputAnalyserModules = this.analysisService.run.value?.modules[ModuleType.OutputAnalyser] ?? [];
+          this.metricOptions = buildMetricPresentations(metrics, outputAnalyserModules, (metric, fallbackIndex) =>
+            this.analysisService.resolveOutputAnalyserModuleForMetric(metric.name, fallbackIndex),
+          );
         }),
         filter((metrics) => metrics.length > 0),
         tap(() => this.buildAllVisualizations()),
@@ -142,31 +141,20 @@ export class MetricsComponent {
     return this.displayMetrics.some((displayMetric) => displayMetric.index === metric.index);
   }
 
-  public get focusedOutputAnalyserModules(): FocusedRunModule[] {
-    const modules = this.analysisService.run.value?.modules[ModuleType.OutputAnalyser] ?? [];
-    const focusedIndexes = new Set<number>();
-
-    this.displayMetrics.forEach((metric) => {
-      const fallbackIndex = this.metrics.findIndex((candidate) => candidate.index === metric.index);
-      const module = this.analysisService.resolveOutputAnalyserModuleForMetric(
-        metric.name,
-        fallbackIndex >= 0 ? fallbackIndex : null,
-      );
-      if (!module) return;
-
-      const moduleIndex = modules.indexOf(module);
-      if (moduleIndex >= 0) focusedIndexes.add(moduleIndex);
-    });
-
-    return [...focusedIndexes].map((index) => ({ type: ModuleType.OutputAnalyser, index }));
+  public openMetricConfiguration(metric: MetricPresentation): void {
+    this.focusedOutputAnalyserModule =
+      metric.moduleIndex === null ? null : { type: ModuleType.OutputAnalyser, index: metric.moduleIndex };
+    this.configDrawerVisible = true;
   }
 
   private buildAllVisualizations(): void {
-    this.visualizations = this.metrics.map((metric, fallbackIndex) => this.buildVisualization(metric, fallbackIndex));
+    this.visualizations = this.metricOptions.map((metric, fallbackIndex) =>
+      this.buildVisualization(metric, fallbackIndex),
+    );
   }
 
-  private buildVisualization(metric: MetricRaw, fallbackIndex: number): MetricVisualization {
-    const metricModule = this.getMetricsNameFromRawName(metric.name.split('/').pop());
+  private buildVisualization(metric: MetricPresentation, fallbackIndex: number): MetricVisualization {
+    const metricModule = metric.calculatorName;
 
     if (TD_METRICS.includes(metricModule)) {
       return { kind: 'chart', metric, ...this.initTDChart(metric) };
@@ -300,7 +288,7 @@ export class MetricsComponent {
     this.visualizations.forEach((visualization) => {
       if (visualization.kind !== 'chart') return;
 
-      const metricName = this.getMetricsNameFromRawName(visualization.metric.name);
+      const metricName = visualization.metric.calculatorName;
       const fallbackIndex = this.metrics.findIndex((metric) => metric.index === visualization.metric.index);
       let chartBounds: [number, number] | null = null;
 
@@ -357,15 +345,11 @@ export class MetricsComponent {
     return ['Left', 'Right'][index] ?? `Channel ${index + 1}`;
   }
 
-  public getMetricsNameFromRawName(rawName: string | undefined): string {
-    if (!rawName) return '';
-    return metricLabelTransform(rawName).split('-')[0];
-  }
-
   public destroyCharts(): void {
     this.visualizations = [];
     this.metricOptions = [];
     this.displayMetrics = [];
+    this.focusedOutputAnalyserModule = null;
     this.chartsReady = false;
   }
 

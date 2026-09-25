@@ -84,6 +84,31 @@ describe('RunProgressComponent', () => {
     expect(nodes[1].children[0].children[0].children[0].nodeIds).toEqual(['out-2']);
   });
 
+  it('shows settings subtitles only for duplicate module names', () => {
+    const duplicateRun = {
+      ...run,
+      tracks: ['one.wav'],
+      modules: {
+        ...run.modules,
+        [ModuleType.PacketLossSimulator]: [
+          { name: 'PLS', node_ids: ['pls-1'], settings: [{ name: 'rate', value: 0.1 }] },
+          { name: 'PLS', node_ids: ['pls-2'], settings: [{ name: 'rate', value: 0.2 }] },
+        ],
+      },
+    };
+
+    component.nodes = (component as any).buildNodesFromRun(duplicateRun);
+    component.expandedKeys = new Set(component.nodes.map((node) => node.key));
+    fixture.detectChanges();
+
+    expect(component.nodes[0].children.map((node) => node.discriminator)).toEqual(['rate=0.1', 'rate=0.2']);
+    expect(
+      [...fixture.nativeElement.querySelectorAll('.plc-module-label small')].map((element: HTMLElement) =>
+        element.textContent?.trim(),
+      ),
+    ).toEqual(['rate=0.1', 'rate=0.2']);
+  });
+
   it('focuses the selected track in the configuration drawer', () => {
     const trackButton = fixture.nativeElement.querySelectorAll('.plc-track-name')[1] as HTMLButtonElement;
     trackButton.click();

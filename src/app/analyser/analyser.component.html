@@ -9,19 +9,49 @@
 } @else {
   <div class="w-full">
     <div class="py-4">
-      @if (analysisService.trackGroups.value && analysisService.trackGroups.value.length !== 0) {
+      @if (trackSelectionTree.length !== 0) {
         <div class="flex flex-row items-center justify-center w-full gap-3">
           <div class="w-2/4">
             <p-cascadeselect
-              [ngModel]="analysisService.selectedTrackPlayback.value"
-              (ngModelChange)="analysisService.selectedTrackPlayback.next($event)"
-              [options]="$any(analysisService.trackGroups.value)"
-              optionLabel="name"
-              optionGroupLabel="originalTrack"
-              [optionGroupChildren]="['reconstructedTracks']"
-              styleClass="w-full"
+              [ngModel]="selectedTrack"
+              (ngModelChange)="onTrackSelectionChange($event)"
+              [options]="$any(trackSelectionTree)"
+              optionLabel="label"
+              optionGroupLabel="label"
+              [optionGroupChildren]="['children', 'children']"
+              styleClass="w-full track-cascade-select"
+              panelStyleClass="track-cascade-panel"
               placeholder="Select a track"
-            />
+            >
+              <ng-template pTemplate="option" let-option>
+                <div class="flex flex-col min-w-0">
+                  <span class="truncate">{{ option.label }}</span>
+                  @if (option.discriminator) {
+                    <span class="text-xs text-muted-color truncate">{{ option.discriminator }}</span>
+                  }
+                </div>
+              </ng-template>
+              <ng-template pTemplate="value" let-option let-placeholder="placeholder">
+                @if (option) {
+                  <div class="flex flex-col min-w-0 leading-tight">
+                    @if (option.kind === 'original-audio') {
+                      <span class="truncate">{{ option.contextLabel }}</span>
+                      <span class="text-xs text-muted-color truncate">{{ option.label }}</span>
+                    } @else {
+                      <span class="truncate">
+                        {{ option.label }}
+                        @if (option.discriminator) {
+                          · {{ option.discriminator }}
+                        }
+                      </span>
+                      <span class="text-xs text-muted-color truncate">{{ option.contextLabel }}</span>
+                    }
+                  </div>
+                } @else {
+                  {{ placeholder }}
+                }
+              </ng-template>
+            </p-cascadeselect>
           </div>
           <p-button
             type="button"
@@ -29,7 +59,7 @@
             severity="secondary"
             icon="pi pi-info-circle"
             size="small"
-            (click)="configDrawerVisible = true"
+            (click)="openSelectedTrackConfiguration()"
           />
         </div>
       } @else {
@@ -71,4 +101,9 @@
   </div>
 }
 
-<plc-run-configuration-drawer [(visible)]="configDrawerVisible" [run]="analysisService.run.value" />
+<plc-run-configuration-drawer
+  [(visible)]="configDrawerVisible"
+  [run]="analysisService.run.value"
+  [focusedModules]="focusedPipelineModules"
+  [focusedTrackIndex]="focusedTrackIndex"
+/>

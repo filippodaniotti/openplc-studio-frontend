@@ -50,7 +50,12 @@
               >
                 <summary class="cursor-pointer font-semibold flex align-items-center gap-1">
                   <i class="pi pi-box"></i>
-                  {{ module.name }}
+                  <span class="plc-config-module-label">
+                    <span>{{ module.name }}</span>
+                    @if (moduleDiscriminator(module, section.type); as discriminator) {
+                      <small>{{ discriminator }}</small>
+                    }
+                  </span>
                 </summary>
                 <div class="mt-2 ml-2 pl-3 border-l border-gray-300 dark:border-gray-600">
                   <plc-parameter-tree [settings]="module.settings" />

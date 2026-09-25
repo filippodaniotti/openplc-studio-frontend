@@ -30,8 +30,13 @@ import { ZoomLensComponent } from './zoom-lens/zoom-lens.component';
 import { MetricsComponent } from './metrics/metrics.component';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
-import { RunConfigurationDrawerComponent } from '../shared/components/run-configuration-drawer/run-configuration-drawer.component';
+import {
+  FocusedRunModule,
+  RunConfigurationDrawerComponent,
+} from '../shared/components/run-configuration-drawer/run-configuration-drawer.component';
+import { ModuleType } from '../shared/enums/module-type.enum';
 import { RunStatus } from '../shared/enums/run-status.enum';
+import { TrackSelectionGroup, TrackSelectionLeaf, buildTrackSelectionTree } from './track-selection';
 
 Chart.register(zoomPlugin);
 
@@ -78,6 +83,10 @@ export class AnalyserComponent {
   public AccordionPanels: typeof AccordionPanels = AccordionPanels;
 
   public configDrawerVisible = false;
+
+  public trackSelectionTree: TrackSelectionGroup[] = [];
+
+  public selectedTrack: TrackSelectionLeaf | null = null;
 
   private destroy$ = new Subject<void>();
 
@@ -220,8 +229,14 @@ export class AnalyserComponent {
               reconstructedTracks: tracks[key].reconstructedTracks,
             })),
           );
+
+          const modules = this.analysisService.run.value?.modules;
+          this.trackSelectionTree = modules
+            ? buildTrackSelectionTree(this.originalTracks, this.reconstructedTracks, modules)
+            : [];
+          this.selectedTrack = (this.trackSelectionTree[0]?.children[0] as TrackSelectionLeaf | undefined) ?? null;
+          if (this.selectedTrack) this.analysisService.selectedTrackPlayback.next(this.selectedTrack);
         }),
-        tap(() => this.onTrackChange(this.originalTracks[0])),
         tap(() => this.reconstructedTracksFetchDone.next()),
       )
       .subscribe();
@@ -302,8 +317,34 @@ export class AnalyserComponent {
       .subscribe();
   }
 
+  public onTrackSelectionChange(track: TrackSelectionLeaf | null): void {
+    this.selectedTrack = track;
+    this.analysisService.selectedTrackPlayback.next(track);
+  }
+
+  public openSelectedTrackConfiguration(): void {
+    this.configDrawerVisible = true;
+  }
+
+  public get focusedTrackIndex(): number | null {
+    return this.selectedTrack?.trackIndex ?? null;
+  }
+
+  public get focusedPipelineModules(): FocusedRunModule[] {
+    if (!this.selectedTrack || this.selectedTrack.kind !== 'reconstructed-track') return [];
+
+    return [
+      this.selectedTrack.packetLossModuleIndex === null
+        ? null
+        : { type: ModuleType.PacketLossSimulator, index: this.selectedTrack.packetLossModuleIndex },
+      this.selectedTrack.plcModuleIndex === null
+        ? null
+        : { type: ModuleType.PLCAlgorithm, index: this.selectedTrack.plcModuleIndex },
+    ].filter((module): module is FocusedRunModule => module !== null);
+  }
+
   public onTrackChange(track: { name: string } | null): void {
-    if (!track || !track.name) {
+    if (!track?.name) {
       return;
     }
 

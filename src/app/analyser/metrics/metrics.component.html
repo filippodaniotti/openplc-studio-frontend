@@ -13,7 +13,12 @@
   [style]="{ display: metrics.length ? 'flex' : 'none' }"
 >
   <ng-template pTemplate="item" let-option>
-    {{ option | metricLabel }}
+    <div class="flex flex-col">
+      <span>{{ option.calculatorName }}</span>
+      @if (option.discriminator) {
+        <span class="text-xs text-muted-color">{{ option.discriminator }}</span>
+      }
+    </div>
   </ng-template>
 </p-multiselect>
 
@@ -24,12 +29,15 @@
         <p-divider />
         <div>
           <div class="flex flex-row items-center justify-center w-full gap-3">
-            <h1 class="font-sans text-xl">
-              {{ visualization.metric | metricLabel }}
-            </h1>
+            <div class="text-center">
+              <h1 class="font-sans text-xl m-0">{{ visualization.metric.calculatorName }}</h1>
+              @if (visualization.metric.discriminator) {
+                <div class="text-sm text-muted-color">{{ visualization.metric.discriminator }}</div>
+              }
+            </div>
             <p-button
               type="button"
-              (click)="configDrawerVisible = true"
+              (click)="openMetricConfiguration(visualization.metric)"
               [rounded]="true"
               severity="secondary"
               icon="pi pi-info-circle"
@@ -68,5 +76,5 @@
 <plc-run-configuration-drawer
   [(visible)]="configDrawerVisible"
   [run]="analysisService.run.value"
-  [focusedModules]="focusedOutputAnalyserModules"
+  [focusedModule]="focusedOutputAnalyserModule"
 />

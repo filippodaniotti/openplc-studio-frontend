@@ -19,8 +19,13 @@
           class="w-full !min-h-full"
         >
           <ng-template let-item let-index="index" #item>
-            <div class="flex flex-row flex-auto">
-              <p>{{ item.name }}</p>
+            <div class="flex flex-row flex-auto items-center gap-2">
+              <div class="plc-module-list-label">
+                <span>{{ item.name }}</span>
+                @if (moduleDiscriminator(item, modulesSelection); as discriminator) {
+                  <small>{{ discriminator }}</small>
+                }
+              </div>
               <div class="flex-auto"></div>
               <p-button
                 icon="pi pi-times"
@@ -71,10 +76,16 @@
             class="w-full mt-2"
           >
             <ng-template let-item let-index="index" #item>
-              <div class="flex flex-row flex-auto">
-                <p (click)="openCrossfadeModuleDetail(item, 'crossfade')" class="cursor-pointer flex-1">
-                  {{ item.name }}
-                </p>
+              <div class="flex flex-row flex-auto items-center gap-2">
+                <div
+                  (click)="openCrossfadeModuleDetail(item, 'crossfade')"
+                  class="cursor-pointer flex-1 plc-module-list-label"
+                >
+                  <span>{{ item.name }}</span>
+                  @if (moduleDiscriminator(item, getCrossfadeModules(currentCrossfadeParamName)); as discriminator) {
+                    <small>{{ discriminator }}</small>
+                  }
+                </div>
                 <p-button
                   class="small-icon-btn"
                   icon="pi pi-times"
@@ -146,10 +157,16 @@
             class="w-full mt-2"
           >
             <ng-template let-item let-index="index" #item>
-              <div class="flex flex-row flex-auto">
-                <p (click)="openCrossfadeModuleDetail(item, 'fade_in')" class="cursor-pointer flex-1">
-                  {{ item.name }}
-                </p>
+              <div class="flex flex-row flex-auto items-center gap-2">
+                <div
+                  (click)="openCrossfadeModuleDetail(item, 'fade_in')"
+                  class="cursor-pointer flex-1 plc-module-list-label"
+                >
+                  <span>{{ item.name }}</span>
+                  @if (moduleDiscriminator(item, getCrossfadeModules(currentCrossfadeParamName)); as discriminator) {
+                    <small>{{ discriminator }}</small>
+                  }
+                </div>
                 <p-button
                   class="small-icon-btn"
                   icon="pi pi-times"
@@ -223,8 +240,13 @@
             class="w-full mt-2"
           >
             <ng-template let-item let-index="index" #item>
-              <div class="flex flex-row flex-auto">
-                <p (click)="openModuleDetail(item, 'linked')" class="cursor-pointer flex-1">{{ item.name }}</p>
+              <div class="flex flex-row flex-auto items-center gap-2">
+                <div (click)="openModuleDetail(item, 'linked')" class="cursor-pointer flex-1 plc-module-list-label">
+                  <span>{{ item.name }}</span>
+                  @if (moduleDiscriminator(item, getChannelModules('linked')); as discriminator) {
+                    <small>{{ discriminator }}</small>
+                  }
+                </div>
                 <p-button
                   icon="pi pi-times"
                   [rounded]="true"
@@ -310,8 +332,13 @@
             class="w-full mt-2"
           >
             <ng-template let-item let-index="index" #item>
-              <div class="flex flex-row flex-auto">
-                <p (click)="openModuleDetail(item, 'mid')" class="cursor-pointer flex-1">{{ item.name }}</p>
+              <div class="flex flex-row flex-auto items-center gap-2">
+                <div (click)="openModuleDetail(item, 'mid')" class="cursor-pointer flex-1 plc-module-list-label">
+                  <span>{{ item.name }}</span>
+                  @if (moduleDiscriminator(item, getChannelModules('mid')); as discriminator) {
+                    <small>{{ discriminator }}</small>
+                  }
+                </div>
                 <p-button
                   icon="pi pi-times"
                   [rounded]="true"
@@ -397,8 +424,13 @@
             class="w-full mt-2"
           >
             <ng-template let-item let-index="index" #item>
-              <div class="flex flex-row flex-auto">
-                <p (click)="openModuleDetail(item, 'side')" class="cursor-pointer flex-1">{{ item.name }}</p>
+              <div class="flex flex-row flex-auto items-center gap-2">
+                <div (click)="openModuleDetail(item, 'side')" class="cursor-pointer flex-1 plc-module-list-label">
+                  <span>{{ item.name }}</span>
+                  @if (moduleDiscriminator(item, getChannelModules('side')); as discriminator) {
+                    <small>{{ discriminator }}</small>
+                  }
+                </div>
                 <p-button
                   icon="pi pi-times"
                   [rounded]="true"
@@ -485,8 +517,13 @@
             class="w-full mt-2"
           >
             <ng-template let-item let-index="index" #item>
-              <div class="flex flex-row flex-auto">
-                <p (click)="openModuleDetail(item, 'left')" class="cursor-pointer flex-1">{{ item.name }}</p>
+              <div class="flex flex-row flex-auto items-center gap-2">
+                <div (click)="openModuleDetail(item, 'left')" class="cursor-pointer flex-1 plc-module-list-label">
+                  <span>{{ item.name }}</span>
+                  @if (moduleDiscriminator(item, getChannelModules('left')); as discriminator) {
+                    <small>{{ discriminator }}</small>
+                  }
+                </div>
                 <p-button
                   icon="pi pi-times"
                   [rounded]="true"
@@ -574,8 +611,13 @@
             class="w-full mt-2"
           >
             <ng-template let-item let-index="index" #item>
-              <div class="flex flex-row flex-auto">
-                <p (click)="openModuleDetail(item, 'right')" class="cursor-pointer flex-1">{{ item.name }}</p>
+              <div class="flex flex-row flex-auto items-center gap-2">
+                <div (click)="openModuleDetail(item, 'right')" class="cursor-pointer flex-1 plc-module-list-label">
+                  <span>{{ item.name }}</span>
+                  @if (moduleDiscriminator(item, getChannelModules('right')); as discriminator) {
+                    <small>{{ discriminator }}</small>
+                  }
+                </div>
                 <p-button
                   icon="pi pi-times"
                   [rounded]="true"

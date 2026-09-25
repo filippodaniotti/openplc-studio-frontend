@@ -146,7 +146,11 @@
         <button
           class="plc-tree-toggle"
           type="button"
-          [attr.aria-label]="(isExpanded(node) ? 'Collapse ' : 'Expand ') + node.label"
+          [attr.aria-label]="
+            (isExpanded(node) ? 'Collapse ' : 'Expand ') +
+            node.label +
+            (node.discriminator ? ', ' + node.discriminator : '')
+          "
           (click)="toggleNode(node)"
         >
           <i [class]="isExpanded(node) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
@@ -161,9 +165,16 @@
           class="plc-module-name"
           type="button"
           (click)="onModuleClick(node)"
-          [attr.aria-label]="'View configuration for ' + node.label"
+          [attr.aria-label]="
+            'View configuration for ' + node.label + (node.discriminator ? ', ' + node.discriminator : '')
+          "
         >
-          <span>{{ node.label }}</span>
+          <span class="plc-module-label">
+            <span>{{ node.label }}</span>
+            @if (node.discriminator) {
+              <small>{{ node.discriminator }}</small>
+            }
+          </span>
           <i class="pi pi-info-circle"></i>
         </button>
       } @else {
@@ -183,7 +194,7 @@
           class="plc-progress-bar"
           [class]="'is-' + progress.state"
           role="progressbar"
-          [attr.aria-label]="node.label + ' progress'"
+          [attr.aria-label]="node.label + (node.discriminator ? ', ' + node.discriminator : '') + ' progress'"
           [attr.aria-valuenow]="progress.percentage"
           aria-valuemin="0"
           aria-valuemax="100"

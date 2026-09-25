@@ -83,7 +83,30 @@
   }
 }
 
-:host::ng-deep { /*aggiunto per allinare in alto le schermate di configurazione dei moduli*/
+.plc-module-list-label {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.2;
+
+  span,
+  small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    margin-top: 0.2rem;
+    color: var(--p-text-muted-color);
+    font-size: 0.75rem;
+    font-weight: 400;
+  }
+}
+
+:host::ng-deep {
+  /*aggiunto per allinare in alto le schermate di configurazione dei moduli*/
   .p-splitter-panel {
     align-items: flex-start !important;
     overflow-y: auto;

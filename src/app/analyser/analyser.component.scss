@@ -1,3 +1,33 @@
-::ng-deep p-cascadeselect p-overlay > div.p-overlay {
-  min-width: 50% !important ;
+::ng-deep .track-cascade-select .p-cascadeselect-label {
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+}
+
+::ng-deep p-cascadeselect p-overlay > div.p-overlay:has(.track-cascade-panel) {
+  width: max-content !important;
+  min-width: max-content !important;
+}
+
+::ng-deep .track-cascade-panel {
+  width: max-content;
+  min-width: max-content !important;
+}
+
+::ng-deep .track-cascade-panel > p-cascadeselect-sub > .p-cascadeselect-list,
+::ng-deep .track-cascade-panel p-cascadeselect-sub.p-cascadeselect-option-list,
+::ng-deep .track-cascade-panel p-cascadeselect-sub.p-cascadeselect-option-list > .p-cascadeselect-list {
+  width: max-content !important;
+  min-width: max-content !important;
+}
+
+::ng-deep .track-cascade-panel .p-cascadeselect-option,
+::ng-deep .track-cascade-panel .p-cascadeselect-option-content {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+::ng-deep .track-cascade-panel .p-cascadeselect-option-content {
+  min-width: 0 !important;
+  max-width: none !important;
 }
