@@ -12,3 +12,14 @@
   border: 0;
   background: var(--p-content-background);
 }
+
+:host.documentation-contained {
+  margin: 0;
+  height: 100%;
+  min-height: 0;
+
+  .documentation-frame {
+    height: 100%;
+    min-height: 0;
+  }
+}

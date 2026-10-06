@@ -1,4 +1,4 @@
-import { ElementRef } from '@angular/core';
+import { ElementRef, SimpleChange } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { DefaultUrlSerializer, NavigationEnd, Router, UrlCreationOptions, UrlTree } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
@@ -42,7 +42,7 @@ class RouterStub {
 function documentationWindow(pathname = '/api/plctestbench-docs/', hash = ''): Window {
   const target = new EventTarget() as Window;
   Object.defineProperties(target, {
-    location: { value: { pathname, hash }, configurable: true },
+    location: { value: { pathname, hash, origin: window.location.origin }, configurable: true },
     postMessage: { value: jasmine.createSpy('postMessage') },
   });
   return target;
@@ -134,6 +134,61 @@ describe('DocumentationComponent', () => {
       [{ type: 'plctestbench-theme', theme: 'dark' }, window.location.origin],
       [{ type: 'plctestbench-theme', theme: 'dark' }, window.location.origin],
     ]);
+  });
+
+  it('uses an explicit target without subscribing to or updating router navigation', () => {
+    component.syncWithRouter = false;
+    component.target = { path: 'reference/plc_algorithm/', fragment: 'plctestbench.plc_algorithm.BurgPLC' };
+    component.ngOnInit();
+    expect(router.events.observed).toBeFalse();
+    expect(component.documentationUrl).toBe(
+      '/api/plctestbench-docs/reference/plc_algorithm/#plctestbench.plc_algorithm.BurgPLC',
+    );
+    component.onFrameLoad();
+    (frameWindow.location as unknown as { hash: string }).hash = '#another';
+    frameWindow.dispatchEvent(new Event('hashchange'));
+    router.url = '/run-configurator';
+    router.events.next(new NavigationEnd(1, router.url, router.url));
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+    expect(component.documentationUrl).toContain('#plctestbench.plc_algorithm.BurgPLC');
+    component.ngOnDestroy();
+  });
+
+  it('updates explicit targets and enables routing if the mode changes', () => {
+    component.syncWithRouter = false;
+    component.ngOnInit();
+    component.target = { path: 'reference/settings/', fragment: 'LinearCrossfadeSettings' };
+    component.ngOnChanges({ target: new SimpleChange(null, component.target, false) });
+    expect(component.documentationUrl).toBe('/api/plctestbench-docs/reference/settings/#LinearCrossfadeSettings');
+    component.syncWithRouter = true;
+    component.ngOnChanges({ syncWithRouter: new SimpleChange(false, true, false) });
+    expect(router.events.observed).toBeTrue();
+    expect(component.documentationUrl).toBe('/api/plctestbench-docs/');
+    component.ngOnDestroy();
+  });
+
+  it('emits Escape from a contained frame and removes listeners on destruction', () => {
+    component.syncWithRouter = false;
+    const escape = jasmine.createSpy('escape');
+    component.escapeRequested.subscribe(escape);
+    component.ngOnInit();
+    component.onFrameLoad();
+    frameWindow.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(escape).toHaveBeenCalledTimes(1);
+    component.ngOnDestroy();
+    frameWindow.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(escape).toHaveBeenCalledTimes(1);
+  });
+
+  it('tolerates frames that navigate to a different origin', () => {
+    Object.defineProperty(frameWindow, 'location', {
+      get: () => {
+        throw new DOMException('Cross-origin', 'SecurityError');
+      },
+    });
+    expect(() => component.onFrameLoad()).not.toThrow();
+    expect(() => component.ngOnDestroy()).not.toThrow();
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 
   it('stops synchronizing after destruction', () => {

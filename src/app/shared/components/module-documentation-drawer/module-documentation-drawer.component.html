@@ -1,0 +1,49 @@
+<p-drawer
+  [visible]="visible"
+  position="right"
+  appendTo="body"
+  [modal]="false"
+  [blockScroll]="false"
+  [closeOnEscape]="false"
+  [closable]="false"
+  [style]="drawerWidth === null ? null : { width: drawerWidth + 'px' }"
+  [styleClass]="'plc-module-documentation-drawer' + (resizing ? ' plc-module-documentation-resizing' : '')"
+>
+  <ng-template #header>
+    <div class="plc-module-documentation-header" (keydown)="onKeyDown($event)">
+      <h2>Documentation — {{ moduleName }}</h2>
+      <p-button icon="pi pi-refresh" [text]="true" ariaLabel="Reload documentation" (onClick)="reload()" />
+      <p-button icon="pi pi-times" [text]="true" ariaLabel="Close documentation" (onClick)="close()" />
+      <div
+        class="plc-module-documentation-resize-handle"
+        role="separator"
+        tabindex="0"
+        aria-label="Resize documentation sidebar"
+        aria-orientation="vertical"
+        [attr.aria-valuemin]="minimumDrawerWidth"
+        [attr.aria-valuemax]="maximumDrawerWidth"
+        [attr.aria-valuenow]="effectiveWidth"
+        (pointerdown)="startResize($event)"
+        (pointermove)="resize($event)"
+        (pointerup)="stopResize($event)"
+        (pointercancel)="stopResize($event)"
+        (lostpointercapture)="stopResize($event)"
+        (keydown)="resizeWithKeyboard($event)"
+        title="Drag to resize; use arrow keys when focused"
+      >
+        <span aria-hidden="true"></span>
+      </div>
+    </div>
+  </ng-template>
+  <div class="plc-module-documentation-content" (keydown)="onKeyDown($event)">
+    @if (visible) {
+      <plc-documentation
+        *ngFor="let key of viewerKeys"
+        [syncWithRouter]="false"
+        [target]="target"
+        [contained]="true"
+        (escapeRequested)="close()"
+      />
+    }
+  </div>
+</p-drawer>

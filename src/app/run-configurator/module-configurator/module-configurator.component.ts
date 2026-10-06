@@ -26,8 +26,8 @@ import { PopupModalComponent } from '../../shared/popup-modal/popup-modal.compon
 import { MenuItem, MessageService } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TooltipModule } from 'primeng/tooltip';
-import { Router } from '@angular/router';
-import { moduleDocumentationTarget } from '../../shared/utils/module-documentation';
+import { ModuleDocumentationTarget, moduleDocumentationTarget } from '../../shared/utils/module-documentation';
+import { ModuleDocumentationDrawerComponent } from '../../shared/components/module-documentation-drawer/module-documentation-drawer.component';
 
 const suggestedBands: number[] = [100, 200, 2000];
 
@@ -62,11 +62,16 @@ type ModuleSuggestion = ModuleWithCount | GroupedModules;
     ParameterFieldComponent,
     BreadcrumbModule,
     TooltipModule,
+    ModuleDocumentationDrawerComponent,
   ],
 })
 export class ModuleConfiguratorComponent implements OnInit {
   @Input()
   public moduleType!: ModuleType;
+
+  public documentationVisible = false;
+  public documentationTarget: ModuleDocumentationTarget | null = null;
+  public documentationModuleName = '';
 
   public crossfadeModulesSelection!: ModuleWithCount[];
 
@@ -202,6 +207,7 @@ export class ModuleConfiguratorComponent implements OnInit {
   }
 
   set moduleFocus(value: ModuleWithCount | null) {
+    if (this._moduleFocus !== value) this.documentationVisible = false;
     this._moduleFocus = value;
     this.closeAllPopups();
   }
@@ -605,15 +611,13 @@ export class ModuleConfiguratorComponent implements OnInit {
   constructor(
     private readonly modulesClient: ModulesClient,
     private readonly messageService: MessageService,
-    private readonly router: Router,
     public runConfigService: RunConfiguratorService,
   ) {}
 
   public openDocumentation(module: ModuleWithCount): void {
-    const target = moduleDocumentationTarget(this.moduleType, module.name);
-    void this.router.navigate(['/docs', ...target.path.split('/').filter(Boolean)], {
-      fragment: target.fragment,
-    });
+    this.documentationTarget = moduleDocumentationTarget(this.moduleType, module.name);
+    this.documentationModuleName = module.name;
+    this.documentationVisible = true;
   }
 
   get modulesSelection(): ModuleWithCount[] {

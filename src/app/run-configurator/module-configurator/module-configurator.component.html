@@ -759,6 +759,12 @@
   </ng-template>
 </p-splitter>
 
+<plc-module-documentation-drawer
+  [(visible)]="documentationVisible"
+  [target]="documentationTarget"
+  [moduleName]="documentationModuleName"
+/>
+
 <ng-template #moduleSettingsTemplate let-selectedModule>
   <ng-container *ngIf="modulesSelection.length > 0 && selectedModule; else noModulesSelected">
     <div class="flex flex-col min-w-full">
