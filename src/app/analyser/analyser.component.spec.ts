@@ -75,6 +75,15 @@ describe('AnalyserComponent run status', () => {
     component.ngOnDestroy();
   });
 
+  it('requests ready-only analysis assets while the listening study awaits input', () => {
+    runsClient.getRun.and.returnValue(of({ ...run, status: RunStatus.AWAITING_INPUT }));
+    const component = createComponent();
+    component.ngOnInit();
+    expect(runsClient.getRunArtifactsArchive).toHaveBeenCalledWith(run.id, RunArtifactKind.OriginalTracks, true);
+    expect(runsClient.getRunArtifactsArchive).toHaveBeenCalledWith(run.id, RunArtifactKind.OutputAnalysis, true);
+    component.ngOnDestroy();
+  });
+
   it('uses regions only for the parent mask of the loaded reconstructed track', () => {
     const component = createComponent();
     const originalName = 'song.wav';

@@ -18,6 +18,37 @@ function createComponent(): ModuleConfiguratorComponent {
   );
 }
 
+describe('Human listening run limits', () => {
+  it('blocks a second HumanCalculator', () => {
+    const component = createComponent();
+    component.moduleType = ModuleType.OutputAnalyser;
+    component.addModule({ name: 'HumanCalculator', settings: [] });
+    component.addModule({ name: 'HumanCalculator', settings: [] });
+    expect(component.modulesSelection.length).toBe(1);
+  });
+
+  it('blocks a second simulator when HumanCalculator is present', () => {
+    const component = createComponent();
+    component.moduleType = ModuleType.OutputAnalyser;
+    component.addModule({ name: 'HumanCalculator', settings: [] });
+    component.moduleType = ModuleType.PacketLossSimulator;
+    component.addModule({ name: 'BinomialPLS', settings: [] });
+    component.addModule({ name: 'BinomialPLS', settings: [] });
+    expect(component.modulesSelection.length).toBe(1);
+  });
+
+  it('requires removing extra simulators before adding HumanCalculator', () => {
+    const component = createComponent();
+    component.moduleType = ModuleType.PacketLossSimulator;
+    component.addModule({ name: 'BinomialPLS', settings: [] });
+    component.addModule({ name: 'BinomialPLS', settings: [] });
+    expect(component.modulesSelection.length).toBe(2);
+    component.moduleType = ModuleType.OutputAnalyser;
+    component.addModule({ name: 'HumanCalculator', settings: [] });
+    expect(component.modulesSelection.length).toBe(0);
+  });
+});
+
 function search(component: ModuleConfiguratorComponent, query = ''): void {
   component.searchModules({ query } as AutoCompleteCompleteEvent);
 }

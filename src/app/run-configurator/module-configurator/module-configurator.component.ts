@@ -961,6 +961,22 @@ export class ModuleConfiguratorComponent implements OnInit {
       return;
     }
 
+    const selection = this.runConfigService.modulesSelection.value;
+    const hasHuman = selection[ModuleType.OutputAnalyser].some((item) => item.name === 'HumanCalculator');
+    const simulatorCount = selection[ModuleType.PacketLossSimulator].length;
+    let restriction = '';
+    if (this.moduleType === ModuleType.OutputAnalyser && module.name === 'HumanCalculator') {
+      if (hasHuman) restriction = 'A run supports at most one HumanCalculator instance.';
+      else if (simulatorCount > 1) restriction = 'Remove extra loss simulators before adding HumanCalculator.';
+    } else if (this.moduleType === ModuleType.PacketLossSimulator && hasHuman && simulatorCount >= 1) {
+      restriction = 'Runs with HumanCalculator support only one loss simulator instance.';
+    }
+    if (restriction) {
+      this.messageService.add({ severity: 'warn', summary: 'Listening study limit', detail: restriction });
+      this.selectedModuleProxy = null;
+      return;
+    }
+
     const moduleToAdd = this.hydrateModuleConfig(
       {
         ...module,

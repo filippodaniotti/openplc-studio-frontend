@@ -42,6 +42,7 @@ import { WsService } from '../shared/services/ws.service';
   styleUrl: './backlog.component.scss',
 })
 export class BacklogComponent implements OnInit, OnDestroy {
+  public readonly RunStatus = RunStatus;
   public runs: Run[] = [];
   public totalRecords = 0;
   public rows = 10;
@@ -56,6 +57,7 @@ export class BacklogComponent implements OnInit, OnDestroy {
     { label: 'Created', value: RunStatus.CREATED },
     { label: 'Queued', value: RunStatus.QUEUED },
     { label: 'Running', value: RunStatus.RUNNING },
+    { label: 'Manual action required', value: RunStatus.AWAITING_INPUT },
     { label: 'Completed', value: RunStatus.COMPLETED },
     { label: 'Failed', value: RunStatus.FAILED },
   ];
@@ -164,7 +166,15 @@ export class BacklogComponent implements OnInit, OnDestroy {
   }
 
   public isRunAnalyzable(run: Run): boolean {
-    return run.status === RunStatus.COMPLETED;
+    return run.status === RunStatus.COMPLETED || run.status === RunStatus.AWAITING_INPUT;
+  }
+
+  public hasHumanStudies(run: Run): boolean {
+    return Object.values(run.modules).some((modules) => modules.some((module) => module.name === 'HumanCalculator'));
+  }
+
+  public onListeningStudies(run: Run): void {
+    this.router.navigate(['/listening-studies', run.id]);
   }
 
   public onViewProgress(run: Run): void {

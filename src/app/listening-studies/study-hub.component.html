@@ -1,0 +1,413 @@
+<main class="hub">
+  <header class="hub-header">
+    <div class="heading">
+      <p class="eyebrow">
+        <i class="pi pi-headphones" aria-hidden="true"></i>
+        Human listening studies
+      </p>
+      <h1>{{ runName || 'Listening study hub' }}</h1>
+      <p class="subtitle">Invite listeners, review responses, and finalize your MUSHRA studies.</p>
+    </div>
+    <nav class="header-actions" aria-label="Run navigation">
+      <a class="navigation-link" [routerLink]="['/run-progress', runId]">
+        <i class="pi pi-chart-line" aria-hidden="true"></i>
+        Run progress
+      </a>
+      <a class="navigation-link" [routerLink]="['/analyzer', runId]">
+        <i class="pi pi-chart-bar" aria-hidden="true"></i>
+        Run analysis
+      </a>
+    </nav>
+  </header>
+  <p class="warning">
+    Trusted deployment only: owner management is not authenticated. Protect management APIs before public deployment.
+    Flags are advisory; exclusion is always an explicit owner decision.
+  </p>
+  @if (error) {
+    <p role="alert" class="warning">{{ error }}</p>
+  }
+  @if (notice) {
+    <p role="status">{{ notice }}</p>
+  }
+  @if (loading) {
+    <p>Loading studies…</p>
+  } @else if (!studies.length) {
+    <p>No prepared listening studies. Automated processing must finish before collection can start.</p>
+  }
+  @if (studies.length) {
+    <section class="study-overview" aria-labelledby="study-overview-title">
+      <h2 id="study-overview-title">{{ studies.length === 1 ? 'Listening study' : 'Choose a study' }}</h2>
+      <p class="section-description">
+        {{
+          studies.length === 1
+            ? 'One MUSHRA study covers all selected tracks and PLC conditions using the run’s loss simulator.'
+            : 'This legacy run contains multiple studies. Select one to manage its invitations, participants, and results.'
+        }}
+      </p>
+      @if (studies.length === 1) {
+        <div class="study-summary">
+          <div>
+            <strong>MUSHRA listening test</strong>
+            <span class="study-detail">
+              {{ studies[0].trial_count }} trials per listener · {{ studies[0].conditions.length }} PLC conditions
+            </span>
+          </div>
+          <span class="status-badge" [class.collecting]="studies[0].status === 'collecting'">
+            {{
+              studies[0].status === 'collecting'
+                ? 'Collecting responses'
+                : studies[0].status === 'closed'
+                  ? 'Collection closed'
+                  : 'Results finalized'
+            }}
+          </span>
+        </div>
+      } @else {
+        <nav aria-label="Select listening study" class="study-options">
+          @for (study of studies; track study.id) {
+            <button
+              class="study-option"
+              type="button"
+              [class.selected]="selected?.id === study.id"
+              [attr.aria-pressed]="selected?.id === study.id"
+              [disabled]="busy"
+              (click)="selected?.id !== study.id && select(study)"
+            >
+              <span class="study-option-heading">
+                <strong>HumanCalculator {{ study.human_module_index + 1 }}</strong>
+                @if (selected?.id === study.id) {
+                  <span class="selection-label">
+                    <i class="pi pi-check" aria-hidden="true"></i>
+                    Selected
+                  </span>
+                }
+              </span>
+              <span class="study-detail">Loss simulator {{ study.simulator_module_index + 1 }}</span>
+              <span class="status-badge" [class.collecting]="study.status === 'collecting'">
+                {{
+                  study.status === 'collecting'
+                    ? 'Collecting responses'
+                    : study.status === 'closed'
+                      ? 'Collection closed'
+                      : 'Results finalized'
+                }}
+              </span>
+            </button>
+          }
+        </nav>
+      }
+    </section>
+  }
+  @if (selected; as study) {
+    <section class="card">
+      <h2>{{ collecting ? 'Manage collection' : 'Collection summary' }}</h2>
+      <dl class="workload-summary">
+        <div>
+          <dt>Trials per listener</dt>
+          <dd>{{ study.trial_count }}</dd>
+        </div>
+        <div>
+          <dt>{{ study.conditions.length === 1 ? 'PLC condition' : 'PLC conditions' }}</dt>
+          <dd>{{ study.conditions.length }}</dd>
+        </div>
+        <div>
+          <dt>Quality-control items</dt>
+          <dd>Hidden reference + anchor</dd>
+        </div>
+      </dl>
+      <p class="collection-help">
+        Every listener completes all {{ study.trial_count }} trials and rates all
+        {{ study.conditions.length + 2 }} items in each trial.
+      </p>
+      @for (warning of study.warnings; track $index) {
+        <p class="warning">{{ warning }}</p>
+      }
+      @if (collecting && !heads.length && !study.invitations_created) {
+        <details class="protocol-editor">
+          <summary>
+            <span>
+              <i class="pi pi-file-edit" aria-hidden="true"></i>
+              Review instructions & consent
+              <small>Edit these before creating your first invitation</small>
+            </span>
+            <i class="pi pi-chevron-down expand-icon" aria-hidden="true"></i>
+          </summary>
+          <div class="protocol-fields">
+            <div>
+              <label>
+                Instructions — text or HTML
+                <textarea
+                  [(ngModel)]="instructions"
+                  (paste)="pasteProtocol($event, 'instructions')"
+                  maxlength="10000"
+                  rows="6"
+                ></textarea>
+              </label>
+              <p class="collection-help">
+                Paste formatted text or HTML. Basic headings, emphasis, and lists are supported; scripts, styles,
+                images, and links are removed.
+              </p>
+              <h3>Instructions preview</h3>
+              <div class="protocol-preview" [innerHTML]="instructions | protocolHtml"></div>
+            </div>
+            <div>
+              <label>
+                Consent — text or HTML
+                <textarea
+                  [(ngModel)]="consent"
+                  (paste)="pasteProtocol($event, 'consent')"
+                  maxlength="10000"
+                  rows="6"
+                ></textarea>
+              </label>
+              <p class="collection-help">
+                Include study-specific contact, retention, and ethical information. Maximum 10,000 characters per field,
+                including markup.
+              </p>
+              <h3>Consent preview</h3>
+              <div class="protocol-preview" [innerHTML]="consent | protocolHtml"></div>
+            </div>
+          </div>
+          <p>
+            Provide appropriate contact, retention, and ethical/consent information. These texts are locked after the
+            first invitation; the acknowledged version is recorded.
+          </p>
+          <p-button
+            label="Save instructions and consent"
+            [disabled]="busy || !instructions.trim() || !consent.trim()"
+            (onClick)="editInstructions()"
+          />
+        </details>
+      }
+      @if (collecting) {
+        <div class="actions invitation-actions">
+          <label>
+            Individual invitations
+            <input
+              type="number"
+              min="1"
+              max="100"
+              step="1"
+              aria-label="Number of individual invitations, from 1 to 100"
+              [(ngModel)]="invitationCount"
+            />
+          </label>
+          <p-button label="Create invitations" [disabled]="busy || !validCount" (onClick)="invite()" />
+          <p-button label="Create my listening link" icon="pi pi-headphones" [disabled]="busy" (onClick)="invite(1)" />
+          <p-button label="Close collection" severity="warn" [disabled]="busy" (onClick)="close()" />
+        </div>
+      }
+      @if (links.length) {
+        <label>
+          Private participant links — copy now
+          <textarea readonly [value]="links.join('\n')" rows="4"></textarea>
+        </label>
+        <div class="actions">
+          <p-button label="Copy links" (onClick)="copyLinks()" />
+          @if (links.length === 1) {
+            <a [href]="links[0]" target="_blank" rel="noopener noreferrer">Open participant listening test</a>
+          }
+        </div>
+      }
+      @if (canFinalize) {
+        <p-button label="Finalize / retry finalization" [disabled]="busy" (onClick)="finalize()" />
+      }
+      <div class="participants-heading">
+        <h3>
+          <i class="pi pi-users" aria-hidden="true"></i>
+          Participants
+        </h3>
+        <span class="participant-count">{{ heads.length }} {{ heads.length === 1 ? 'session' : 'sessions' }}</span>
+      </div>
+      @if (!heads.length) {
+        <div class="participants-empty" role="status">
+          <i class="pi pi-user-plus" aria-hidden="true"></i>
+          <div>
+            <strong>No participants yet</strong>
+            <p>
+              {{
+                collecting
+                  ? 'Create individual invitations above. Sessions will appear here as soon as links are created.'
+                  : 'Collection ended without any participant sessions.'
+              }}
+            </p>
+          </div>
+        </div>
+      } @else {
+        <div class="scroll participant-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Pseudonymous session</th>
+                <th>State</th>
+                <th>Quality flags</th>
+                <th>Inclusion</th>
+                <th>Owner actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (head of visibleParticipants; track head.session_id) {
+                <tr>
+                  <td>
+                    <code>{{ head.session_id }}</code>
+                  </td>
+                  <td>{{ head.revoked ? 'Revoked' : head.revision === 0 ? 'Invited' : head.status }}</td>
+                  <td>
+                    @for (value of head.flags; track value) {
+                      <p>{{ flag(value) }}</p>
+                    }
+                  </td>
+                  <td>
+                    {{
+                      head.excluded
+                        ? 'Excluded: ' + head.exclusion_reason
+                        : head.status === 'completed'
+                          ? 'Included'
+                          : 'Unfinished — not analyzed'
+                    }}
+                  </td>
+                  <td>
+                    @if (collecting) {
+                      <p-button
+                        icon="pi pi-ellipsis-h"
+                        [text]="true"
+                        [rounded]="true"
+                        severity="secondary"
+                        size="small"
+                        [ariaLabel]="'Manage participant ' + head.session_id"
+                        title="Manage participant"
+                        [disabled]="busy"
+                        (onClick)="openParticipantActions(head)"
+                      />
+                    } @else {
+                      Frozen
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <p-paginator
+          aria-label="Participant pages"
+          [first]="participantFirst"
+          [rows]="participantPageSize"
+          [totalRecords]="heads.length"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="{first}–{last} of {totalRecords} participants"
+          (onPageChange)="pageParticipants($event)"
+        />
+      }
+      <div class="actions participant-exports" aria-label="Participant data exports">
+        <details class="export-options">
+          <summary class="navigation-link">
+            <i class="pi pi-download" aria-hidden="true"></i>
+            Export ratings
+            <i class="pi pi-chevron-down" aria-hidden="true"></i>
+          </summary>
+          <div class="export-menu">
+            <a [href]="client.exportUrl(study.id, 'responses.csv')">
+              <i class="pi pi-table" aria-hidden="true"></i>
+              <span>
+                <strong>CSV</strong>
+                <small>For spreadsheets</small>
+              </span>
+            </a>
+            <a [href]="client.exportUrl(study.id, 'responses.json')">
+              <i class="pi pi-code" aria-hidden="true"></i>
+              <span>
+                <strong>JSON</strong>
+                <small>For data processing</small>
+              </span>
+            </a>
+          </div>
+        </details>
+        <a
+          class="navigation-link"
+          [href]="client.exportUrl(study.id, 'sessions.json')"
+          title="Download consent, presentation orders, and session metadata as JSON"
+        >
+          <i class="pi pi-file" aria-hidden="true"></i>
+          Session details
+        </a>
+      </div>
+    </section>
+    <section class="card"><plc-study-results [study]="study" [results]="results" /></section>
+  }
+</main>
+
+<p-dialog
+  header="Participant actions"
+  [(visible)]="participantActionsVisible"
+  [modal]="true"
+  [closable]="!busy"
+  [closeOnEscape]="!busy"
+  [draggable]="false"
+  [style]="{ width: '32rem', maxWidth: 'calc(100vw - 2rem)' }"
+  appendTo="body"
+>
+  @if (actionParticipant; as head) {
+    <p class="collection-help">
+      Session
+      <code>{{ head.session_id }}</code>
+    </p>
+    @if (error) {
+      <p role="alert" class="warning">{{ error }}</p>
+    }
+    @if (notice) {
+      <p role="status">{{ notice }}</p>
+    }
+    @if (collecting) {
+      <div class="participant-action-section">
+        <h3>Analysis inclusion</h3>
+        <p class="collection-help">
+          {{
+            head.excluded ? 'This session is excluded.' : 'Only completed, non-excluded sessions are analyzed.'
+          }}
+          Responses are retained when inclusion changes.
+        </p>
+        <label>
+          Reason (required)
+          <textarea maxlength="1000" rows="3" [(ngModel)]="reasons[head.session_id]"></textarea>
+        </label>
+        <p-button
+          [label]="head.excluded ? 'Include again' : 'Exclude'"
+          severity="secondary"
+          [disabled]="busy || !reasons[head.session_id]?.trim()"
+          (onClick)="exclude(head)"
+        />
+      </div>
+      <div class="participant-action-section">
+        <h3>Invitation access</h3>
+        <p class="collection-help">
+          Revoking access disables the link but retains existing answers. It does not exclude responses from analysis.
+        </p>
+        <p-button
+          label="Revoke access"
+          icon="pi pi-ban"
+          severity="warn"
+          [outlined]="true"
+          [disabled]="busy || head.revoked"
+          (onClick)="revoke(head)"
+        />
+      </div>
+      @if (canDeleteInvitation(head)) {
+        <div class="participant-action-section">
+          <h3>Delete unused invitation</h3>
+          <p class="collection-help">Permanently remove this unused session and invalidate its link.</p>
+          <p-button
+            label="Delete invitation"
+            icon="pi pi-trash"
+            severity="danger"
+            [outlined]="true"
+            [disabled]="busy"
+            (onClick)="deleteInvitation(head)"
+          />
+        </div>
+      }
+    } @else {
+      <p class="collection-help">Collection is closed. Participant actions are frozen.</p>
+    }
+  }
+</p-dialog>

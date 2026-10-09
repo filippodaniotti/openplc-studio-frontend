@@ -7,7 +7,33 @@ import { ModuleParameter } from '../shared/interfaces/module-parameters.interfac
 import { ModuleType } from '../shared/enums/module-type.enum';
 import { extractWorkerName } from '../shared/utils/module-instance-presentation';
 
-export type JsonPayload = number | number[] | number[][];
+export interface HumanMetricPayload {
+  kind: 'human-listening';
+  schema_version: number;
+  status: 'prepared' | 'finalized';
+  study_id: string | null;
+  condition_id: string;
+  excerpts: { response_count: number; mean: number | null; std: number | null }[];
+}
+
+export function isHumanMetricPayload(value: unknown): value is HumanMetricPayload {
+  if (typeof value !== 'object' || value === null || !('kind' in value) || value.kind !== 'human-listening')
+    return false;
+  return (
+    'schema_version' in value &&
+    value.schema_version === 1 &&
+    'status' in value &&
+    (value.status === 'prepared' || value.status === 'finalized') &&
+    'study_id' in value &&
+    (value.study_id === null || typeof value.study_id === 'string') &&
+    'condition_id' in value &&
+    typeof value.condition_id === 'string' &&
+    'excerpts' in value &&
+    Array.isArray(value.excerpts)
+  );
+}
+
+export type JsonPayload = number | number[] | number[][] | HumanMetricPayload;
 
 export type FileDescriptionWithJson<T = JsonPayload> = Omit<FileDescription, 'data' | 'text'> & { json: T };
 

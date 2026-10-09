@@ -25,6 +25,7 @@ export class RunMapper {
       name: runDto.name,
       testbenchInternalId: runDto.testbench_internal_id,
       status: runDto.status,
+      failure: runDto.failure ?? null,
       tracks: runDto.tracks,
       modules: {
         [ModuleType.PacketLossSimulator]: runDto.modules[ModuleType.PacketLossSimulator],

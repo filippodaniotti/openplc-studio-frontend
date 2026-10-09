@@ -51,12 +51,35 @@
               </details>
             </div>
           }
+          @if (hasHumanStudies && (requiresListeningInput || isAnalysisAvailable || canRetry)) {
+            <p-button
+              [label]="requiresListeningInput ? 'Perform listening test' : 'Human listening studies'"
+              icon="pi pi-headphones"
+              severity="warn"
+              (onClick)="onListeningStudies()"
+            />
+          }
           @if (isAnalysisAvailable) {
             <p-button label="Go to analysis" icon="pi pi-chart-bar" (onClick)="onGoToAnalysis()" />
           }
         </div>
       </div>
 
+      @if (requiresListeningInput) {
+        <p>
+          Automated processing is complete. Human ratings are pending; no worker remains occupied. Open listening
+          studies to invite participants, listen, and explicitly close collection. Ready automated results can already
+          be analyzed.
+        </p>
+      }
+      @if (canRetry && run.failure; as failure) {
+        <section role="alert" class="p-3 border-round border-1 border-orange-400 my-3">
+          <h2 class="text-lg">Why this run failed</h2>
+          <p>{{ failure.message }}</p>
+          <p>{{ failure.guidance }}</p>
+          <p>Use “Adjust and retry” to change the configuration. Your settings have not been changed automatically.</p>
+        </section>
+      }
       <div class="plc-summary-stats" aria-label="Run configuration summary">
         <div>
           <i class="pi pi-wave-pulse"></i>

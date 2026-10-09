@@ -2,7 +2,7 @@
   <h1>{{ analysisService.run.value?.name }}</h1>
 </div>
 
-@if (analysisService.run.value && analysisService.run.value.status !== 'completed') {
+@if (analysisService.run.value && !['completed', 'awaiting_input'].includes(analysisService.run.value.status)) {
   <div class="flex justify-center py-8">
     <p>Run analysis requires completion.</p>
   </div>

@@ -1,6 +1,7 @@
 import { RunStatus } from '../enums/run-status.enum';
 import { ModuleType } from '../enums/module-type.enum';
 import { Module } from '../interfaces/module.interface';
+import { RunFailure } from '../interfaces/run.interface';
 
 export interface RunDto {
   id: string;
@@ -10,6 +11,7 @@ export interface RunDto {
   name: string;
   testbench_internal_id: string | null;
   status: RunStatus;
+  failure?: RunFailure | null;
   tracks: string[];
   modules: {
     [ModuleType.PacketLossSimulator]: Module[];

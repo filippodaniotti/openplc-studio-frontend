@@ -73,8 +73,11 @@ export class RunsClient {
     return this.http.delete<void>(`${this.api}/${runId}`);
   }
 
-  public getRunArtifactsArchive(runId: string, kind: RunArtifactKind): Observable<ArrayBuffer> {
-    return this.http.get(`${this.api}/${runId}/artifacts/${kind}/archive`, { responseType: 'arraybuffer' });
+  public getRunArtifactsArchive(runId: string, kind: RunArtifactKind, readyOnly = false): Observable<ArrayBuffer> {
+    return this.http.get(`${this.api}/${runId}/artifacts/${kind}/archive`, {
+      responseType: 'arraybuffer',
+      params: readyOnly ? { ready_only: 'true' } : {},
+    });
   }
 
   //method to export run config as a blob(Binary Large Object)

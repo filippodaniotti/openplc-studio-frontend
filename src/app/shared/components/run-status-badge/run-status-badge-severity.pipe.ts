@@ -14,6 +14,7 @@ export class RunStatusBadgeSeverityPipe implements PipeTransform {
       case RunStatus.QUEUED:
         return 'secondary';
       case RunStatus.RUNNING:
+      case RunStatus.AWAITING_INPUT:
         return 'warn';
       case RunStatus.FAILED:
         return 'danger';

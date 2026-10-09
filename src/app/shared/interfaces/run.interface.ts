@@ -2,6 +2,12 @@ import { RunStatus } from '../enums/run-status.enum';
 import { ModuleType } from '../enums/module-type.enum';
 import { Module } from './module.interface';
 
+export interface RunFailure {
+  code: 'human_no_eligible_excerpts' | 'execution_failed';
+  message: string;
+  guidance: string;
+}
+
 export interface Run {
   id: string;
   created: string;
@@ -10,6 +16,7 @@ export interface Run {
   name: string;
   testbenchInternalId: string | null;
   status: RunStatus;
+  failure?: RunFailure | null;
   tracks: string[];
   modules: {
     [ModuleType.PacketLossSimulator]: Module[];
