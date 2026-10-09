@@ -10,6 +10,7 @@ import { catchError, exhaustMap, firstValueFrom, forkJoin, of, timer } from 'rxj
 import { ListeningClient, listeningError } from './listening.client';
 import { SessionHead, Study, StudyResults } from './listening.models';
 import { StudyResultsComponent } from './study-results.component';
+import { StudyLmmVisualizationsComponent } from './charts/study-lmm-visualizations.component';
 import { ProtocolHtmlPipe } from './protocol-html.pipe';
 import { RunsClient } from '../shared/clients/runs.client';
 import { RunStatus } from '../shared/enums/run-status.enum';
@@ -26,6 +27,7 @@ import { WsService } from '../shared/services/ws.service';
     DialogModule,
     PaginatorModule,
     StudyResultsComponent,
+    StudyLmmVisualizationsComponent,
     ProtocolHtmlPipe,
   ],
   templateUrl: './study-hub.component.html',

@@ -333,7 +333,25 @@
         </a>
       </div>
     </section>
-    <section class="card"><plc-study-results [study]="study" [results]="results" /></section>
+    <section class="card">
+      @if (results; as frozen) {
+        @if (
+          study.status === 'finalized' &&
+          frozen.status === 'finalized' &&
+          !frozen.provisional &&
+          frozen.study_id === study.id
+        ) {
+          <plc-study-lmm-visualizations
+            [study]="study"
+            [results]="frozen"
+            [showResults]="true"
+            [includeDistributions]="true"
+          />
+        } @else {
+          <plc-study-results [study]="study" [results]="results" />
+        }
+      }
+    </section>
   }
 </main>
 
@@ -362,9 +380,7 @@
       <div class="participant-action-section">
         <h3>Analysis inclusion</h3>
         <p class="collection-help">
-          {{
-            head.excluded ? 'This session is excluded.' : 'Only completed, non-excluded sessions are analyzed.'
-          }}
+          {{ head.excluded ? 'This session is excluded.' : 'Only completed, non-excluded sessions are analyzed.' }}
           Responses are retained when inclusion changes.
         </p>
         <label>

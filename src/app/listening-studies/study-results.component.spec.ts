@@ -10,7 +10,7 @@ function result(included = 0): StudyResults {
     provisional: true,
     counts: { invited: 3, draft: 1, completed: included, included, excluded: 0, flagged: 0 },
     analysis: {
-      analysis_version: 'mushra-v1',
+      analysis_version: 'mushra-v2-lmm-tukey',
       weighting: 'Equal participants',
       exploratory: false,
       participant_count: included,
@@ -55,6 +55,26 @@ describe('Study results during collection', () => {
     expect(page.querySelector('table')).not.toBeNull();
     expect(page.querySelector('article')).toBeNull();
     expect(page.textContent).toContain('Statistical comparisons');
+  });
+
+  it('renders Tukey-adjusted model contrasts and simultaneous intervals', async () => {
+    const data = result(8);
+    data.analysis.analysis_version = 'mushra-v2-lmm-tukey';
+    data.analysis.inference = {
+      available: true,
+      method: 'mixed_effects_ml',
+      formula: 'score ~ C(condition_id)',
+      pairwise_correction: 'Tukey',
+      pairwise_ci_correction: 'Tukey',
+      correction_note: 'Asymptotic approximation',
+      pairwise: [{ first: 'plc-0', second: 'plc-1', effect: -12, ci95: [-15, -9], p: 0.001, p_adjusted: 0.003 }],
+    };
+    const page = await render(data);
+    expect(page.textContent).toContain('Tukey correction');
+    expect(page.textContent).toContain('Simultaneous 95% CI');
+    expect(page.textContent).toContain('0.003000');
+    expect(page.textContent).toContain('Asymptotic approximation');
+    expect(page.textContent).not.toContain('Holm');
   });
 
   it('labels populated distributions as individual rating counts during collection', async () => {

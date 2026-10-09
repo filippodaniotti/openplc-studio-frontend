@@ -98,16 +98,16 @@
                 analysisService.run.value?.status === 'completed'
               ) {
                 <section aria-label="Human listening study results" class="mt-6">
-                  <p class="my-2 text-muted-color">
-                    Study-wide results across tracks and PLC conditions, independent of waveform selection or zoom.
-                  </p>
-                  <a [routerLink]="['/listening-studies', analysisService.run.value?.id]">Open Study Hub</a>
                   @if (humanError) {
                     <p role="alert">{{ humanError }}</p>
                   }
                   @for (panel of humanPanels; track panel.study.id) {
-                    <plc-human-listening-distributions [study]="panel.study" />
-                    <plc-study-results [study]="panel.study" [results]="panel.results" />
+                    <plc-study-lmm-visualizations
+                      [study]="panel.study"
+                      [results]="panel.results"
+                      [plotsOnly]="true"
+                      [includeDistributions]="true"
+                    />
                   }
                 </section>
               } @else {

@@ -57,6 +57,12 @@ export interface ConditionSummary {
   ci_unavailable_reason?: string | null;
   score_histogram?: { edges: number[]; counts: number[] };
 }
+export interface EstimatedMarginalMean {
+  id: string;
+  mean: number;
+  se: number;
+  ci95: [number, number];
+}
 export interface PairwiseComparison {
   first: string;
   second: string;
@@ -66,9 +72,43 @@ export interface PairwiseComparison {
   p_adjusted?: number;
   reason?: string;
 }
+export interface StudyInference {
+  available: boolean;
+  reason?: string;
+  method?: string;
+  formula?: string;
+  diagnostics?: string[];
+  fallback?: boolean;
+  correction_note?: string;
+  assumptions?: string;
+  estimated_marginal_means?: EstimatedMarginalMean[];
+  marginal_mean_ci_method?: string;
+  marginal_mean_confidence_level?: number;
+  marginal_mean_weighting?: string;
+  fixed_covariance_method?: string;
+  condition_test?: { test: string; likelihood_ratio: number; df: number; p: number };
+  pairwise?: PairwiseComparison[];
+  pairwise_correction?: string;
+  pairwise_ci_correction?: string;
+  pairwise_method?: string;
+}
+export interface QualityControlAnalysis {
+  analysis_version: string;
+  exploratory: true;
+  scope: string;
+  comparison_family: string;
+  conditions: { id: string; role: 'plc' | 'hidden_reference' | 'anchor' }[];
+  summaries?: ConditionSummary[];
+  participant_count?: number;
+  response_count?: number;
+  inference: StudyInference;
+}
 export interface StudyResults {
   kind: 'human-listening-study';
   status: StudyStatus;
+  study_id?: string;
+  analysis_input_digest?: string;
+  included_sessions?: string[];
   study_revision: number;
   provisional: boolean;
   counts: Record<'invited' | 'draft' | 'completed' | 'excluded' | 'flagged' | 'included', number>;
@@ -79,27 +119,7 @@ export interface StudyResults {
     participant_count: number;
     response_count: number;
     conditions: ConditionSummary[];
-    inference: {
-      available: boolean;
-      reason?: string;
-      method?: string;
-      formula?: string;
-      diagnostics?: string[];
-      fallback?: boolean;
-      correction_note?: string;
-      assumptions?: string;
-      effects?: {
-        effect: string;
-        F: number;
-        df1: number;
-        df2: number;
-        p_uncorrected: number;
-        p_greenhouse_geisser: number | null;
-        epsilon: number | null;
-        partial_eta_squared: number | null;
-      }[];
-      condition_test?: { test: string; likelihood_ratio: number; df: number; p: number };
-      pairwise?: PairwiseComparison[];
-    };
+    inference: StudyInference;
+    quality_control_analysis?: QualityControlAnalysis;
   };
 }

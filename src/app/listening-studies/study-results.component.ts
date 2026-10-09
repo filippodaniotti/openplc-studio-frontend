@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { Study, StudyResults } from './listening.models';
+import { ConditionSummary, Study, StudyResults } from './listening.models';
 
 @Component({
   selector: 'plc-study-results',
@@ -71,7 +71,7 @@ import { Study, StudyResults } from './listening.models';
                 </tr>
               </thead>
               <tbody>
-                @for (condition of result.analysis.conditions; track condition.id) {
+                @for (condition of summaries; track condition.id) {
                   <tr>
                     <th>{{ label(condition.id) }}</th>
                     <td>{{ condition.participant_count }}</td>
@@ -86,6 +86,9 @@ import { Study, StudyResults } from './listening.models';
               </tbody>
             </table>
           </div>
+          @if (qualityControlScope && !result.analysis.quality_control_analysis?.summaries) {
+            <p class="note">QC descriptive summaries are unavailable in this frozen snapshot.</p>
+          }
           @if (hasDistributions(result)) {
             <h3>How listeners rated each condition</h3>
             <p class="note">
@@ -94,7 +97,7 @@ import { Study, StudyResults } from './listening.models';
             </p>
           }
           <div class="distributions">
-            @for (condition of result.analysis.conditions; track condition.id) {
+            @for (condition of summaries; track condition.id) {
               @if (condition.response_count > 0 && condition.score_histogram) {
                 <article>
                   <h4>{{ label(condition.id) }}</h4>
@@ -128,12 +131,20 @@ import { Study, StudyResults } from './listening.models';
               }
             }
           </div>
-          @let inference = result.analysis.inference;
+          @let inference = selectedInference;
           <h3>Statistical comparisons</h3>
-          <p class="note">
-            These tests compare PLC conditions while accounting for repeated ratings from the same listener. They are
-            not another quality score.
-          </p>
+          @if (qualityControlScope) {
+            <p class="note">
+              Exploratory QC-inclusive LMM and Tukey family: PLC conditions, hidden reference and anchor. Even
+              PLC-to-PLC comparisons may differ from the primary fit. Switch off reference & anchor to view the primary
+              PLC-only analysis.
+            </p>
+          } @else {
+            <p class="note">
+              These tests compare PLC conditions while accounting for repeated ratings from the same listener. They are
+              not another quality score.
+            </p>
+          }
           @if (!inference.available) {
             <p class="inference-notice">{{ inferenceExplanation(inference.reason) }}</p>
           } @else {
@@ -142,40 +153,7 @@ import { Study, StudyResults } from './listening.models';
               <code>{{ inference.formula }}</code>
             </p>
             @if (inference.fallback) {
-              <p>
-                Documented fallback: participant and excerpt random intercepts; condition deviations could not be
-                fitted.
-              </p>
-            }
-            @if (inference.effects; as effects) {
-              <div class="scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Within-participant effect</th>
-                      <th>F</th>
-                      <th>df (uncorrected)</th>
-                      <th>GG ε</th>
-                      <th>Uncorrected p</th>
-                      <th>GG-corrected p</th>
-                      <th>Partial η²</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (effect of effects; track effect.effect) {
-                      <tr>
-                        <th>{{ effect.effect }}</th>
-                        <td>{{ format(effect.F) }}</td>
-                        <td>{{ format(effect.df1) }}, {{ format(effect.df2) }}</td>
-                        <td>{{ format(effect.epsilon) }}</td>
-                        <td>{{ probability(effect.p_uncorrected) }}</td>
-                        <td>{{ probability(effect.p_greenhouse_geisser) }}</td>
-                        <td>{{ format(effect.partial_eta_squared) }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
+              <p>Documented fallback: random-intercept model; participant-condition deviations could not be fitted.</p>
             }
             @if (inference.condition_test; as test) {
               <p>
@@ -185,12 +163,15 @@ import { Study, StudyResults } from './listening.models';
             @if (inference.pairwise; as pairs) {
               <div class="scroll">
                 <table>
-                  <caption>Pairwise contrasts — first minus second, Holm correction across all displayed pairs</caption>
+                  <caption>
+                    Pairwise contrasts — first minus second,
+                    {{ inference.pairwise_correction }} correction across all displayed pairs
+                  </caption>
                   <thead>
                     <tr>
                       <th>Pair</th>
                       <th>Effect</th>
-                      <th>95% CI</th>
+                      <th>Simultaneous 95% CI</th>
                       <th>Adjusted p</th>
                     </tr>
                   </thead>
@@ -253,9 +234,11 @@ import { Study, StudyResults } from './listening.models';
               <dt>Analysis scope</dt>
               <dd>
                 {{
-                  result.analysis.exploratory
-                    ? 'Exploratory: a filtered subset of data.'
-                    : 'Predefined: all conditions, without exploratory filtering.'
+                  qualityControlScope
+                    ? 'Exploratory: QC-inclusive comparison family.'
+                    : result.analysis.exploratory
+                      ? 'Exploratory: a filtered subset of data.'
+                      : 'Predefined: all conditions, without exploratory filtering.'
                 }}
               </dd>
             </div>
@@ -433,17 +416,47 @@ import { Study, StudyResults } from './listening.models';
 export class StudyResultsComponent {
   @Input() public results: StudyResults | null = null;
   @Input() public study: Study | null = null;
-  public hasDistributions(result: StudyResults): boolean {
-    return result.analysis.conditions.some((condition) => condition.response_count > 0 && !!condition.score_histogram);
+  @Input() public showQualityControls = false;
+  public get qualityControlScope(): boolean {
+    return (
+      this.showQualityControls &&
+      Boolean(this.results?.analysis.quality_control_analysis?.conditions.some((condition) => condition.role !== 'plc'))
+    );
+  }
+  public get selectedInference() {
+    return this.qualityControlScope
+      ? this.results!.analysis.quality_control_analysis!.inference
+      : this.results!.analysis.inference;
+  }
+  public get summaries(): ConditionSummary[] {
+    const primary = this.results?.analysis.conditions ?? [];
+    const orderedPrimary = this.study
+      ? this.study.conditions.flatMap((condition) => primary.filter((summary) => summary.id === condition.id))
+      : primary;
+    if (!this.qualityControlScope) return orderedPrimary;
+    const quality = this.results!.analysis.quality_control_analysis!;
+    const controls = (role: 'anchor' | 'hidden_reference') =>
+      quality.conditions
+        .filter((condition) => condition.role === role)
+        .flatMap((condition) => (quality.summaries ?? []).filter((summary) => summary.id === condition.id));
+    return [...controls('anchor'), ...orderedPrimary, ...controls('hidden_reference')];
+  }
+  public hasDistributions(_result: StudyResults): boolean {
+    return this.summaries.some((condition) => condition.response_count > 0 && !!condition.score_histogram);
   }
   public inferenceExplanation(reason?: string): string {
     if (reason === 'no_included_responses')
       return 'No completed, included responses yet. Comparisons will be assessed as listeners finish.';
-    if (this.study && this.study.conditions.length < 2)
+    if (!this.qualityControlScope && this.study && this.study.conditions.length < 2)
       return 'This study has only one PLC condition, so there is no pair of PLC conditions to compare. Quality-score summaries are still useful.';
     return `A statistical comparison cannot be reported yet (${this.reason(reason)}). Score summaries above remain available; more participants alone may not resolve every analysis limitation.`;
   }
   public label(id: string): string {
+    const role = this.results?.analysis.quality_control_analysis?.conditions.find(
+      (condition) => condition.id === id,
+    )?.role;
+    if (role === 'anchor') return 'Anchor · QC';
+    if (role === 'hidden_reference') return 'Hidden reference · QC';
     const condition = this.study?.conditions.find((item) => item.id === id);
     return condition ? `${condition.name} (#${condition.module_index + 1})` : id;
   }

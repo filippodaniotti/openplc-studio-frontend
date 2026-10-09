@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, Input, OnChanges, inject } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,7 @@ import { SelectModule } from 'primeng/select';
 import { BehaviorSubject, Subject, catchError, combineLatest, map, of, switchMap } from 'rxjs';
 import { Study } from '../../listening-studies/listening.models';
 import { ListeningClient, listeningError } from '../../listening-studies/listening.client';
+import { ChartCondition } from '../../listening-studies/charts/listening-chart-data';
 import { ThemeService } from '../../shared/services/theme.service';
 import { ListeningRating, ListeningDistribution, listeningDistributions } from './human-listening-distributions';
 
@@ -62,20 +63,24 @@ type DistributionType = 'boxplot' | 'violin';
             styleClass="w-full"
           />
         </div>
-        <label class="quality-control-toggle">
-          <input type="checkbox" [(ngModel)]="showQualityControls" (ngModelChange)="qualityControls.next($event)" />
-          Show reference & anchor
-        </label>
+        @if (!chartConditions) {
+          <label class="quality-control-toggle">
+            <input type="checkbox" [(ngModel)]="showQualityControls" (ngModelChange)="qualityControls.next($event)" />
+            Show reference & anchor
+          </label>
+        }
       </div>
-      <p>
-        Each observation is one completed, included listener’s average score. The overall plot weights tracks equally
-        within each listener. Reference and anchor are optional quality-control comparisons, not PLC conditions.
-      </p>
-      <p class="help">
-        Boxplots show the median, middle 50% of scores, whiskers and outliers. Violins show a smoothed distribution;
-        with very few listeners they may not be informative. These are descriptive distributions, not confidence
-        intervals.
-      </p>
+      @if (showDetails) {
+        <p>
+          Each observation is one completed, included listener’s average score. The overall plot weights tracks equally
+          within each listener. Reference and anchor are optional quality-control comparisons, not PLC conditions.
+        </p>
+        <p class="help">
+          Boxplots show the median, middle 50% of scores, whiskers and outliers. Violins show a smoothed distribution;
+          with very few listeners they may not be informative. These are descriptive distributions, not confidence
+          intervals.
+        </p>
+      }
       @if (loading) {
         <p role="status">Loading listener distributions…</p>
       }
@@ -87,7 +92,9 @@ type DistributionType = 'boxplot' | 'violin';
         <article>
           <h4>{{ panel.trackId === null ? 'Overall · all tracks' : 'Track · ' + panel.trackId }}</h4>
           @if (panel.hasScores) {
-            <p class="help">{{ panel.counts }}</p>
+            @if (showDetails) {
+              <p class="help">{{ panel.counts }}</p>
+            }
             <!-- PrimeNG narrows its type input to built-ins; Chart.js registers these extension types above. -->
             <p-chart [type]="$any(plotType)" [data]="panel.data" [options]="options" height="340px" />
           } @else {
@@ -212,6 +219,13 @@ type DistributionType = 'boxplot' | 'violin';
 })
 export class HumanListeningDistributionsComponent implements OnChanges {
   @Input({ required: true }) public study!: Study;
+  @Input() public showDetails = true;
+  @Input() public ratings?: ListeningRating[];
+  @Input() public ratingsLoading = false;
+  @Input() public ratingsError = '';
+  @Input() public chartConditions?: ChartCondition[];
+  @Output() public readonly ratingsRetry = new EventEmitter<void>();
+  private studyId = '';
   public plotType: DistributionType = 'boxplot';
   public selectedAggregation = 'null';
   public showQualityControls = false;
@@ -272,6 +286,11 @@ export class HumanListeningDistributionsComponent implements OnChanges {
     combineLatest([this.data, theme.isDarkMode, this.qualityControls])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([distributions, dark, showQualityControls]) => {
+        const includesQualityControls = this.chartConditions
+          ? this.chartConditions.some(
+              (condition) => condition.role === 'anchor' || condition.role === 'hidden_reference',
+            )
+          : showQualityControls;
         const style = getComputedStyle(document.documentElement);
         const text = style.getPropertyValue('--p-text-color').trim() || (dark ? '#e5e7eb' : '#374151');
         const grid = dark ? '#374151' : '#e5e7eb';
@@ -285,7 +304,7 @@ export class HumanListeningDistributionsComponent implements OnChanges {
               grid: { display: false },
               title: {
                 display: true,
-                text: showQualityControls ? 'PLC conditions & quality controls' : 'PLC condition',
+                text: includesQualityControls ? 'PLC conditions & quality controls' : 'PLC condition',
                 color: text,
               },
             },
@@ -302,11 +321,19 @@ export class HumanListeningDistributionsComponent implements OnChanges {
           ? ['#60a5fa', '#34d399', '#fbbf24', '#c084fc', '#fb7185']
           : ['#2563eb', '#059669', '#d97706', '#9333ea', '#e11d48'];
         this.panels = distributions.map((distribution) => {
-          const conditions = [
+          const conditions: ChartCondition[] = this.chartConditions ?? [
             ...(showQualityControls ? [{ id: 'anchor35', name: 'Anchor · QC', module_index: -1 }] : []),
             ...this.study.conditions,
             ...(showQualityControls ? [{ id: 'reference', name: 'Hidden reference · QC', module_index: -1 }] : []),
           ];
+          const conditionColors = conditions.map((condition, index) => {
+            if (condition.role === 'anchor') return dark ? '#94a3b8' : '#475569';
+            if (condition.role === 'hidden_reference') return dark ? '#fbbf24' : '#b45309';
+            const colorIndex = this.chartConditions
+              ? this.study.conditions.findIndex((item) => item.id === condition.id)
+              : index;
+            return colors[Math.max(0, colorIndex) % colors.length];
+          });
           return {
             trackId: distribution.trackId,
             counts: conditions
@@ -321,8 +348,8 @@ export class HumanListeningDistributionsComponent implements OnChanges {
                 {
                   label: 'Listener averages',
                   data: conditions.map((condition) => distribution.values[condition.id]),
-                  backgroundColor: conditions.map((_, index) => colors[index % colors.length] + '66'),
-                  borderColor: conditions.map((_, index) => colors[index % colors.length]),
+                  backgroundColor: conditionColors.map((color) => color + '66'),
+                  borderColor: conditionColors,
                   borderWidth: 1.5,
                 },
               ],
@@ -336,10 +363,21 @@ export class HumanListeningDistributionsComponent implements OnChanges {
     this.panels = this.panels.map((panel) => ({ ...panel, data: { ...panel.data } }));
   }
   public ngOnChanges(): void {
-    this.selectedAggregation = 'null';
-    this.reload();
+    if (this.study.id !== this.studyId) {
+      this.studyId = this.study.id;
+      this.selectedAggregation = 'null';
+    }
+    if (this.ratings !== undefined) {
+      this.loading = this.ratingsLoading;
+      this.error = this.ratingsError;
+      const ids = (this.chartConditions ?? this.study.conditions).map((condition) => condition.id);
+      this.data.next(listeningDistributions(this.ratings, ids));
+    } else {
+      this.reload();
+    }
   }
   public reload(): void {
-    this.requests.next(this.study);
+    if (this.ratings !== undefined) this.ratingsRetry.emit();
+    else this.requests.next(this.study);
   }
 }

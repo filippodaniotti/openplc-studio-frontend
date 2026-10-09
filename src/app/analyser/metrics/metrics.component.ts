@@ -4,8 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ListeningClient, listeningError } from '../../listening-studies/listening.client';
 import { Study, StudyResults } from '../../listening-studies/listening.models';
-import { StudyResultsComponent } from '../../listening-studies/study-results.component';
-import { HumanListeningDistributionsComponent } from './human-listening-distributions.component';
+import { StudyLmmVisualizationsComponent } from '../../listening-studies/charts/study-lmm-visualizations.component';
 import { Chart, ChartData, ChartOptions } from 'chart.js';
 import { ButtonModule } from 'primeng/button';
 import { ChartModule } from 'primeng/chart';
@@ -113,8 +112,7 @@ type MetricVisualization =
     RunConfigurationDrawerComponent,
     SpectralEnergyHeatmapComponent,
     RouterLink,
-    StudyResultsComponent,
-    HumanListeningDistributionsComponent,
+    StudyLmmVisualizationsComponent,
   ],
   templateUrl: './metrics.component.html',
   styleUrl: './metrics.component.scss',
