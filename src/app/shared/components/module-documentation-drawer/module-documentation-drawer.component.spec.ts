@@ -1,5 +1,5 @@
 import { SimpleChange } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { Drawer } from 'primeng/drawer';
@@ -21,7 +21,7 @@ describe('ModuleDocumentationDrawerComponent', () => {
     }).compileComponents();
   });
 
-  it('lazily renders a non-routed contained viewer without a mask and recreates it on Reload', () => {
+  it('lazily renders a non-routed contained viewer without a mask and recreates it on Reload', fakeAsync(() => {
     const fixture = TestBed.createComponent(ModuleDocumentationDrawerComponent);
     fixture.detectChanges();
     expect(fixture.debugElement.query(By.directive(DocumentationComponent))).toBeNull();
@@ -30,6 +30,10 @@ describe('ModuleDocumentationDrawerComponent', () => {
     fixture.componentRef.setInput('target', { path: 'reference/plc_algorithm/', fragment: 'BurgPLC' });
     fixture.componentRef.setInput('visible', true);
     fixture.detectChanges();
+    flush();
+    fixture.detectChanges();
+    const drawer = fixture.debugElement.query(By.directive(Drawer)).componentInstance as Drawer;
+    const panel = drawer.containerViewChild!.nativeElement as HTMLElement;
     const viewer = fixture.debugElement.query(By.directive(DocumentationComponent))
       .componentInstance as DocumentationComponent;
     expect(viewer.syncWithRouter).toBeFalse();
@@ -37,10 +41,10 @@ describe('ModuleDocumentationDrawerComponent', () => {
     expect(viewer.documentationUrl).toBe('/api/plctestbench-docs/reference/plc_algorithm/#BurgPLC');
     expect(document.querySelector('.p-drawer-mask')).toBeNull();
     expect(document.body.classList.contains('p-overflow-hidden')).toBeFalse();
-    expect(document.querySelector('.plc-module-documentation-header')?.textContent).toContain(
+    expect(panel.querySelector('.plc-module-documentation-header')?.textContent).toContain(
       'Documentation — BurgPLC',
     );
-    expect(document.querySelector('.plc-module-documentation-drawer iframe')?.getAttribute('title')).toBe(
+    expect(panel.querySelector('iframe')?.getAttribute('title')).toBe(
       'PLCTestbench documentation',
     );
     const theme = TestBed.inject(ThemeService).isDarkMode;
@@ -52,16 +56,20 @@ describe('ModuleDocumentationDrawerComponent', () => {
 
     fixture.componentRef.setInput('visible', false);
     fixture.detectChanges();
+    flush();
     expect(fixture.debugElement.query(By.directive(DocumentationComponent))).toBeNull();
     expect(theme.observed).toBeFalse();
     fixture.destroy();
-  });
+  }));
 
-  it('updates the rendered panel on every pointer move before release without recreating the iframe', () => {
+  it('updates the rendered panel on every pointer move before release without recreating the iframe', fakeAsync(() => {
     spyOnProperty(window, 'innerWidth', 'get').and.returnValue(1200);
     const fixture = TestBed.createComponent(ModuleDocumentationDrawerComponent);
     fixture.componentRef.setInput('visible', true);
     fixture.detectChanges();
+    // Noop animations still queue callbacks that append the panel to body.
+    // Finish them before destroying the fixture so they cannot leak into another test.
+    flush();
     const drawer = fixture.debugElement.query(By.directive(Drawer)).componentInstance as Drawer;
     const panel = drawer.containerViewChild!.nativeElement as HTMLElement;
     const handle = panel.querySelector('.plc-module-documentation-resize-handle') as HTMLElement;
@@ -83,7 +91,8 @@ describe('ModuleDocumentationDrawerComponent', () => {
     expect(panel.style.width).toBe('800px');
     expect(panel.querySelector('iframe')).toBe(iframe);
     fixture.destroy();
-  });
+    flush();
+  }));
 
   it('resizes from the left edge with pointer capture and clamps the width', () => {
     spyOnProperty(window, 'innerWidth', 'get').and.returnValue(1200);

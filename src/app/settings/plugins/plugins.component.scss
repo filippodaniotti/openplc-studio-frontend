@@ -2,6 +2,20 @@
   display: block;
 }
 
+.plc-plugin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.plc-plugin-feedback {
+  color: var(--p-green-500);
+
+  &.is-error {
+    color: var(--p-red-500);
+  }
+}
+
 .plc-plugins-page {
   padding: 1.25rem;
 }

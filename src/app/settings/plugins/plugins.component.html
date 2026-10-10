@@ -5,8 +5,19 @@
       <h2>Plugins</h2>
       <p>Python plugins currently detected in the configured plugin directory.</p>
     </div>
-    <p-button label="Refresh" icon="pi pi-refresh" severity="secondary" [loading]="loading" (onClick)="refresh()" />
+    <div class="plc-plugin-actions">
+      <input #pluginFile type="file" accept=".py" hidden (change)="upload(pluginFile)" />
+      <p-button label="Upload plugin" icon="pi pi-upload" [loading]="uploading" [disabled]="loading || uploading" (onClick)="pluginFile.click()" />
+      <p-button label="Refresh" icon="pi pi-refresh" severity="secondary" [loading]="loading" [disabled]="loading || uploading" (onClick)="refresh()" />
+    </div>
   </div>
+
+  @if (uploadError) {
+    <p class="plc-plugin-feedback is-error" role="alert">{{ uploadError }}</p>
+  }
+  @if (uploadSuccess) {
+    <p class="plc-plugin-feedback" role="status">{{ uploadSuccess }}</p>
+  }
 
   <div class="plc-plugin-summary" aria-label="Plugin inventory summary">
     <div>
@@ -42,7 +53,7 @@
     <div class="plc-plugin-state">
       <i class="pi pi-puzzle-piece"></i>
       <h3>No plugins detected</h3>
-      <p>Add a Python plugin to the configured plugin directory and refresh this page.</p>
+      <p>Use Upload plugin to add a Python plugin file (.py), up to 5 MB.</p>
     </div>
   } @else {
     <div class="plc-plugin-list">

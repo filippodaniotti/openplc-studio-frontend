@@ -19,6 +19,9 @@ export class PluginsComponent implements OnInit {
   public loading = false;
   public loaded = false;
   public loadError = false;
+  public uploading = false;
+  public uploadError: string | null = null;
+  public uploadSuccess: string | null = null;
 
   constructor(private readonly pluginsClient: PluginsClient) {}
 
@@ -49,6 +52,31 @@ export class PluginsComponent implements OnInit {
         error: () => {
           this.loadError = true;
           this.loaded = true;
+        },
+      });
+  }
+
+  public upload(input: HTMLInputElement): void {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.uploading) return;
+    this.uploadError = null;
+    this.uploadSuccess = null;
+    if (!file.name.endsWith('.py') || file.size === 0 || file.size > 5 * 1024 * 1024) {
+      this.uploadError = 'Choose a non-empty Python plugin file (.py), 5 MB or smaller.';
+      return;
+    }
+    this.uploading = true;
+    this.pluginsClient.uploadPlugin(file)
+      .pipe(finalize(() => (this.uploading = false)))
+      .subscribe({
+        next: () => {
+          this.uploadSuccess = `${file.name} uploaded successfully.`;
+          this.refresh();
+        },
+        error: (error) => {
+          this.uploadError = typeof error.error?.detail === 'string'
+            ? error.error.detail : 'Unable to upload the plugin. Please try again.';
         },
       });
   }

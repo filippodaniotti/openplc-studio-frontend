@@ -9,6 +9,12 @@ export class PluginsClient {
 
   constructor(private readonly http: HttpClient) {}
 
+  public uploadPlugin(file: File): Observable<unknown> {
+    const data = new FormData();
+    data.append('file', file);
+    return this.http.post(this.api, data);
+  }
+
   public getPlugins(): Observable<PluginInventory> {
     return this.http.get<PluginInventoryDto>(this.api).pipe(
       map((dto) => ({

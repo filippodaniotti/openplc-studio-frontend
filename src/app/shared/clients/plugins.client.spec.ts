@@ -15,6 +15,15 @@ describe('PluginsClient', () => {
 
   afterEach(() => http.verify());
 
+  it('uploads a plugin as multipart form data', () => {
+    const file = new File(['plugin'], 'DemoAlgorithm.py');
+    client.uploadPlugin(file).subscribe();
+    const request = http.expectOne('/api/plugins');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body.get('file')).toBe(file);
+    request.flush({});
+  });
+
   it('maps the plugin inventory into frontend models', () => {
     let result: any;
     client.getPlugins().subscribe((inventory) => (result = inventory));
