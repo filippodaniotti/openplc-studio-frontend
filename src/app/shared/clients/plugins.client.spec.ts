@@ -15,6 +15,51 @@ describe('PluginsClient', () => {
 
   afterEach(() => http.verify());
 
+  it('loads and maps plugin source with an encoded filename', () => {
+    let result: any;
+    client.getSource('Demo Plugin.py').subscribe((source) => (result = source));
+    const request = http.expectOne('/api/plugins/Demo%20Plugin.py/source');
+    request.flush({
+      filename: 'Demo Plugin.py',
+      content: 'code',
+      revision: 'hash',
+      plugin: {
+        filename: 'Demo Plugin.py',
+        status: 'invalid',
+        module_type: 'PLCAlgorithm',
+        error: 'Broken',
+        spec: null,
+      },
+    });
+    expect(result.content).toBe('code');
+    expect(result.revision).toBe('hash');
+    expect(result.plugin.moduleType).toBe('PLCAlgorithm');
+  });
+
+  it('validates source without saving', () => {
+    client.validateSource('Demo.py', 'draft').subscribe();
+    const request = http.expectOne('/api/plugins/Demo.py/validate');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ content: 'draft' });
+    request.flush({ valid: false, diagnostics: [{ message: 'Invalid', line: 1, column: 1 }] });
+  });
+
+  it('saves source with its revision and maps the updated plugin', () => {
+    let result: any;
+    client.saveSource('Demo.py', 'edited', 'old-hash').subscribe((source) => (result = source));
+    const request = http.expectOne('/api/plugins/Demo.py/source');
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ content: 'edited', revision: 'old-hash' });
+    request.flush({
+      filename: 'Demo.py',
+      content: 'edited',
+      revision: 'new-hash',
+      plugin: { filename: 'Demo.py', status: 'available', module_type: 'PLCAlgorithm', error: null, spec: null },
+    });
+    expect(result.revision).toBe('new-hash');
+    expect(result.plugin.status).toBe('available');
+  });
+
   it('uploads a plugin as multipart form data', () => {
     const file = new File(['plugin'], 'DemoAlgorithm.py');
     client.uploadPlugin(file).subscribe();

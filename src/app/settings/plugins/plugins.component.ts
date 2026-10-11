@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { finalize } from 'rxjs';
@@ -9,7 +10,7 @@ import { PluginInventoryItem } from '../../shared/interfaces/plugin.interface';
 @Component({
   selector: 'plc-plugins',
   standalone: true,
-  imports: [CommonModule, ButtonModule, TagModule],
+  imports: [CommonModule, ButtonModule, TagModule, RouterLink],
   templateUrl: './plugins.component.html',
   styleUrl: './plugins.component.scss',
 })

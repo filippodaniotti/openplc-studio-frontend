@@ -1,0 +1,98 @@
+<div class="plugin-editor-page">
+  <a routerLink="/settings/plugins">
+    <i class="pi pi-arrow-left" aria-hidden="true"></i>
+    Back to plugins
+  </a>
+  <header>
+    <div>
+      <h2>{{ filename }}</h2>
+      <div class="editor-status">
+        @if (source) {
+          <p-tag
+            [severity]="source.plugin.status === 'available' ? 'success' : 'danger'"
+            [value]="source.plugin.status === 'available' ? 'Available' : 'Invalid'"
+          />
+        }
+        <span>{{ dirty ? 'Unsaved changes' : 'Saved source' }}</span>
+      </div>
+    </div>
+    <div class="editor-actions">
+      <p-button
+        label="Validate"
+        ariaLabel="Validate"
+        icon="pi pi-check"
+        severity="secondary"
+        [loading]="validating"
+        [disabled]="!source || loading || saving"
+        (onClick)="validate()"
+      />
+      <p-button
+        label="Discard changes"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="!dirty || loading || saving"
+        (onClick)="discard()"
+      />
+      <p-button
+        label="Save"
+        ariaLabel="Save"
+        icon="pi pi-save"
+        [loading]="saving"
+        [disabled]="!dirty || loading || saving || conflict"
+        (onClick)="save()"
+      />
+    </div>
+  </header>
+  @if (error) {
+    <p class="is-error" role="alert">{{ error }}</p>
+  }
+  @if (notice) {
+    <p class="notice" role="status">{{ notice }}</p>
+  }
+  @if (conflict) {
+    <p>Your draft is preserved. Copy any changes you want to keep before reloading the current server version.</p>
+    <p-button label="Reload from server" severity="secondary" [disabled]="loading || saving" (onClick)="load()" />
+  }
+  @if (loading) {
+    <p role="status">
+      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+      Loading source…
+    </p>
+  }
+  @if (source) {
+    <plc-python-editor
+      #editor
+      [value]="content"
+      [disabled]="loading || saving"
+      [diagnostics]="diagnostics"
+      (valueChange)="edit($event)"
+      (saveRequested)="save()"
+    />
+    <section class="diagnostics" aria-label="Plugin validation" aria-live="polite">
+      <h3>Validation</h3>
+      @if (validating) {
+        <p>Checking Python syntax and plugin manifest…</p>
+      } @else if (valid === true) {
+        <p class="is-valid">Python syntax and plugin manifest are valid.</p>
+      } @else if (valid === null) {
+        <p>Not yet validated.</p>
+      }
+      @for (diagnostic of diagnostics; track $index) {
+        <div class="is-error">
+          @if (diagnostic.line) {
+            <button type="button" (click)="editor.reveal(diagnostic.line, diagnostic.column ?? 1)">
+              Line {{ diagnostic.line }}
+              @if (diagnostic.column) {
+                , column {{ diagnostic.column }}
+              }
+            </button>
+          }
+          <span>{{ diagnostic.message }}</span>
+        </div>
+      }
+      <small>Static checks do not verify imports or runtime behavior.</small>
+    </section>
+  } @else if (!loading) {
+    <p-button label="Retry" icon="pi pi-refresh" severity="secondary" (onClick)="load()" />
+  }
+</div>

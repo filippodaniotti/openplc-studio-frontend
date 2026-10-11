@@ -47,6 +47,11 @@ export const routes: Routes = [
         loadComponent: () => import('./assets/assets.component').then((module) => module.AssetsComponent),
       },
       {
+        path: 'plugins/:filename/edit',
+        loadComponent: () => import('./settings/plugins/plugin-editor/plugin-editor.component').then((module) => module.PluginEditorComponent),
+        canDeactivate: [(component: { canDeactivate(): boolean }) => component.canDeactivate()],
+      },
+      {
         path: 'plugins',
         loadComponent: () => import('./settings/plugins/plugins.component').then((module) => module.PluginsComponent),
       },

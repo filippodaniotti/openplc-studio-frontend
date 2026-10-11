@@ -1,0 +1,61 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.plugin-editor-page {
+  padding: 1.25rem;
+}
+header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+h2 {
+  margin: 0 0 0.5rem;
+  overflow-wrap: anywhere;
+}
+.editor-status,
+.editor-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.editor-status,
+small {
+  color: var(--p-text-muted-color);
+}
+.is-error {
+  color: var(--p-red-500);
+}
+.is-valid,
+.notice {
+  color: var(--p-green-500);
+}
+.diagnostics {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 0.5rem;
+}
+.diagnostics h3 {
+  margin-top: 0;
+}
+.diagnostics > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.diagnostics button {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  white-space: nowrap;
+}

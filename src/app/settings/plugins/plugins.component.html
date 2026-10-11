@@ -68,6 +68,8 @@
               </div>
             </div>
             <div class="plc-plugin-meta">
+              <p-button label="Edit source" ariaLabel="Edit source" icon="pi pi-code" severity="secondary"
+                [routerLink]="['/settings/plugins', plugin.filename, 'edit']" />
               <span>{{ plugin.moduleType }}</span>
               <span>{{ plugin.spec?.settings?.length || 0 }} setting(s)</span>
               <p-tag

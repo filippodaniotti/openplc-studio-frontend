@@ -52,3 +52,25 @@ export interface PluginInventoryDto {
     error: string | null;
   }>;
 }
+
+export interface PluginDiagnostic {
+  message: string;
+  line: number | null;
+  column: number | null;
+}
+
+export interface PluginValidation {
+  valid: boolean;
+  diagnostics: PluginDiagnostic[];
+}
+
+export interface PluginSource {
+  filename: string;
+  content: string;
+  revision: string;
+  plugin: PluginInventoryItem;
+}
+
+export interface PluginSourceDto extends Omit<PluginSource, 'plugin'> {
+  plugin: PluginInventoryDto['items'][number];
+}
