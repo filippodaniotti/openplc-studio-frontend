@@ -1,11 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
+import { TooltipModule } from 'primeng/tooltip';
+import { ButtonModule } from 'primeng/button';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { ConditionSummary, Study, StudyResults } from './listening.models';
 
 @Component({
   selector: 'plc-study-results',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TooltipModule, ButtonModule, ProgressBarModule],
   template: `
     @if (results; as result) {
       <section class="results" aria-label="Human listening results">
@@ -55,19 +58,31 @@ import { ConditionSummary, Study, StudyResults } from './listening.models';
           </p>
           <div class="scroll">
             <table>
-              <caption>Participant-level descriptive estimates (0–100, higher is better)</caption>
+              <caption class="descriptive-caption">
+                Participant-level descriptive estimates
+                <span>0–100 · higher is better</span>
+              </caption>
               <thead>
                 <tr>
-                  <th>Condition</th>
-                  <th>Participants</th>
-                  <th>Ratings</th>
-                  <th>Mean</th>
-                  <th>Median</th>
-                  <th title="Standard deviation: spread of participant scores">SD</th>
-                  <th title="Interquartile range: spread of the middle half of participant scores">IQR</th>
-                  <th title="95% confidence interval for the mean, resampling whole participants">
-                    95% confidence interval
-                  </th>
+                  @for (column of descriptiveColumns; track column.label) {
+                    <th scope="col">
+                      <span class="column-heading">
+                        {{ column.label }}
+                        <p-button
+                          icon="pi pi-info-circle"
+                          severity="info"
+                          size="small"
+                          [text]="true"
+                          [rounded]="true"
+                          [ariaLabel]="column.label + ': more information'"
+                          [pTooltip]="column.help"
+                          tooltipEvent="both"
+                          tooltipPosition="top"
+                          appendTo="body"
+                        ></p-button>
+                      </span>
+                    </th>
+                  }
                 </tr>
               </thead>
               <tbody>
@@ -105,23 +120,27 @@ import { ConditionSummary, Study, StudyResults } from './listening.models';
                     {{ condition.response_count }} {{ condition.response_count === 1 ? 'rating' : 'ratings' }} · mean
                     {{ format(condition.mean) }} / 100
                   </p>
-                  @if (condition.mean !== null) {
-                    <meter
-                      min="0"
-                      max="100"
-                      [value]="condition.mean"
-                      [attr.aria-label]="label(condition.id) + ' mean score'"
-                    ></meter>
-                  }
+                  <div class="mean-bar">
+                    @if (condition.mean !== null) {
+                      <p-progressbar
+                        [value]="condition.mean"
+                        [showValue]="false"
+                        [ariaLabel]="label(condition.id) + ' mean score out of 100'"
+                        [style]="{ height: '0.5rem' }"
+                      />
+                    }
+                  </div>
                   @if (condition.score_histogram; as histogram) {
                     <div class="histogram" aria-label="Unweighted individual rating distribution">
                       @for (count of histogram.counts; track $index) {
                         <div
                           class="bin"
                           [style.height.%]="height(count, histogram.counts)"
-                          [title]="
+                          [pTooltip]="
                             histogram.edges[$index] + '–' + histogram.edges[$index + 1] + ': ' + count + ' ratings'
                           "
+                          tooltipPosition="top"
+                          appendTo="body"
                         ></div>
                       }
                     </div>
@@ -381,31 +400,72 @@ import { ConditionSummary, Study, StudyResults } from './listening.models';
         text-align: left;
         font-weight: 600;
       }
+      .descriptive-caption {
+        padding: 0.4rem 0 1.25rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--p-text-color);
+      }
+      .descriptive-caption span {
+        display: block;
+        margin-top: 0.35rem;
+        font-size: 0.85rem;
+        font-weight: 400;
+        color: var(--p-text-muted-color);
+      }
+      .column-heading {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
       .distributions {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
         gap: 1rem;
       }
-      article {
-        width: 240px;
+      .distributions article {
+        display: grid;
+        grid-template-rows: subgrid;
+        grid-row: span 5;
+        gap: 0.75rem;
+        min-width: 0;
         padding: 1rem;
+        background: var(--p-content-background);
         border: 1px solid var(--p-content-border-color);
-        border-radius: 0.7rem;
+        border-radius: var(--p-content-border-radius, 0.7rem);
       }
-      meter {
-        width: 100%;
+      .distributions h4,
+      .distributions p {
+        margin: 0;
+        overflow-wrap: anywhere;
+      }
+      .mean-bar {
+        min-height: 0.5rem;
       }
       .histogram {
-        height: 90px;
+        height: 100px;
         display: flex;
         align-items: end;
-        gap: 3px;
-        margin: 0.7rem 0;
+        gap: 4px;
+        padding: 0.75rem 0.5rem 0;
+        margin-top: 0.25rem;
+        border-bottom: 1px solid var(--p-content-border-color);
+        border-radius: var(--p-content-border-radius, 0.4rem) var(--p-content-border-radius, 0.4rem) 0 0;
+        background: var(--p-content-hover-background);
       }
       .bin {
         flex: 1;
         background: var(--p-primary-color);
+        border-radius: 3px 3px 0 0;
         min-height: 0;
+      }
+      .bin:hover {
+        background: var(--p-primary-hover-color);
+      }
+      .distributions small {
+        display: block;
+        padding-top: 0.5rem;
+        line-height: 1.5;
       }
       code {
         overflow-wrap: anywhere;
@@ -414,6 +474,22 @@ import { ConditionSummary, Study, StudyResults } from './listening.models';
   ],
 })
 export class StudyResultsComponent {
+  public readonly descriptiveColumns = [
+    { label: 'Condition', help: 'The PLC condition or quality-control item rated by listeners.' },
+    { label: 'Participants', help: 'Number of completed, included listeners contributing scores for this condition.' },
+    { label: 'Ratings', help: 'Number of individual answered ratings before averaging within each listener.' },
+    {
+      label: 'Mean',
+      help: 'Average listener score. Each listener has equal weight; observed tracks are weighted equally within each listener.',
+    },
+    { label: 'Median', help: 'Middle participant score after averaging ratings within each listener.' },
+    { label: 'SD', help: 'Standard deviation: how widely participant scores vary around the mean.' },
+    { label: 'IQR', help: 'Interquartile range: the width of the middle 50% of participant scores.' },
+    {
+      label: '95% confidence interval',
+      help: 'Uncertainty in the mean, estimated by resampling whole participants. This is not the range of individual ratings.',
+    },
+  ];
   @Input() public results: StudyResults | null = null;
   @Input() public study: Study | null = null;
   @Input() public showQualityControls = false;
