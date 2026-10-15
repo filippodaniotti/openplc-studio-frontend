@@ -238,11 +238,36 @@
           <table>
             <thead>
               <tr>
-                <th>Pseudonymous session</th>
-                <th>State</th>
-                <th>Quality flags</th>
-                <th>Inclusion</th>
-                <th>Owner actions</th>
+                <th scope="col">
+                  <plc-table-column-help
+                    label="Pseudonymous session"
+                    help="Anonymous identifier for one participant session. Invitation tokens are not displayed here."
+                  />
+                </th>
+                <th scope="col">
+                  <plc-table-column-help
+                    label="State"
+                    help="Invitation or response status. Revoked sessions cannot submit further responses; revocation does not itself exclude completed responses."
+                  />
+                </th>
+                <th scope="col">
+                  <plc-table-column-help
+                    label="Quality flags"
+                    help="Advisory listener-quality checks for owner review. Flags do not automatically exclude a participant."
+                  />
+                </th>
+                <th scope="col">
+                  <plc-table-column-help
+                    label="Inclusion"
+                    help="Only completed, non-excluded sessions contribute to analysis. Unfinished responses are retained but not analyzed."
+                  />
+                </th>
+                <th scope="col">
+                  <plc-table-column-help
+                    label="Owner actions"
+                    help="Manage inclusion, exclusion, revocation or eligible unused invitations while collection is open. Actions are frozen after closure."
+                  />
+                </th>
               </tr>
             </thead>
             <tbody>

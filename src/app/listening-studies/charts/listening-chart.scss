@@ -1,9 +1,15 @@
+@use '../report-panels';
+@use '../report-tables';
+
 :host {
   display: block;
   min-width: 0;
   height: 100%;
 }
 .chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 1rem;
   border: 1px solid var(--p-content-border-color);
   border-radius: 0.75rem;
@@ -12,10 +18,29 @@
   height: 100%;
   box-sizing: border-box;
 }
+.chart-card > * {
+  flex-shrink: 0;
+}
+.chart-card > details {
+  margin-top: auto;
+}
 h3 {
-  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  margin: 0 0 0.65rem;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.75rem;
+}
+h3::before {
+  content: '';
+  width: 0.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--p-primary-color);
 }
 p {
   line-height: 1.6;
@@ -42,15 +67,6 @@ p {
   border-radius: 0.5rem;
   background: var(--p-content-hover-background);
 }
-details {
-  margin-top: 0.75rem;
-}
-summary {
-  cursor: pointer;
-  color: var(--p-primary-color);
-  font-weight: 600;
-}
-summary:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--p-primary-color);
   outline-offset: 3px;
@@ -58,24 +74,6 @@ button:focus-visible {
 .table-scroll {
   overflow: auto;
   max-height: 320px;
-}
-table {
-  border-collapse: collapse;
-  width: 100%;
-  font-size: 0.85rem;
-}
-caption {
-  text-align: left;
-  padding: 0.65rem 0;
-}
-th,
-td {
-  text-align: left;
-  padding: 0.5rem;
-  border-bottom: 1px solid var(--p-content-border-color);
-}
-th {
-  overflow-wrap: anywhere;
 }
 .legend {
   display: flex;

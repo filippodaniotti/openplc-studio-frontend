@@ -122,7 +122,20 @@ type DistributionType = 'boxplot' | 'violin';
         font-weight: 700;
       }
       h3 {
-        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.15rem;
+        line-height: 1.35;
+        letter-spacing: -0.015em;
+      }
+      h3::before {
+        content: '';
+        width: 0.25rem;
+        height: 1.25rem;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: var(--p-primary-color);
       }
       h4 {
         font-size: 1.05rem;

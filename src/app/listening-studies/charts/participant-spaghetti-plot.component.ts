@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ChartData, ChartOptions, LineElement, Plugin } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
+import { TableColumnHelpComponent } from '../table-column-help.component';
 import { ListeningChartBase } from './listening-chart-base';
 import { ListenerProfile, conditionTickLabel } from './listening-chart-data';
 import './listening-chart-extensions';
@@ -20,7 +21,7 @@ const listenerEmphasis: Plugin<'line'> = {
 @Component({
   selector: 'plc-participant-spaghetti-plot',
   standalone: true,
-  imports: [ChartModule],
+  imports: [ChartModule, TableColumnHelpComponent],
   styleUrl: './listening-chart.scss',
   template: `
     <article class="chart-card" aria-label="Participant-level spaghetti plot">
@@ -63,9 +64,19 @@ const listenerEmphasis: Plugin<'line'> = {
                 <caption>Listener track-balanced means (0–100); not model estimates</caption>
                 <thead>
                   <tr>
-                    <th>Pseudonymous listener</th>
+                    <th scope="col">
+                      <plc-table-column-help
+                        label="Pseudonymous listener"
+                        help="Anonymous session identifier for one completed, included listener."
+                      />
+                    </th>
                     @for (condition of conditions; track condition.id) {
-                      <th>{{ label(condition.id) }}</th>
+                      <th scope="col">
+                        <plc-table-column-help
+                          [label]="label(condition.id)"
+                          help="Observed listener mean from 0–100, with tracks weighted equally after averaging excerpts and repetitions. Not a model estimate."
+                        />
+                      </th>
                     }
                   </tr>
                 </thead>

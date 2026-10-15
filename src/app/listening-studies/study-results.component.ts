@@ -1,14 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { TooltipModule } from 'primeng/tooltip';
-import { ButtonModule } from 'primeng/button';
+import { TableColumnHelpComponent } from './table-column-help.component';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { ConditionSummary, Study, StudyResults } from './listening.models';
 
 @Component({
   selector: 'plc-study-results',
   standalone: true,
-  imports: [CommonModule, TooltipModule, ButtonModule, ProgressBarModule],
+  imports: [CommonModule, TooltipModule, TableColumnHelpComponent, ProgressBarModule],
+  styleUrl: './report-tables.scss',
   template: `
     @if (results; as result) {
       <section class="results" aria-label="Human listening results">
@@ -56,31 +57,17 @@ import { ConditionSummary, Study, StudyResults } from './listening.models';
             Scores range from 0 (bad) to 100 (excellent). Missing scores are not zero. Reference and anchor scores are
             quality checks, not PLC comparisons.
           </p>
+          <div class="descriptive-caption">
+            <h4>Participant-level descriptive estimates</h4>
+            <span>0–100 · higher is better</span>
+          </div>
           <div class="scroll">
-            <table>
-              <caption class="descriptive-caption">
-                Participant-level descriptive estimates
-                <span>0–100 · higher is better</span>
-              </caption>
+            <table aria-label="Participant-level descriptive estimates (0–100, higher is better)">
               <thead>
                 <tr>
                   @for (column of descriptiveColumns; track column.label) {
                     <th scope="col">
-                      <span class="column-heading">
-                        {{ column.label }}
-                        <p-button
-                          icon="pi pi-info-circle"
-                          severity="info"
-                          size="small"
-                          [text]="true"
-                          [rounded]="true"
-                          [ariaLabel]="column.label + ': more information'"
-                          [pTooltip]="column.help"
-                          tooltipEvent="both"
-                          tooltipPosition="top"
-                          appendTo="body"
-                        ></p-button>
-                      </span>
+                      <plc-table-column-help [label]="column.label" [help]="column.help" />
                     </th>
                   }
                 </tr>
@@ -95,7 +82,9 @@ import { ConditionSummary, Study, StudyResults } from './listening.models';
                     <td>{{ format(condition.median) }}</td>
                     <td>{{ format(condition.sd) }}</td>
                     <td>{{ format(condition.iqr) }}</td>
-                    <td [title]="condition.ci_unavailable_reason ?? ''">{{ interval(condition.ci95) }}</td>
+                    <td [pTooltip]="condition.ci_unavailable_reason ?? ''" tooltipPosition="top" appendTo="body">
+                      {{ interval(condition.ci95) }}
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -180,18 +169,38 @@ import { ConditionSummary, Study, StudyResults } from './listening.models';
               </p>
             }
             @if (inference.pairwise; as pairs) {
+              <div class="descriptive-caption">
+                <h4>Pairwise contrasts — first minus second</h4>
+                <span>{{ inference.pairwise_correction }} correction across all displayed pairs</span>
+              </div>
               <div class="scroll">
-                <table>
-                  <caption>
-                    Pairwise contrasts — first minus second,
-                    {{ inference.pairwise_correction }} correction across all displayed pairs
-                  </caption>
+                <table aria-label="Pairwise contrasts — first minus second">
                   <thead>
                     <tr>
-                      <th>Pair</th>
-                      <th>Effect</th>
-                      <th>Simultaneous 95% CI</th>
-                      <th>Adjusted p</th>
+                      <th scope="col">
+                        <plc-table-column-help
+                          label="Pair"
+                          help="The two conditions being compared; effects are first minus second."
+                        />
+                      </th>
+                      <th scope="col">
+                        <plc-table-column-help
+                          label="Effect"
+                          help="Difference in model-estimated quality-score points. Positive values favor the first condition."
+                        />
+                      </th>
+                      <th scope="col">
+                        <plc-table-column-help
+                          label="Simultaneous 95% CI"
+                          help="Tukey-adjusted interval across the selected comparison family, using asymptotic inference."
+                        />
+                      </th>
+                      <th scope="col">
+                        <plc-table-column-help
+                          label="Adjusted p"
+                          help="Tukey-adjusted p-value across the selected comparison family. Not an effect size."
+                        />
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -282,8 +291,27 @@ import { ConditionSummary, Study, StudyResults } from './listening.models';
         margin: 0;
       }
       h3 {
-        font-size: 1.1rem;
-        margin: 1.5rem 0 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.15rem;
+        letter-spacing: -0.015em;
+        margin: 2rem 0 0.75rem;
+      }
+      h3::before {
+        content: '';
+        width: 0.25rem;
+        height: 1.25rem;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: var(--p-primary-color);
+      }
+      h3::after {
+        content: '';
+        flex: 1;
+        min-width: 1rem;
+        height: 1px;
+        background: var(--p-content-border-color);
       }
       h4 {
         font-size: 1rem;
@@ -350,19 +378,65 @@ import { ConditionSummary, Study, StudyResults } from './listening.models';
         background: var(--p-content-hover-background);
         border-radius: 0.65rem;
       }
+      details {
+        margin-top: 1rem;
+        border: 1px solid var(--p-content-border-color);
+        border-radius: var(--p-content-border-radius, 0.65rem);
+        background: var(--p-content-background);
+        overflow: hidden;
+      }
       .analysis-details {
-        margin-top: 1.5rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--p-content-border-color);
+        margin-top: 2rem;
       }
       summary {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.25rem;
         cursor: pointer;
+        list-style: none;
         font-weight: 600;
-        color: var(--p-primary-color);
+        line-height: 1.5;
+        color: var(--p-text-color);
+        transition: background 150ms;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      summary::before {
+        content: '\\e901';
+        font-family: 'primeicons';
+        font-size: 0.75rem;
+        line-height: 1;
+        color: var(--p-text-muted-color);
+        flex: 0 0 auto;
+        transition: transform 150ms;
+      }
+      details[open] > summary::before {
+        transform: rotate(90deg);
+      }
+      summary:hover,
+      details[open] > summary {
+        background: var(--p-content-hover-background);
+      }
+      details[open] > summary {
+        border-bottom: 1px solid var(--p-content-border-color);
       }
       summary:focus-visible {
         outline: 2px solid var(--p-primary-color);
-        outline-offset: 4px;
+        outline-offset: -3px;
+      }
+      details > p,
+      details > dl {
+        margin: 1rem 1.25rem;
+      }
+      details > ul {
+        margin: 1rem 1.25rem;
+        padding-left: 1.25rem;
+        line-height: 1.6;
+      }
+      details li + li {
+        margin-top: 0.5rem;
       }
       .metadata {
         font-size: 0.9rem;
@@ -384,27 +458,14 @@ import { ConditionSummary, Study, StudyResults } from './listening.models';
       .scroll {
         overflow-x: auto;
       }
-      table {
-        border-collapse: collapse;
-        width: 100%;
-        margin: 1rem 0;
-      }
-      th,
-      td {
-        padding: 0.7rem;
-        text-align: left;
-        border-bottom: 1px solid var(--p-content-border-color);
-        white-space: nowrap;
-      }
-      caption {
-        text-align: left;
-        font-weight: 600;
-      }
       .descriptive-caption {
-        padding: 0.4rem 0 1.25rem;
-        font-size: 1.1rem;
+        padding: 0.75rem 0 1rem;
+        font-size: 1rem;
         font-weight: 700;
         color: var(--p-text-color);
+      }
+      .descriptive-caption h4 {
+        margin: 0;
       }
       .descriptive-caption span {
         display: block;
@@ -412,11 +473,6 @@ import { ConditionSummary, Study, StudyResults } from './listening.models';
         font-size: 0.85rem;
         font-weight: 400;
         color: var(--p-text-muted-color);
-      }
-      .column-heading {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
       }
       .distributions {
         display: grid;

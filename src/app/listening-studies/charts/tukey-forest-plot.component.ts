@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ChartData, ChartOptions } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
+import { TableColumnHelpComponent } from '../table-column-help.component';
 import { PairwiseComparison } from '../listening.models';
 import { ListeningChartBase } from './listening-chart-base';
 import {
@@ -16,7 +17,7 @@ import { IntervalPoint, zeroReference, indexTicks } from './listening-chart-exte
 @Component({
   selector: 'plc-tukey-forest-plot',
   standalone: true,
-  imports: [ChartModule],
+  imports: [ChartModule, TableColumnHelpComponent],
   styleUrl: './listening-chart.scss',
   template: `
     <article class="chart-card" aria-label="Tukey pairwise differences forest plot">
@@ -50,11 +51,36 @@ import { IntervalPoint, zeroReference, indexTicks } from './listening-chart-exte
                 <caption>Asymptotic Tukey-adjusted comparisons; alpha .05</caption>
                 <thead>
                   <tr>
-                    <th>First − second</th>
-                    <th>Difference</th>
-                    <th>Simultaneous 95% CI</th>
-                    <th>Adjusted p</th>
-                    <th>Evidence</th>
+                    <th scope="col">
+                      <plc-table-column-help
+                        label="First − second"
+                        help="The two conditions being compared; effects are first minus second."
+                      />
+                    </th>
+                    <th scope="col">
+                      <plc-table-column-help
+                        label="Difference"
+                        help="Difference in model-estimated quality-score points. Positive values favor the first condition."
+                      />
+                    </th>
+                    <th scope="col">
+                      <plc-table-column-help
+                        label="Simultaneous 95% CI"
+                        help="Tukey-adjusted interval across the selected comparison family, using asymptotic inference."
+                      />
+                    </th>
+                    <th scope="col">
+                      <plc-table-column-help
+                        label="Adjusted p"
+                        help="Tukey-adjusted p-value across the selected comparison family. Not an effect size."
+                      />
+                    </th>
+                    <th scope="col">
+                      <plc-table-column-help
+                        label="Evidence"
+                        help="Stars indicate adjusted p-value thresholds; ns means p ≥ .05, not evidence of equivalence."
+                      />
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

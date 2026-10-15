@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ChartData, ChartOptions } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
+import { TableColumnHelpComponent } from '../table-column-help.component';
 import { EstimatedMarginalMean } from '../listening.models';
 import { ListeningChartBase } from './listening-chart-base';
 import { orderedMeans, conditionTickLabel } from './listening-chart-data';
@@ -9,7 +10,7 @@ import { IntervalPoint, indexTicks } from './listening-chart-extensions';
 @Component({
   selector: 'plc-emm-plot',
   standalone: true,
-  imports: [ChartModule],
+  imports: [ChartModule, TableColumnHelpComponent],
   styleUrl: './listening-chart.scss',
   template: `
     <article class="chart-card" aria-label="Estimated marginal means plot">
@@ -40,10 +41,30 @@ import { IntervalPoint, indexTicks } from './listening-chart-extensions';
                 <caption>Pointwise 95% asymptotic normal intervals; not Tukey-adjusted</caption>
                 <thead>
                   <tr>
-                    <th>Condition</th>
-                    <th>EMM</th>
-                    <th>SE</th>
-                    <th>95% CI</th>
+                    <th scope="col">
+                      <plc-table-column-help
+                        label="Condition"
+                        help="The rated PLC condition or quality-control item."
+                      />
+                    </th>
+                    <th scope="col">
+                      <plc-table-column-help
+                        label="EMM"
+                        help="Estimated marginal mean: model-estimated quality score, averaged equally over source tracks."
+                      />
+                    </th>
+                    <th scope="col">
+                      <plc-table-column-help
+                        label="SE"
+                        help="Standard error of the model-estimated mean, not the spread of individual listener scores."
+                      />
+                    </th>
+                    <th scope="col">
+                      <plc-table-column-help
+                        label="95% CI"
+                        help="Pointwise 95% asymptotic model interval. Not Tukey-adjusted; overlap is not a test of differences."
+                      />
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

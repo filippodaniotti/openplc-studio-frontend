@@ -116,6 +116,7 @@ type RatingsRequest = { study: Study; results: StudyResults } | null;
       </section>
     }
   `,
+  styleUrl: '../report-panels.scss',
   styles: [
     `
       :host {
@@ -126,8 +127,12 @@ type RatingsRequest = { study: Study; results: StudyResults } | null;
         color: var(--p-text-color);
       }
       h2 {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
         font-weight: 700;
+        line-height: 1.35;
+        margin: 2rem 0 1rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--p-content-border-color);
       }
       .help {
         color: var(--p-text-muted-color);
@@ -162,10 +167,6 @@ type RatingsRequest = { study: Study; results: StudyResults } | null;
         border-radius: 0.5rem;
         line-height: 1.6;
         background: var(--p-content-hover-background);
-      }
-      summary {
-        cursor: pointer;
-        color: var(--p-primary-color);
       }
       .chart-grid {
         display: grid;

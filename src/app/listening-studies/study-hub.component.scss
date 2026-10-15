@@ -1,3 +1,5 @@
+@use './report-tables';
+
 .hub {
   padding: 1.5rem;
   max-width: 1400px;
@@ -224,17 +226,6 @@ button:disabled {
 .scroll {
   overflow-x: auto;
 }
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-td,
-th {
-  padding: 0.7rem;
-  border-bottom: 1px solid var(--p-content-border-color);
-  text-align: left;
-  vertical-align: top;
-}
 a {
   color: var(--p-primary-color);
 }
@@ -364,19 +355,6 @@ code {
     margin-top: 0.4rem;
     color: var(--p-text-muted-color);
     line-height: 1.6;
-  }
-}
-.participant-table {
-  border: 1px solid var(--p-content-border-color);
-  border-radius: 0.75rem;
-  th {
-    background: var(--p-content-hover-background);
-    color: var(--p-text-muted-color);
-    font-size: 0.85rem;
-    font-weight: 600;
-  }
-  tbody tr:last-child td {
-    border-bottom: 0;
   }
 }
 .participant-exports {

@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ChartData, ChartOptions } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
+import { TableColumnHelpComponent } from '../table-column-help.component';
 import { PairwiseComparison } from '../listening.models';
 import { ListeningChartBase } from './listening-chart-base';
 import {
@@ -16,7 +17,7 @@ type HeatmapCell = MatrixPoint & MatrixComparison;
 @Component({
   selector: 'plc-significance-heatmap',
   standalone: true,
-  imports: [ChartModule],
+  imports: [ChartModule, TableColumnHelpComponent],
   styleUrl: './listening-chart.scss',
   template: `
     <article class="chart-card" aria-label="Pairwise significance heatmap">
@@ -57,9 +58,19 @@ type HeatmapCell = MatrixPoint & MatrixComparison;
                 <caption>Tukey-adjusted p-values; diagonal — is not a comparison</caption>
                 <thead>
                   <tr>
-                    <th>Row / column</th>
+                    <th scope="col">
+                      <plc-table-column-help
+                        label="Row / column"
+                        help="Each cell compares its row and column conditions. The diagonal is not a comparison."
+                      />
+                    </th>
                     @for (condition of conditions; track condition.id) {
-                      <th>{{ label(condition.id) }}</th>
+                      <th scope="col">
+                        <plc-table-column-help
+                          [label]="label(condition.id)"
+                          help="Tukey-adjusted p-value comparing this column condition with the row condition. Not an effect size."
+                        />
+                      </th>
                     }
                   </tr>
                 </thead>
