@@ -1,8 +1,5 @@
 <div class="plugin-editor-page">
-  <a routerLink="/settings/plugins">
-    <i class="pi pi-arrow-left" aria-hidden="true"></i>
-    Back to plugins
-  </a>
+  <p-button label="Back to plugins" icon="pi pi-arrow-left" severity="secondary" routerLink="/settings/plugins" />
   <header>
     <div>
       <h2>{{ filename }}</h2>
@@ -60,6 +57,38 @@
     </p>
   }
   @if (source) {
+    <section class="diagnostics" aria-labelledby="validation-heading" aria-live="polite">
+      <div class="diagnostics-heading">
+        <i class="pi pi-check-circle" aria-hidden="true"></i>
+        <h3 id="validation-heading">Validation</h3>
+      </div>
+      <div class="diagnostics-body">
+        @if (validating) {
+          <p>Checking Python syntax and plugin manifest…</p>
+        } @else if (valid === true) {
+          <p class="is-valid">Python syntax and plugin manifest are valid.</p>
+        } @else if (valid === null) {
+          <p>Not yet validated.</p>
+        }
+        @for (diagnostic of diagnostics; track $index) {
+          <div class="is-error">
+            @if (diagnostic.line) {
+              <button type="button" (click)="editor.reveal(diagnostic.line, diagnostic.column ?? 1)">
+                Line {{ diagnostic.line }}
+                @if (diagnostic.column) {
+                  , column {{ diagnostic.column }}
+                }
+              </button>
+            }
+            <span>{{ diagnostic.message }}</span>
+          </div>
+        }
+      </div>
+      <footer class="diagnostics-footer">
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
+        <small>Static checks do not verify imports or runtime behavior.</small>
+      </footer>
+    </section>
     <plc-python-editor
       #editor
       [value]="content"
@@ -68,30 +97,6 @@
       (valueChange)="edit($event)"
       (saveRequested)="save()"
     />
-    <section class="diagnostics" aria-label="Plugin validation" aria-live="polite">
-      <h3>Validation</h3>
-      @if (validating) {
-        <p>Checking Python syntax and plugin manifest…</p>
-      } @else if (valid === true) {
-        <p class="is-valid">Python syntax and plugin manifest are valid.</p>
-      } @else if (valid === null) {
-        <p>Not yet validated.</p>
-      }
-      @for (diagnostic of diagnostics; track $index) {
-        <div class="is-error">
-          @if (diagnostic.line) {
-            <button type="button" (click)="editor.reveal(diagnostic.line, diagnostic.column ?? 1)">
-              Line {{ diagnostic.line }}
-              @if (diagnostic.column) {
-                , column {{ diagnostic.column }}
-              }
-            </button>
-          }
-          <span>{{ diagnostic.message }}</span>
-        </div>
-      }
-      <small>Static checks do not verify imports or runtime behavior.</small>
-    </section>
   } @else if (!loading) {
     <p-button label="Retry" icon="pi pi-refresh" severity="secondary" (onClick)="load()" />
   }

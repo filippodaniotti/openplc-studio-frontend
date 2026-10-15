@@ -36,19 +36,47 @@ small {
   color: var(--p-green-500);
 }
 .diagnostics {
-  margin-top: 1rem;
-  padding: 1rem;
+  margin-bottom: 1.25rem;
+  background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
   border-radius: 0.5rem;
+  overflow: hidden;
+}
+.diagnostics-heading,
+.diagnostics-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1rem;
+  background: var(--p-content-hover-background);
+}
+.diagnostics-heading {
+  border-bottom: 1px solid var(--p-content-border-color);
 }
 .diagnostics h3 {
-  margin-top: 0;
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--p-text-color);
 }
-.diagnostics > div {
+.diagnostics-body {
+  padding: 1rem;
+}
+.diagnostics-body p {
+  margin: 0;
+}
+.diagnostics-body > div {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+}
+.diagnostics-body > div + div {
+  margin-top: 0.5rem;
+}
+.diagnostics-footer {
+  border-top: 1px solid var(--p-content-border-color);
+  color: var(--p-text-muted-color);
 }
 .diagnostics button {
   background: none;
