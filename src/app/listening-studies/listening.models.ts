@@ -31,6 +31,7 @@ export interface Rating {
   answered: boolean;
 }
 export interface ParticipantCheckpoint {
+  audio_loading_limits?: { max_decoded_bytes: number; timeout_seconds: number };
   run_name?: string | null;
   study_id: string;
   study_status: StudyStatus;

@@ -797,10 +797,16 @@
             {{ message }}
           </div>
         </div>
+        <p *ngIf="usesFullTrack(selectedModule)" class="text-sm text-muted-color">
+          Each full track is one stimulus per repetition. Excerpt length, loss selection, trial count, selection seed
+          and loudness filtering are bypassed.
+        </p>
         <ng-container *ngIf="selectedModule?.settings?.length > 0; else hasNoParam">
-          <ng-container *ngFor="let param of selectedModule?.settings ?? []">
+          <ng-container *ngFor="let param of $any(visibleParameters(selectedModule))">
             <div class="w-full flex flex-row min-h-10">
-              <p class="min-w-56 flex items-center">{{ param.name }}</p>
+              <p class="min-w-56 flex items-center">
+                {{ param.name === 'use_full_track' ? 'Use full track' : param.name }}
+              </p>
 
               <ng-container *ngIf="isParameterFieldType(param)">
                 <plc-parameter-field

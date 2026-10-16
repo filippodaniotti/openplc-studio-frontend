@@ -3,7 +3,7 @@ import { ModuleType } from '../enums/module-type.enum';
 import { Module } from './module.interface';
 
 export interface RunFailure {
-  code: 'human_no_eligible_excerpts' | 'execution_failed';
+  code: 'human_no_eligible_excerpts' | 'human_audio_budget_exceeded' | 'execution_failed';
   message: string;
   guidance: string;
 }

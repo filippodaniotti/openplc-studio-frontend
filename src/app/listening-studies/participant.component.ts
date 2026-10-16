@@ -62,7 +62,7 @@ import { ThemeService } from '../shared/services/theme.service';
           <iframe
             #player
             title="MUSHRA listening player"
-            src="/api/listening-client/index.html"
+            src="/api/listening-client/index.html?v=shared-faders-20261016-2"
             sandbox="allow-scripts allow-same-origin allow-downloads allow-modals"
             referrerpolicy="no-referrer"
             (load)="initializePlayer()"

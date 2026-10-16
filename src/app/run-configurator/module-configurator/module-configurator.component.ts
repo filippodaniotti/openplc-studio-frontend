@@ -642,6 +642,25 @@ export class ModuleConfiguratorComponent implements OnInit {
     return buildModuleInstancePresentations(siblings)[moduleIndex]?.discriminator ?? null;
   }
 
+  public usesFullTrack(module: ModuleWithCount): boolean {
+    return (
+      module.name === 'HumanCalculator' &&
+      module.settings.some((setting) => setting.name === 'use_full_track' && setting.value === true)
+    );
+  }
+
+  public visibleParameters(module: ModuleWithCount): ModuleWithCount['settings'] {
+    if (!this.usesFullTrack(module)) return module.settings;
+    const excerptSettings = [
+      'stimulus_length',
+      'single_loss_per_stimulus',
+      'trials_per_track',
+      'choose_seed',
+      'loudness_threshold_db',
+    ];
+    return module.settings.filter((setting) => !excerptSettings.includes(setting.name));
+  }
+
   public isParameterFieldType(param: { type: string }): boolean {
     return ['int', 'float', 'str', 'bool', 'Enum', 'list_int'].includes(param.type);
   }
