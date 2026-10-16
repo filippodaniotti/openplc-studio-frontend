@@ -31,6 +31,7 @@ export interface Rating {
   answered: boolean;
 }
 export interface ParticipantCheckpoint {
+  run_name?: string | null;
   study_id: string;
   study_status: StudyStatus;
   session_id: string;

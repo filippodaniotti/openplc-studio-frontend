@@ -16,7 +16,9 @@ import { ThemeService } from '../shared/services/theme.service';
   imports: [CommonModule, FormsModule, ButtonModule, ProtocolHtmlPipe],
   template: `
     <main class="participant">
-      <h1>Human listening test</h1>
+      <header class="study-header">
+        <h1>{{ runName ? runName + ' - Listening study' : 'Listening study' }}</h1>
+      </header>
       @if (error) {
         <p role="alert">{{ error }}</p>
       }
@@ -38,7 +40,7 @@ import { ThemeService } from '../shared/services/theme.service';
               environment. Take breaks and resume with this same invitation link.
             </p>
             <h2>Instructions</h2>
-            <div class="plain" [innerHTML]="session.instructions | protocolHtml"></div>
+            <div class="plain instructions-content" [innerHTML]="session.instructions | protocolHtml"></div>
             <h2>Consent · version {{ session.consent_version }}</h2>
             <div class="plain" [innerHTML]="session.consent | protocolHtml"></div>
             <label>
@@ -53,7 +55,10 @@ import { ThemeService } from '../shared/services/theme.service';
             />
           </section>
         } @else {
-          <div class="plain" [innerHTML]="session.instructions | protocolHtml"></div>
+          <section class="study-instructions" aria-labelledby="study-instructions-heading">
+            <h2 id="study-instructions-heading">Instructions</h2>
+            <div class="plain instructions-content" [innerHTML]="session.instructions | protocolHtml"></div>
+          </section>
           <iframe
             #player
             title="MUSHRA listening player"
@@ -74,6 +79,28 @@ import { ThemeService } from '../shared/services/theme.service';
         padding: 1.5rem;
         color: var(--p-text-color);
       }
+      .study-header {
+        margin-bottom: 1.5rem;
+      }
+      .study-header h1 {
+        margin: 0;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 600;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+      }
+      .study-instructions {
+        margin-bottom: 1.5rem;
+        border-inline-start: 4px solid var(--p-primary-color);
+      }
+      .study-instructions h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+      }
+      .instructions-content {
+        color: var(--p-text-muted-color);
+      }
       section {
         padding: 1.5rem;
         background: var(--p-content-background);
@@ -92,7 +119,9 @@ import { ThemeService } from '../shared/services/theme.service';
       }
       iframe {
         width: 100%;
-        height: 780px;
+        display: block;
+        height: auto;
+        min-height: 1px;
         border: 1px solid var(--p-content-border-color);
         border-radius: 0.75rem;
       }
@@ -106,6 +135,7 @@ import { ThemeService } from '../shared/services/theme.service';
 export class ParticipantComponent implements OnInit, OnDestroy {
   @ViewChild('player') private player?: ElementRef<HTMLIFrameElement>;
   public checkpoint: ParticipantCheckpoint | null = null;
+  public runName = '';
   public loading = true;
   public consenting = false;
   public accepted = false;
@@ -117,6 +147,7 @@ export class ParticipantComponent implements OnInit, OnDestroy {
   private consentRequestId: string | null = null;
   private readonly destroyRef = inject(DestroyRef);
   private observer?: MutationObserver;
+  private playerResizeObserver?: ResizeObserver;
   constructor(
     private readonly client: ListeningClient,
     private readonly route: ActivatedRoute,
@@ -140,6 +171,7 @@ export class ParticipantComponent implements OnInit, OnDestroy {
         const id = this.route.snapshot.paramMap.get('sessionId');
         if (!id) throw new Error('Open your individual invitation link to begin or resume.');
         this.checkpoint = await firstValueFrom(this.client.checkpoint(id));
+        this.runName = this.checkpoint.run_name ?? '';
       }
     } catch (error) {
       this.error =
@@ -165,6 +197,27 @@ export class ParticipantComponent implements OnInit, OnDestroy {
     }
   }
   public initializePlayer(): void {
+    this.playerResizeObserver?.disconnect();
+    const frame = this.player?.nativeElement;
+    const body = frame?.contentDocument?.body;
+    if (frame && body) {
+      const resize = () => {
+        // Measure the body, not the viewport-sized document, so the frame can shrink too.
+        const style = getComputedStyle(body);
+        const height = Math.ceil(
+          Math.max(body.getBoundingClientRect().height, body.scrollHeight) +
+            parseFloat(style.marginTop) +
+            parseFloat(style.marginBottom),
+        );
+        // Global border-box sizing includes the iframe border in its height.
+        const frameStyle = getComputedStyle(frame);
+        const borders = parseFloat(frameStyle.borderTopWidth) + parseFloat(frameStyle.borderBottomWidth);
+        frame.style.height = `${height + borders + 1}px`;
+      };
+      this.playerResizeObserver = new ResizeObserver(resize);
+      this.playerResizeObserver.observe(body);
+      resize();
+    }
     if (this.checkpoint) this.send({ type: 'plc-listening-init', checkpoint: this.checkpoint, theme: this.colors() });
   }
   @HostListener('window:message', ['$event'])
@@ -202,6 +255,7 @@ export class ParticipantComponent implements OnInit, OnDestroy {
   }
   public ngOnDestroy(): void {
     this.observer?.disconnect();
+    this.playerResizeObserver?.disconnect();
     this.send({ type: 'plc-listening-shutdown' });
   }
   private send(value: Record<string, unknown>): void {
