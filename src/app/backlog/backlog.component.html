@@ -110,7 +110,11 @@
                 [text]="true"
                 [rounded]="true"
                 [disabled]="!isRunAnalyzable(run)"
-                [pTooltip]="isRunAnalyzable(run) ? 'Go to analysis' : 'Analysis is available only for completed runs'"
+                [pTooltip]="
+                  isRunAnalyzable(run)
+                    ? 'Go to analysis'
+                    : 'Analysis is available for completed runs or ready automated outputs'
+                "
                 tooltipPosition="top"
                 ariaLabel="Go to analysis"
                 (onClick)="onAnalyse(run)"
@@ -137,6 +141,25 @@
                 ariaLabel="Download config"
                 (onClick)="onDownloadConfig(run)"
               ></p-button>
+              @if (
+                hasHumanStudies(run) &&
+                (run.status === RunStatus.AWAITING_INPUT ||
+                  run.status === RunStatus.COMPLETED ||
+                  run.status === RunStatus.FAILED)
+              ) {
+                <p-button
+                  icon="pi pi-headphones"
+                  severity="warn"
+                  size="small"
+                  [text]="true"
+                  [rounded]="true"
+                  [pTooltip]="
+                    run.status === RunStatus.AWAITING_INPUT ? 'Perform listening test' : 'Human listening studies'
+                  "
+                  ariaLabel="Open human listening studies"
+                  (onClick)="onListeningStudies(run)"
+                />
+              }
               @if (isRunRetryable(run)) {
                 <p-button
                   icon="pi pi-refresh"

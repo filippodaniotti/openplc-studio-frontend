@@ -1,4 +1,5 @@
 import { RunStatus } from '../enums/run-status.enum';
+import { RunFailure } from './run.interface';
 
 interface BaseWsMessage {
   type: string;
@@ -14,6 +15,7 @@ export interface RunCompletionMessage extends BaseWsMessage {
   run_id: string;
   run_name: string;
   success: boolean;
+  failure?: RunFailure | null;
 }
 
 export interface NodeProgress {

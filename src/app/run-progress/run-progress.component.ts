@@ -21,7 +21,7 @@ import { buildModuleInstancePresentations } from '../shared/utils/module-instanc
 import { MessageService } from 'primeng/api';
 
 type ProgressKind = 'track' | 'packet-loss' | 'plc' | 'output';
-type ProgressState = 'waiting' | 'running' | 'complete' | 'interrupted';
+type ProgressState = 'waiting' | 'running' | 'complete' | 'interrupted' | 'awaiting-input';
 
 interface ProgressTreeNode {
   key: string;
@@ -107,7 +107,19 @@ export class RunProgressComponent implements OnInit, OnDestroy {
   }
 
   public get isAnalysisAvailable(): boolean {
-    return this.run?.status === RunStatus.COMPLETED;
+    return this.run?.status === RunStatus.COMPLETED || this.run?.status === RunStatus.AWAITING_INPUT;
+  }
+
+  public get hasHumanStudies(): boolean {
+    return this.run?.modules[ModuleType.OutputAnalyser].some((module) => module.name === 'HumanCalculator') ?? false;
+  }
+
+  public get requiresListeningInput(): boolean {
+    return this.run?.status === RunStatus.AWAITING_INPUT;
+  }
+
+  public onListeningStudies(): void {
+    this.router.navigate(['/listening-studies', this.runId]);
   }
 
   public get canExecute(): boolean {
@@ -128,7 +140,13 @@ export class RunProgressComponent implements OnInit, OnDestroy {
   }
 
   public getStateLabel(state: ProgressState): string {
-    return { waiting: 'Waiting', running: 'Running', complete: 'Complete', interrupted: 'Interrupted' }[state];
+    return {
+      waiting: 'Waiting',
+      running: 'Running',
+      complete: 'Complete',
+      interrupted: 'Interrupted',
+      'awaiting-input': 'Manual action required',
+    }[state];
   }
 
   public getStateIcon(state: ProgressState): string {
@@ -137,6 +155,7 @@ export class RunProgressComponent implements OnInit, OnDestroy {
       running: 'pi pi-spin pi-spinner',
       complete: 'pi pi-check-circle',
       interrupted: 'pi pi-exclamation-circle',
+      'awaiting-input': 'pi pi-headphones',
     }[state];
   }
 
@@ -278,6 +297,14 @@ export class RunProgressComponent implements OnInit, OnDestroy {
 
   private subscribeToLiveProgress(): void {
     this.wsService
+      .getStateChangeMessages()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((message) => {
+        if (message.run_id !== this.runId || !this.run) return;
+        this.run = { ...this.run, status: message.new_status };
+        if (message.new_status === RunStatus.AWAITING_INPUT || message.new_status === RunStatus.FAILED) this.loadRun();
+      });
+    this.wsService
       .getProgressMessages()
       .pipe(takeUntil(this.destroy$))
       .subscribe((message) => this.applyProgressMessage(message));
@@ -302,7 +329,18 @@ export class RunProgressComponent implements OnInit, OnDestroy {
 
   private applyCompletionMessage(message: RunCompletionMessage): void {
     if (message.run_id !== this.runId || !this.run) return;
-    this.run = { ...this.run, status: message.success ? RunStatus.COMPLETED : RunStatus.FAILED };
+    this.run = {
+      ...this.run,
+      status: message.success ? RunStatus.COMPLETED : RunStatus.FAILED,
+      failure: message.failure ?? null,
+    };
+    if (!message.success && message.failure)
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Run failed',
+        detail: `${message.failure.message} ${message.failure.guidance}`,
+        life: 12000,
+      });
   }
 
   private buildNodesFromRun(run: Run): ProgressTreeNode[] {
@@ -391,10 +429,23 @@ export class RunProgressComponent implements OnInit, OnDestroy {
   private getProgressForIds(ids: string[]): DisplayProgress {
     const uniqueIds = [...new Set(ids)];
     if (this.run?.status === RunStatus.COMPLETED) return { state: 'complete', percentage: 100 };
+    const humanIds = new Set(
+      this.run?.modules[ModuleType.OutputAnalyser]
+        .filter((module) => module.name === 'HumanCalculator')
+        .flatMap((module) => module.node_ids ?? []) ?? [],
+    );
+    const manual = uniqueIds.some((id) => humanIds.has(id));
+    if (this.run?.status === RunStatus.AWAITING_INPUT)
+      return manual || !uniqueIds.length
+        ? { state: 'awaiting-input', percentage: null }
+        : { state: 'complete', percentage: 100 };
 
     const entries = uniqueIds.map((id) => this.progressByNodeId.get(id));
     const complete = entries.length > 0 && entries.every((entry) => this.isEntryComplete(entry));
-    if (complete) return { state: 'complete', percentage: 100 };
+    if (complete)
+      return manual
+        ? { state: this.run?.status === RunStatus.FAILED ? 'interrupted' : 'awaiting-input', percentage: null }
+        : { state: 'complete', percentage: 100 };
 
     if (this.run?.status === RunStatus.FAILED) return { state: 'interrupted', percentage: this.getPercentage(entries) };
     const hasProgress = entries.some((entry) => (entry?.current ?? 0) > 0);

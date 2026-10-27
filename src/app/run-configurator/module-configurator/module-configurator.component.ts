@@ -642,6 +642,25 @@ export class ModuleConfiguratorComponent implements OnInit {
     return buildModuleInstancePresentations(siblings)[moduleIndex]?.discriminator ?? null;
   }
 
+  public usesFullTrack(module: ModuleWithCount): boolean {
+    return (
+      module.name === 'HumanCalculator' &&
+      module.settings.some((setting) => setting.name === 'use_full_track' && setting.value === true)
+    );
+  }
+
+  public visibleParameters(module: ModuleWithCount): ModuleWithCount['settings'] {
+    if (!this.usesFullTrack(module)) return module.settings;
+    const excerptSettings = [
+      'stimulus_length',
+      'single_loss_per_stimulus',
+      'trials_per_track',
+      'choose_seed',
+      'loudness_threshold_db',
+    ];
+    return module.settings.filter((setting) => !excerptSettings.includes(setting.name));
+  }
+
   public isParameterFieldType(param: { type: string }): boolean {
     return ['int', 'float', 'str', 'bool', 'Enum', 'list_int'].includes(param.type);
   }
@@ -958,6 +977,22 @@ export class ModuleConfiguratorComponent implements OnInit {
 
   public addModule(module: ModuleWithCount | null): void {
     if (!module) {
+      return;
+    }
+
+    const selection = this.runConfigService.modulesSelection.value;
+    const hasHuman = selection[ModuleType.OutputAnalyser].some((item) => item.name === 'HumanCalculator');
+    const simulatorCount = selection[ModuleType.PacketLossSimulator].length;
+    let restriction = '';
+    if (this.moduleType === ModuleType.OutputAnalyser && module.name === 'HumanCalculator') {
+      if (hasHuman) restriction = 'A run supports at most one HumanCalculator instance.';
+      else if (simulatorCount > 1) restriction = 'Remove extra loss simulators before adding HumanCalculator.';
+    } else if (this.moduleType === ModuleType.PacketLossSimulator && hasHuman && simulatorCount >= 1) {
+      restriction = 'Runs with HumanCalculator support only one loss simulator instance.';
+    }
+    if (restriction) {
+      this.messageService.add({ severity: 'warn', summary: 'Listening study limit', detail: restriction });
+      this.selectedModuleProxy = null;
       return;
     }
 

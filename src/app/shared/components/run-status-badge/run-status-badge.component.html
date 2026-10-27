@@ -1,1 +1,4 @@
-<p-tag [severity]="runStatus | runStatusBadgeSeverity" [value]="runStatus | titlecase" />
+<p-tag
+  [severity]="runStatus | runStatusBadgeSeverity"
+  [value]="runStatus === RunStatus.AWAITING_INPUT ? 'Manual action required' : (runStatus | titlecase)"
+/>

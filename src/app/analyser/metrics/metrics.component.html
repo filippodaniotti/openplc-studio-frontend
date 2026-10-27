@@ -93,7 +93,34 @@
               />
             }
             @case ('unsupported') {
-              <p class="p-4 text-center text-muted-color">{{ visualization.message }}</p>
+              @if (
+                visualization.metric.calculatorName === 'HumanCalculator' &&
+                analysisService.run.value?.status === 'completed'
+              ) {
+                <section aria-label="Human listening study results" class="mt-6">
+                  @if (humanError) {
+                    <p role="alert">{{ humanError }}</p>
+                  }
+                  @for (panel of humanPanels; track panel.study.id) {
+                    <plc-study-lmm-visualizations
+                      [study]="panel.study"
+                      [results]="panel.results"
+                      [plotsOnly]="true"
+                      [includeDistributions]="true"
+                    />
+                  }
+                </section>
+              } @else {
+                <p class="p-4 text-center text-muted-color">{{ visualization.message }}</p>
+              }
+              @if (
+                visualization.metric.calculatorName === 'HumanCalculator' &&
+                analysisService.run.value?.status !== 'completed'
+              ) {
+                <div class="text-center pb-4">
+                  <a [routerLink]="['/listening-studies', analysisService.run.value?.id]">Open Study Hub</a>
+                </div>
+              }
             }
           }
         </div>

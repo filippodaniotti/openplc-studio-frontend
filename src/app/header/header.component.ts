@@ -21,6 +21,10 @@ export class HeaderComponent {
     return this.themeService.isDarkMode.value;
   }
 
+  public get isParticipantPage(): boolean {
+    return this.isActive('/listening-participant');
+  }
+
   public isActive(path: string): boolean {
     const currentPath = this.router.url.split(/[?#]/, 1)[0];
     return currentPath === path || currentPath.startsWith(`${path}/`);

@@ -1,22 +1,39 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { ListeningClient, listeningError } from '../../listening-studies/listening.client';
+import { Study, StudyResults } from '../../listening-studies/listening.models';
+import { StudyLmmVisualizationsComponent } from '../../listening-studies/charts/study-lmm-visualizations.component';
 import { Chart, ChartData, ChartOptions } from 'chart.js';
 import { ButtonModule } from 'primeng/button';
 import { ChartModule } from 'primeng/chart';
 import { DividerModule } from 'primeng/divider';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SkeletonModule } from 'primeng/skeleton';
-import { debounceTime, filter, of, Subject, switchMap, takeUntil, tap } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  exhaustMap,
+  filter,
+  forkJoin,
+  map,
+  of,
+  Subject,
+  switchMap,
+  takeUntil,
+  tap,
+  timer,
+} from 'rxjs';
 import {
   FocusedRunModule,
   RunConfigurationDrawerComponent,
 } from '../../shared/components/run-configuration-drawer/run-configuration-drawer.component';
 import { ModuleType } from '../../shared/enums/module-type.enum';
 import { ThemeService } from '../../shared/services/theme.service';
-import { AnalysisService, MetricRaw } from '../analysis.service';
+import { AnalysisService, MetricRaw, isHumanMetricPayload } from '../analysis.service';
 import { DARK_COLORS, LIGHT_COLORS } from '../utils';
-import { buildMetricPresentations, MetricPresentation } from './metric-presentation';
+import { addPendingHumanMetric, buildMetricPresentations, MetricPresentation } from './metric-presentation';
 import { SpectralEnergyHeatmapComponent } from './spectral-energy-heatmap/spectral-energy-heatmap.component';
 
 const TD_METRICS = ['MSECalculator', 'MAECalculator', 'WindowedPEAQCalculator'];
@@ -94,12 +111,16 @@ type MetricVisualization =
     DividerModule,
     RunConfigurationDrawerComponent,
     SpectralEnergyHeatmapComponent,
+    RouterLink,
+    StudyLmmVisualizationsComponent,
   ],
   templateUrl: './metrics.component.html',
   styleUrl: './metrics.component.scss',
 })
 export class MetricsComponent {
   public metrics: MetricRaw[] = [];
+  public humanPanels: { study: Study; results: StudyResults }[] = [];
+  public humanError = '';
 
   public metricOptions: MetricPresentation[] = [];
 
@@ -123,9 +144,43 @@ export class MetricsComponent {
   constructor(
     public readonly analysisService: AnalysisService,
     private readonly themeService: ThemeService,
+    private readonly listening: ListeningClient,
   ) {}
 
   public ngOnInit(): void {
+    this.analysisService.run
+      .pipe(
+        switchMap((run) =>
+          run?.modules[ModuleType.OutputAnalyser].some((module) => module.name === 'HumanCalculator')
+            ? (run.status === 'completed' ? timer(0) : timer(0, 5000)).pipe(
+                exhaustMap(() =>
+                  this.listening.studies(run.id).pipe(
+                    switchMap((studies) =>
+                      studies.length
+                        ? forkJoin(
+                            studies.map((study) =>
+                              this.listening.results(study.id).pipe(map((results) => ({ study, results }))),
+                            ),
+                          )
+                        : of([]),
+                    ),
+                    catchError((error) => {
+                      this.humanError = listeningError(error);
+                      return of(null);
+                    }),
+                  ),
+                ),
+              )
+            : of([]),
+        ),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((panels) => {
+        if (panels) {
+          this.humanPanels = panels;
+          this.humanError = '';
+        }
+      });
     this.themeService.isDarkMode
       .asObservable()
       .pipe(
@@ -156,13 +211,21 @@ export class MetricsComponent {
         switchMap((track) => of(this.analysisService.playbaleTrackToMetricsMap.value[track.name.split('.')[0]] ?? [])),
         tap(() => this.destroyCharts()),
         tap((metrics) => {
-          this.metrics = metrics;
           const outputAnalyserModules = this.analysisService.run.value?.modules[ModuleType.OutputAnalyser] ?? [];
           this.metricOptions = buildMetricPresentations(metrics, outputAnalyserModules, (metric, fallbackIndex) =>
             this.analysisService.resolveOutputAnalyserModuleForMetric(metric.name, fallbackIndex),
           );
+          if (
+            this.analysisService.run.value?.status !== 'completed' &&
+            this.analysisService.selectedTrackPlayback.value?.kind !== 'original-audio'
+          ) {
+            this.metricOptions = addPendingHumanMetric(this.metricOptions, outputAnalyserModules);
+          }
+          this.metrics = this.metricOptions;
+          this.displayMetrics = [];
+          this.visualizations = [];
         }),
-        filter((metrics) => metrics.length > 0),
+        filter(() => this.metricOptions.length > 0),
         tap(() => this.buildAllVisualizations()),
         tap(() => (this.displayMetrics = this.metricOptions.slice(0, 1))),
         tap(() => {
@@ -173,6 +236,10 @@ export class MetricsComponent {
         }),
       )
       .subscribe();
+  }
+
+  public get humanMetricSelected(): boolean {
+    return this.displayMetrics.some((metric) => metric.calculatorName === 'HumanCalculator');
   }
 
   public isMetricDisplayed(metric: MetricRaw): boolean {
@@ -193,6 +260,28 @@ export class MetricsComponent {
 
   private buildVisualization(metric: MetricPresentation, fallbackIndex: number): MetricVisualization {
     const metricModule = metric.calculatorName;
+    if (
+      metricModule === 'HumanCalculator' &&
+      (this.analysisService.run.value?.status !== 'completed' ||
+        (isHumanMetricPayload(metric.json) && metric.json.status === 'prepared'))
+    )
+      return {
+        kind: 'unsupported',
+        metric,
+        message:
+          'The listening study is not completed. Complete all listening trials and close collection in the Study Hub, then wait for finalization before viewing results.',
+      };
+    if (isHumanMetricPayload(metric.json))
+      return {
+        kind: 'unsupported',
+        metric,
+        message:
+          metric.json.status === 'prepared'
+            ? 'Manual input pending. Use listening studies to collect ratings; participant-aware results appear below.'
+            : 'Finalized human output. Study-wide participant-aware results appear below; raw excerpt means are not independent observations.',
+      };
+    if (typeof metric.json !== 'number' && !Array.isArray(metric.json))
+      return { kind: 'unsupported', metric, message: 'Unknown structured metric payload.' };
 
     const scalarConfigs = SCALAR_METRICS[metricModule];
     if (scalarConfigs) {
@@ -230,6 +319,7 @@ export class MetricsComponent {
   }
 
   private readScalarMetrics(payload: MetricRaw['json'], expectedCount: number): number[] | null {
+    if (typeof payload !== 'number' && !Array.isArray(payload)) return null;
     const values = typeof payload === 'number' ? [payload] : payload;
     if (
       values.length !== expectedCount ||

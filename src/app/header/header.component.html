@@ -1,51 +1,59 @@
 <p-toolbar class="py-4">
   <ng-template #start>
-    <button class="brand" type="button" (click)="this.router.navigate(['/dashboard'])">
-      <img *ngIf="!isDarkMode" src="assets/branding/logo-light.png" alt="OpenPLC Studio" />
-      <img *ngIf="isDarkMode" src="assets/branding/logo-dark.png" alt="OpenPLC Studio" />
-      <span>OpenPLC Studio</span>
-    </button>
-    <div class="plc-main-nav flex gap-1 items-center">
-      <p-button
-        label="New"
-        icon="pi pi-plus"
-        class="mr-2"
-        text
-        severity="primary"
-        size="small"
-        (click)="this.router.navigate(['/run-configurator'])"
-      />
-      <p-button
-        label="History"
-        icon="pi pi-history"
-        class="mr-2"
-        [text]="!isActive('/backlog')"
-        [outlined]="isActive('/backlog')"
-        [severity]="isActive('/backlog') ? 'primary' : 'secondary'"
-        size="small"
-        (click)="this.router.navigate(['/backlog'])"
-      />
-      <p-button
-        label="Docs"
-        icon="pi pi-book"
-        class="mr-2"
-        [text]="!isActive('/docs')"
-        [outlined]="isActive('/docs')"
-        [severity]="isActive('/docs') ? 'primary' : 'secondary'"
-        size="small"
-        (click)="this.router.navigate(['/docs'])"
-      />
-      <p-button
-        label="Settings"
-        icon="pi pi-cog"
-        class="mr-2"
-        [text]="!isActive('/settings')"
-        [outlined]="isActive('/settings')"
-        [severity]="isActive('/settings') ? 'primary' : 'secondary'"
-        size="small"
-        (click)="this.router.navigate(['/settings'])"
-      />
-    </div>
+    @if (isParticipantPage) {
+      <div class="brand">
+        <img *ngIf="!isDarkMode" src="assets/branding/logo-light.png" alt="OpenPLC Studio" />
+        <img *ngIf="isDarkMode" src="assets/branding/logo-dark.png" alt="OpenPLC Studio" />
+        <span>OpenPLC Studio</span>
+      </div>
+    } @else {
+      <button class="brand" type="button" (click)="this.router.navigate(['/dashboard'])">
+        <img *ngIf="!isDarkMode" src="assets/branding/logo-light.png" alt="OpenPLC Studio" />
+        <img *ngIf="isDarkMode" src="assets/branding/logo-dark.png" alt="OpenPLC Studio" />
+        <span>OpenPLC Studio</span>
+      </button>
+      <div class="plc-main-nav flex gap-1 items-center">
+        <p-button
+          label="New"
+          icon="pi pi-plus"
+          class="mr-2"
+          text
+          severity="primary"
+          size="small"
+          (click)="this.router.navigate(['/run-configurator'])"
+        />
+        <p-button
+          label="History"
+          icon="pi pi-history"
+          class="mr-2"
+          [text]="!isActive('/backlog')"
+          [outlined]="isActive('/backlog')"
+          [severity]="isActive('/backlog') ? 'primary' : 'secondary'"
+          size="small"
+          (click)="this.router.navigate(['/backlog'])"
+        />
+        <p-button
+          label="Docs"
+          icon="pi pi-book"
+          class="mr-2"
+          [text]="!isActive('/docs')"
+          [outlined]="isActive('/docs')"
+          [severity]="isActive('/docs') ? 'primary' : 'secondary'"
+          size="small"
+          (click)="this.router.navigate(['/docs'])"
+        />
+        <p-button
+          label="Settings"
+          icon="pi pi-cog"
+          class="mr-2"
+          [text]="!isActive('/settings')"
+          [outlined]="isActive('/settings')"
+          [severity]="isActive('/settings') ? 'primary' : 'secondary'"
+          size="small"
+          (click)="this.router.navigate(['/settings'])"
+        />
+      </div>
+    }
   </ng-template>
   <ng-template #center></ng-template>
   <ng-template #end>

@@ -41,6 +41,25 @@ describe('HeaderComponent', () => {
     expect(fixture.componentInstance.isActive('/docs')).toBeTrue();
   });
 
+  for (const url of ['/listening-participant#invite=token', '/listening-participant/session-id']) {
+    it(`shows only a non-clickable logo and theme toggle on ${url}`, () => {
+      router.url = url;
+      fixture.detectChanges();
+
+      const header: HTMLElement = fixture.nativeElement;
+      expect(header.querySelector('.plc-main-nav')).toBeNull();
+      expect(header.querySelector('.brand')?.tagName).toBe('DIV');
+      expect(header.querySelector('.brand img')).not.toBeNull();
+      expect(header.querySelector('.brand span')?.textContent).toBe('OpenPLC Studio');
+      expect(header.querySelectorAll('button').length).toBe(1);
+      const toggle = header.querySelector('button')!;
+      expect(toggle.getAttribute('aria-label')).toBe('Toggle color theme');
+      toggle.click();
+      expect(TestBed.inject(ThemeService).toggle).toHaveBeenCalled();
+      expect(router.navigate).not.toHaveBeenCalled();
+    });
+  }
+
   it('navigates to the documentation route', () => {
     const docsButton = [...fixture.nativeElement.querySelectorAll('.plc-main-nav button')].find(
       (button: HTMLButtonElement) => button.textContent?.includes('Docs'),

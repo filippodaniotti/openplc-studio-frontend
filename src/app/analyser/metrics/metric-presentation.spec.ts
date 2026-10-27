@@ -3,10 +3,20 @@ import { Module } from '../../shared/interfaces/module.interface';
 import { BehaviorSubject } from 'rxjs';
 import { AnalysisService, JsonPayload, MetricRaw } from '../analysis.service';
 import { metricLabelTransform } from './metric-label.pipe';
-import { buildMetricPresentations } from './metric-presentation';
+import { addPendingHumanMetric, buildMetricPresentations } from './metric-presentation';
 import { MetricsComponent } from './metrics.component';
+import { ListeningClient } from '../../listening-studies/listening.client';
 
 describe('metric presentation', () => {
+  it('keeps a pending HumanCalculator selectable when ready-only exports omit its artifact', () => {
+    const modules = [createModule('HumanCalculator', {})];
+    const options = addPendingHumanMetric([], modules);
+    expect(options.length).toBe(1);
+    expect(options[0].calculatorName).toBe('HumanCalculator');
+    expect(options[0].moduleIndex).toBe(0);
+    expect(addPendingHumanMetric(options, modules).length).toBe(1);
+    expect(addPendingHumanMetric([], [])).toEqual([]);
+  });
   it('shows only the calculator name for a unique metric', () => {
     const modules = [createModule('MSECalculator', { N: 1024, hop: 512 })];
 
@@ -94,10 +104,31 @@ describe('metricLabelTransform', () => {
 
 describe('MetricsComponent scalar metric visualization', () => {
   function createComponent(): MetricsComponent {
-    return new MetricsComponent(new AnalysisService(), {
-      isDarkMode: new BehaviorSubject(false),
-    } as any);
+    return new MetricsComponent(
+      new AnalysisService(),
+      {
+        isDarkMode: new BehaviorSubject(false),
+      } as any,
+      {} as ListeningClient,
+    );
   }
+
+  it('shows human analysis only while HumanCalculator is selected', () => {
+    const component = createComponent();
+    expect(component.humanMetricSelected).toBeFalse();
+    component.displayMetrics = addPendingHumanMetric([], [createModule('HumanCalculator', {})]);
+    expect(component.humanMetricSelected).toBeTrue();
+    component.displayMetrics = [];
+    expect(component.humanMetricSelected).toBeFalse();
+  });
+
+  it('shows a completion notice instead of visualizing pending human ratings', () => {
+    const metric = addPendingHumanMetric([], [createModule('HumanCalculator', {})])[0];
+    const visualization = (createComponent() as any).buildVisualization(metric, 0);
+    expect(visualization.kind).toBe('unsupported');
+    expect(visualization.message).toContain('listening study is not completed');
+    expect(visualization.message).toContain('Study Hub');
+  });
 
   it('builds a PLCMOS score card on the MOS scale', () => {
     const metric = buildPresentations(
@@ -199,9 +230,13 @@ describe('MetricsComponent scalar metric visualization', () => {
 
 describe('MetricsComponent metric configuration focus', () => {
   it('focuses the output analyser instance associated with the clicked metric', () => {
-    const component = new MetricsComponent(new AnalysisService(), {
-      isDarkMode: new BehaviorSubject(false),
-    } as any);
+    const component = new MetricsComponent(
+      new AnalysisService(),
+      {
+        isDarkMode: new BehaviorSubject(false),
+      } as any,
+      {} as ListeningClient,
+    );
     const metric = buildPresentations(
       [createMetric('MSECalculator-first.json', 0), createMetric('MSECalculator-second.json', 1)],
       [createModule('MSECalculator', { N: 1024 }), createModule('MSECalculator', { N: 2048 })],

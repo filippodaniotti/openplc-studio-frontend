@@ -33,6 +33,7 @@ describe('RunProgressComponent', () => {
   let router: jasmine.SpyObj<Router>;
   const progress$ = new Subject<any>();
   const completion$ = new Subject<any>();
+  const state$ = new Subject<any>();
 
   beforeEach(async () => {
     runsClient = jasmine.createSpyObj<RunsClient>('RunsClient', ['getRun', 'executeRun', 'retryRun']);
@@ -63,6 +64,7 @@ describe('RunProgressComponent', () => {
             sendRunId: jasmine.createSpy('sendRunId'),
             getProgressMessages: () => progress$.asObservable(),
             getCompletionMessages: () => completion$.asObservable(),
+            getStateChangeMessages: () => state$.asObservable(),
           },
         },
       ],
@@ -71,6 +73,38 @@ describe('RunProgressComponent', () => {
     fixture = TestBed.createComponent(RunProgressComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('keeps prepared human nodes pending while allowing ready automated analysis', () => {
+    component.run = {
+      ...run,
+      status: RunStatus.AWAITING_INPUT,
+      modules: {
+        ...run.modules,
+        [ModuleType.OutputAnalyser]: [{ name: 'HumanCalculator', node_ids: ['out-1', 'out-2'], settings: [] }],
+      },
+    };
+    expect(component.overallProgress.state).toBe('awaiting-input');
+    expect(component.isAnalysisAvailable).toBeTrue();
+    expect(component.requiresListeningInput).toBeTrue();
+    expect(component.getNodeProgress(component.nodes[0].children[0].children[0].children[0]).state).toBe(
+      'awaiting-input',
+    );
+  });
+
+  it('shows actionable failure guidance and notifies the user on completion', () => {
+    const failure = {
+      code: 'human_no_eligible_excerpts' as const,
+      message: 'Every excerpt contains multiple loss bursts.',
+      guidance: 'Disable single_loss_per_stimulus or increase burst spacing.',
+    };
+    completion$.next({ run_id: 'run-1', success: false, failure });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain(failure.message);
+    expect(fixture.nativeElement.textContent).toContain(failure.guidance);
+    expect(messageService.add).toHaveBeenCalledWith(
+      jasmine.objectContaining({ severity: 'error', summary: 'Run failed' }),
+    );
   });
 
   it('renders the run summary without track metadata in the execution tree', () => {

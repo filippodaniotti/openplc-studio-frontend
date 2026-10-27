@@ -310,8 +310,14 @@ export class AnalyserComponent {
   private getCompletedRunArtifacts(runId: string, kind: RunArtifactKind): Observable<ArrayBuffer> {
     return this.runFetchDone.pipe(
       take(1),
-      filter(() => this.analysisService.run.value?.status === RunStatus.COMPLETED),
-      switchMap(() => this.runsClient.getRunArtifactsArchive(runId, kind)),
+      filter(() =>
+        [RunStatus.COMPLETED, RunStatus.AWAITING_INPUT].includes(this.analysisService.run.value?.status as RunStatus),
+      ),
+      switchMap(() =>
+        this.analysisService.run.value?.status === RunStatus.AWAITING_INPUT
+          ? this.runsClient.getRunArtifactsArchive(runId, kind, true)
+          : this.runsClient.getRunArtifactsArchive(runId, kind),
+      ),
     );
   }
 

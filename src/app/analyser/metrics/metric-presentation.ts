@@ -9,6 +9,33 @@ export type MetricPresentation = MetricRaw & {
   moduleIndex: number | null;
 };
 
+export function addPendingHumanMetric(options: MetricPresentation[], modules: Module[]): MetricPresentation[] {
+  const moduleIndex = modules.findIndex((module) => module.name === 'HumanCalculator');
+  if (moduleIndex < 0 || options.some((metric) => metric.calculatorName === 'HumanCalculator')) return options;
+  return [
+    ...options,
+    {
+      name: 'HumanCalculator.pending',
+      type: 'file',
+      size: 0,
+      attrs: { mode: '', uid: 0, gid: 0, mtime: 0, user: '', group: '' },
+      index: -1,
+      calculatorName: 'HumanCalculator',
+      discriminator: null,
+      displayName: 'HumanCalculator',
+      moduleIndex,
+      json: {
+        kind: 'human-listening',
+        schema_version: 1,
+        status: 'prepared',
+        study_id: null,
+        condition_id: '',
+        excerpts: [],
+      },
+    },
+  ];
+}
+
 export function buildMetricPresentations(
   metrics: MetricRaw[],
   modules: Module[],

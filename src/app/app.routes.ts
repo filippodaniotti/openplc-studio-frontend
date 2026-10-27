@@ -27,6 +27,20 @@ export const routes: Routes = [
     component: BacklogComponent,
   },
   {
+    path: 'listening-studies/:runId',
+    loadComponent: () => import('./listening-studies/study-hub.component').then((module) => module.StudyHubComponent),
+  },
+  {
+    path: 'listening-participant',
+    loadComponent: () =>
+      import('./listening-studies/participant.component').then((module) => module.ParticipantComponent),
+  },
+  {
+    path: 'listening-participant/:sessionId',
+    loadComponent: () =>
+      import('./listening-studies/participant.component').then((module) => module.ParticipantComponent),
+  },
+  {
     path: 'docs',
     children: [
       { path: '', pathMatch: 'full', loadComponent: loadDocumentationComponent },
