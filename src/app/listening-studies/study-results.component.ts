@@ -539,11 +539,11 @@ export class StudyResultsComponent {
       help: 'Average listener score. Each listener has equal weight; observed tracks are weighted equally within each listener.',
     },
     { label: 'Median', help: 'Middle participant score after averaging ratings within each listener.' },
-    { label: 'SD', help: 'Standard deviation: how widely participant scores vary around the mean.' },
-    { label: 'IQR', help: 'Interquartile range: the width of the middle 50% of participant scores.' },
+    { label: 'SD', help: 'Standard deviation.' },
+    { label: 'IQR', help: 'Interquartile range.' },
     {
-      label: '95% confidence interval',
-      help: 'Uncertainty in the mean, estimated by resampling whole participants. This is not the range of individual ratings.',
+      label: '95% CI',
+      help: '95% confidence interval, estimated by resampling whole participants.',
     },
   ];
   @Input() public results: StudyResults | null = null;
